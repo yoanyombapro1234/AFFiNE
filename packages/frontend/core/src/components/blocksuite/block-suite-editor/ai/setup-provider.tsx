@@ -1,22 +1,20 @@
 import { AIProvider } from '@affine/core/blocksuite/presets/ai';
 import { toggleGeneralAIOnboarding } from '@affine/core/components/affine/ai-onboarding/apis';
-import { authAtom } from '@affine/core/components/atoms';
+import type { GlobalDialogService } from '@affine/core/modules/dialogs';
 import {
-  getBaseUrl,
   type getCopilotHistoriesQuery,
   type RequestOptions,
 } from '@affine/graphql';
 import { UnauthorizedError } from '@blocksuite/affine/blocks';
 import { assertExists } from '@blocksuite/affine/global/utils';
-import { getCurrentStore } from '@toeverything/infra';
 import { z } from 'zod';
 
+import type { CopilotClient } from './copilot-client';
 import type { PromptKey } from './prompt';
 import {
   cleanupSessions,
   createChatSession,
   forkCopilotSession,
-  listHistories,
   textToText,
   toImage,
 } from './request';
@@ -39,11 +37,14 @@ const processTypeToPromptName = new Map(
   })
 );
 
-export function setupAIProvider() {
-  // a single workspace should have only a single chat session
-  // user-id:workspace-id:doc-id -> chat session id
-  const chatSessions = new Map<string, Promise<string>>();
+// a single workspace should have only a single chat session
+// user-id:workspace-id:doc-id -> chat session id
+const chatSessions = new Map<string, Promise<string>>();
 
+export function setupAIProvider(
+  client: CopilotClient,
+  globalDialogService: GlobalDialogService
+) {
   async function getChatSessionId(workspaceId: string, docId: string) {
     const userId = (await AIProvider.userInfo)?.id;
 
@@ -56,6 +57,7 @@ export function setupAIProvider() {
       chatSessions.set(
         storeKey,
         createChatSession({
+          client,
           workspaceId,
           docId,
         })
@@ -78,6 +80,7 @@ export function setupAIProvider() {
       options.sessionId ?? getChatSessionId(options.workspaceId, options.docId);
     return textToText({
       ...options,
+      client,
       content: options.input,
       sessionId,
     });
@@ -86,6 +89,7 @@ export function setupAIProvider() {
   AIProvider.provide('summary', options => {
     return textToText({
       ...options,
+      client,
       content: options.input,
       promptName: 'Summary',
     });
@@ -94,6 +98,7 @@ export function setupAIProvider() {
   AIProvider.provide('translate', options => {
     return textToText({
       ...options,
+      client,
       promptName: 'Translate to',
       content: options.input,
       params: {
@@ -105,6 +110,7 @@ export function setupAIProvider() {
   AIProvider.provide('changeTone', options => {
     return textToText({
       ...options,
+      client,
       params: {
         tone: options.tone.toLowerCase(),
       },
@@ -116,6 +122,7 @@ export function setupAIProvider() {
   AIProvider.provide('improveWriting', options => {
     return textToText({
       ...options,
+      client,
       content: options.input,
       promptName: 'Improve writing for it',
     });
@@ -124,6 +131,7 @@ export function setupAIProvider() {
   AIProvider.provide('improveGrammar', options => {
     return textToText({
       ...options,
+      client,
       content: options.input,
       promptName: 'Improve grammar for it',
     });
@@ -132,6 +140,7 @@ export function setupAIProvider() {
   AIProvider.provide('fixSpelling', options => {
     return textToText({
       ...options,
+      client,
       content: options.input,
       promptName: 'Fix spelling for it',
     });
@@ -140,6 +149,7 @@ export function setupAIProvider() {
   AIProvider.provide('createHeadings', options => {
     return textToText({
       ...options,
+      client,
       content: options.input,
       promptName: 'Create headings',
     });
@@ -148,6 +158,7 @@ export function setupAIProvider() {
   AIProvider.provide('makeLonger', options => {
     return textToText({
       ...options,
+      client,
       content: options.input,
       promptName: 'Make it longer',
     });
@@ -156,6 +167,7 @@ export function setupAIProvider() {
   AIProvider.provide('makeShorter', options => {
     return textToText({
       ...options,
+      client,
       content: options.input,
       promptName: 'Make it shorter',
     });
@@ -164,6 +176,7 @@ export function setupAIProvider() {
   AIProvider.provide('checkCodeErrors', options => {
     return textToText({
       ...options,
+      client,
       content: options.input,
       promptName: 'Check code error',
     });
@@ -172,6 +185,7 @@ export function setupAIProvider() {
   AIProvider.provide('explainCode', options => {
     return textToText({
       ...options,
+      client,
       content: options.input,
       promptName: 'Explain this code',
     });
@@ -180,6 +194,7 @@ export function setupAIProvider() {
   AIProvider.provide('writeArticle', options => {
     return textToText({
       ...options,
+      client,
       content: options.input,
       promptName: 'Write an article about this',
     });
@@ -188,6 +203,7 @@ export function setupAIProvider() {
   AIProvider.provide('writeTwitterPost', options => {
     return textToText({
       ...options,
+      client,
       content: options.input,
       promptName: 'Write a twitter about this',
     });
@@ -196,6 +212,7 @@ export function setupAIProvider() {
   AIProvider.provide('writePoem', options => {
     return textToText({
       ...options,
+      client,
       content: options.input,
       promptName: 'Write a poem about this',
     });
@@ -204,6 +221,7 @@ export function setupAIProvider() {
   AIProvider.provide('writeOutline', options => {
     return textToText({
       ...options,
+      client,
       content: options.input,
       promptName: 'Write outline',
     });
@@ -212,6 +230,7 @@ export function setupAIProvider() {
   AIProvider.provide('writeBlogPost', options => {
     return textToText({
       ...options,
+      client,
       content: options.input,
       promptName: 'Write a blog post about this',
     });
@@ -220,6 +239,7 @@ export function setupAIProvider() {
   AIProvider.provide('brainstorm', options => {
     return textToText({
       ...options,
+      client,
       content: options.input,
       promptName: 'Brainstorm ideas about this',
     });
@@ -228,6 +248,7 @@ export function setupAIProvider() {
   AIProvider.provide('findActions', options => {
     return textToText({
       ...options,
+      client,
       content: options.input,
       promptName: 'Find action items from it',
     });
@@ -236,6 +257,7 @@ export function setupAIProvider() {
   AIProvider.provide('brainstormMindmap', options => {
     return textToText({
       ...options,
+      client,
       content: options.input,
       promptName: 'workflow:brainstorm',
       workflow: true,
@@ -246,6 +268,7 @@ export function setupAIProvider() {
     assertExists(options.input, 'expandMindmap action requires input');
     return textToText({
       ...options,
+      client,
       params: {
         mindmap: options.mindmap,
         node: options.input,
@@ -258,6 +281,7 @@ export function setupAIProvider() {
   AIProvider.provide('explain', options => {
     return textToText({
       ...options,
+      client,
       content: options.input,
       promptName: 'Explain this',
     });
@@ -266,6 +290,7 @@ export function setupAIProvider() {
   AIProvider.provide('explainImage', options => {
     return textToText({
       ...options,
+      client,
       content: options.input,
       promptName: 'Explain this image',
     });
@@ -273,7 +298,7 @@ export function setupAIProvider() {
 
   AIProvider.provide('makeItReal', options => {
     let promptName: PromptKey = 'Make it real';
-    let content = options.content || '';
+    let content = options.input || '';
 
     // wireframes
     if (options.attachments?.length) {
@@ -288,6 +313,7 @@ Could you make a new website based on these notes and send back just the html fi
 
     return textToText({
       ...options,
+      client,
       content,
       promptName,
     });
@@ -332,6 +358,7 @@ Could you make a new website based on these notes and send back just the html fi
     };
     return textToText({
       ...options,
+      client,
       content: options.input,
       promptName: 'workflow:presentation',
       workflow: true,
@@ -348,6 +375,8 @@ Could you make a new website based on these notes and send back just the html fi
     }
     return toImage({
       ...options,
+      client,
+      content: options.input,
       promptName,
     });
   });
@@ -357,6 +386,8 @@ Could you make a new website based on these notes and send back just the html fi
     const promptName = filterStyleToPromptName.get(options.style as string);
     return toImage({
       ...options,
+      client,
+      content: options.input,
       timeout: 120000,
       promptName: promptName as PromptKey,
       workflow: !!promptName?.startsWith('workflow:'),
@@ -370,6 +401,8 @@ Could you make a new website based on these notes and send back just the html fi
     ) as PromptKey;
     return toImage({
       ...options,
+      client,
+      content: options.input,
       timeout: 120000,
       promptName,
     });
@@ -378,6 +411,7 @@ Could you make a new website based on these notes and send back just the html fi
   AIProvider.provide('generateCaption', options => {
     return textToText({
       ...options,
+      client,
       content: options.input,
       promptName: 'Generate a caption',
     });
@@ -386,6 +420,7 @@ Could you make a new website based on these notes and send back just the html fi
   AIProvider.provide('continueWriting', options => {
     return textToText({
       ...options,
+      client,
       content: options.input,
       promptName: 'Continue writing',
     });
@@ -399,7 +434,7 @@ Could you make a new website based on these notes and send back just the html fi
     ): Promise<BlockSuitePresets.AIHistory[]> => {
       // @ts-expect-error - 'action' is missing in server impl
       return (
-        (await listHistories(workspaceId, docId, {
+        (await client.getHistories(workspaceId, docId, {
           action: true,
         })) ?? []
       );
@@ -412,14 +447,14 @@ Could you make a new website based on these notes and send back just the html fi
       >['variables']['options']
     ): Promise<BlockSuitePresets.AIHistory[]> => {
       // @ts-expect-error - 'action' is missing in server impl
-      return (await listHistories(workspaceId, docId, options)) ?? [];
+      return (await client.getHistories(workspaceId, docId, options)) ?? [];
     },
     cleanup: async (
       workspaceId: string,
       docId: string,
       sessionIds: string[]
     ) => {
-      await cleanupSessions({ workspaceId, docId, sessionIds });
+      await cleanupSessions({ workspaceId, docId, sessionIds, client });
     },
     ids: async (
       workspaceId: string,
@@ -429,21 +464,24 @@ Could you make a new website based on these notes and send back just the html fi
       >['variables']['options']
     ): Promise<BlockSuitePresets.AIHistoryIds[]> => {
       // @ts-expect-error - 'role' is missing type in server impl
-      return await listHistories(workspaceId, docId, options);
+      return await client.getHistoryIds(workspaceId, docId, options);
     },
   });
 
   AIProvider.provide('photoEngine', {
     async searchImages(options): Promise<string[]> {
-      const url = new URL(getBaseUrl() + '/api/copilot/unsplash/photos');
-      url.searchParams.set('query', options.query);
+      let url = '/api/copilot/unsplash/photos';
+      if (options.query) {
+        url += `?query=${encodeURIComponent(options.query)}`;
+      }
       const result: {
-        results: {
+        results?: {
           urls: {
             regular: string;
           };
         }[];
-      } = await fetch(url.toString()).then(res => res.json());
+      } = await client.fetcher(url.toString()).then(res => res.json());
+      if (!result.results) return [];
       return result.results.map(r => {
         const url = new URL(r.urls.regular);
         url.searchParams.set('fit', 'crop');
@@ -459,15 +497,16 @@ Could you make a new website based on these notes and send back just the html fi
   AIProvider.provide('onboarding', toggleGeneralAIOnboarding);
 
   AIProvider.provide('forkChat', options => {
-    return forkCopilotSession(options);
+    return forkCopilotSession(client, options);
   });
 
-  AIProvider.slots.requestLogin.on(() => {
-    getCurrentStore().set(authAtom, s => ({
-      ...s,
-      openModal: true,
-    }));
+  const disposeRequestLoginHandler = AIProvider.slots.requestLogin.on(() => {
+    globalDialogService.open('sign-in', {});
   });
 
   setupTracker();
+
+  return () => {
+    disposeRequestLoginHandler.dispose();
+  };
 }

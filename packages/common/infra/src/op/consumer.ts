@@ -126,6 +126,16 @@ export class OpConsumer<Ops extends OpSchema> extends AutoMessageHandler {
     this.registeredOpHandlers.set(op, handler);
   }
 
+  registerAll(
+    handlers: OpNames<Ops> extends string
+      ? { [K in OpNames<Ops>]: OpHandler<Ops, K> }
+      : never
+  ) {
+    for (const [op, handler] of Object.entries(handlers)) {
+      this.register(op as any, handler as any);
+    }
+  }
+
   before<Op extends OpNames<Ops>>(
     op: Op,
     handler: (...input: OpInput<Ops, Op>) => void

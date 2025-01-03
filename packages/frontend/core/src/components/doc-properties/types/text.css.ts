@@ -69,7 +69,6 @@ export const textInvisible = style({
   visibility: 'hidden',
   fontSize: cssVar('fontSm'),
   lineHeight: '22px',
-  padding: `6px`,
 });
 
 export const mobileTextInvisible = style([textInvisible, mobileTextareaBase]);

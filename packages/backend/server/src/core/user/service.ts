@@ -8,9 +8,10 @@ import {
   EventEmitter,
   type EventPayload,
   OnEvent,
+  Runtime,
   WrongSignInCredentials,
   WrongSignInMethod,
-} from '../../fundamentals';
+} from '../../base';
 import { PermissionService } from '../permission';
 import { Quota_FreePlanV1_1 } from '../quota/schema';
 import { validators } from '../utils/validators';
@@ -33,6 +34,7 @@ export class UserService {
 
   constructor(
     private readonly config: Config,
+    private readonly runtime: Runtime,
     private readonly crypto: CryptoHelper,
     private readonly prisma: PrismaClient,
     private readonly emitter: EventEmitter,
@@ -60,7 +62,7 @@ export class UserService {
     validators.assertValidEmail(data.email);
 
     if (data.password) {
-      const config = await this.config.runtime.fetchAll({
+      const config = await this.runtime.fetchAll({
         'auth/password.max': true,
         'auth/password.min': true,
       });
@@ -184,7 +186,7 @@ export class UserService {
     const user = await this.findUserWithHashedPasswordByEmail(email);
 
     if (!user) {
-      throw new WrongSignInCredentials();
+      throw new WrongSignInCredentials({ email });
     }
 
     if (!user.password) {
@@ -197,7 +199,7 @@ export class UserService {
     );
 
     if (!passwordMatches) {
-      throw new WrongSignInCredentials();
+      throw new WrongSignInCredentials({ email });
     }
 
     return user;
@@ -242,7 +244,7 @@ export class UserService {
     select: Prisma.UserSelect = this.defaultUserSelect
   ) {
     if (data.password) {
-      const config = await this.config.runtime.fetchAll({
+      const config = await this.runtime.fetchAll({
         'auth/password.max': true,
         'auth/password.min': true,
       });

@@ -9,6 +9,16 @@ export const EXCLUDING_COPY_ACTIONS = [
   'processImage',
 ];
 
+export const EXCLUDING_REPLACE_ACTIONS = [
+  'brainstormMindmap',
+  'expandMindmap',
+  'makeItReal',
+  'createSlides',
+  'createImage',
+  'filterImage',
+  'processImage',
+];
+
 export const EXCLUDING_INSERT_ACTIONS = ['generateCaption'];
 
 export const IMAGE_ACTIONS = ['createImage', 'processImage', 'filterImage'];
@@ -27,4 +37,3 @@ export const generatingStages: {
 };
 
 export const INSERT_ABOVE_ACTIONS = ['createHeadings'];
-export const TOGGLE_EMPTY_INPUT_ACTIONS = ['createImage', 'makeItReal'];

@@ -8,9 +8,9 @@ import type { TestFn } from 'ava';
 import ava from 'ava';
 
 import { AppModule } from '../src/app.module';
+import { MailService } from '../src/base/mailer';
 import { AuthService } from '../src/core/auth/service';
 import { UserService } from '../src/core/user';
-import { MailService } from '../src/fundamentals/mailer';
 import {
   acceptInviteById,
   createTestingApp,
@@ -52,13 +52,7 @@ test('should invite a user', async t => {
 
   const workspace = await createWorkspace(app, u1.token.token);
 
-  const invite = await inviteUser(
-    app,
-    u1.token.token,
-    workspace.id,
-    u2.email,
-    'Admin'
-  );
+  const invite = await inviteUser(app, u1.token.token, workspace.id, u2.email);
   t.truthy(invite, 'failed to invite user');
 });
 
@@ -68,13 +62,7 @@ test('should leave a workspace', async t => {
   const u2 = await signUp(app, 'u2', 'u2@affine.pro', '1');
 
   const workspace = await createWorkspace(app, u1.token.token);
-  const id = await inviteUser(
-    app,
-    u1.token.token,
-    workspace.id,
-    u2.email,
-    'Admin'
-  );
+  const id = await inviteUser(app, u1.token.token, workspace.id, u2.email);
   await acceptInviteById(app, workspace.id, id, false);
 
   const leave = await leaveWorkspace(app, u2.token.token, workspace.id);
@@ -89,7 +77,7 @@ test('should revoke a user', async t => {
   const u2 = await signUp(app, 'u2', 'u2@affine.pro', '1');
 
   const workspace = await createWorkspace(app, u1.token.token);
-  await inviteUser(app, u1.token.token, workspace.id, u2.email, 'Admin');
+  await inviteUser(app, u1.token.token, workspace.id, u2.email);
 
   const currWorkspace = await getWorkspace(app, u1.token.token, workspace.id);
   t.is(currWorkspace.members.length, 2, 'failed to invite user');
@@ -104,7 +92,7 @@ test('should create user if not exist', async t => {
 
   const workspace = await createWorkspace(app, u1.token.token);
 
-  await inviteUser(app, u1.token.token, workspace.id, 'u2@affine.pro', 'Admin');
+  await inviteUser(app, u1.token.token, workspace.id, 'u2@affine.pro');
 
   const u2 = await user.findUserByEmail('u2@affine.pro');
   t.not(u2, undefined, 'failed to create user');
@@ -118,24 +106,12 @@ test('should invite a user by link', async t => {
 
   const workspace = await createWorkspace(app, u1.token.token);
 
-  const invite = await inviteUser(
-    app,
-    u1.token.token,
-    workspace.id,
-    u2.email,
-    'Admin'
-  );
+  const invite = await inviteUser(app, u1.token.token, workspace.id, u2.email);
 
   const accept = await acceptInviteById(app, workspace.id, invite);
   t.true(accept, 'failed to accept invite');
 
-  const invite1 = await inviteUser(
-    app,
-    u1.token.token,
-    workspace.id,
-    u2.email,
-    'Admin'
-  );
+  const invite1 = await inviteUser(app, u1.token.token, workspace.id, u2.email);
 
   t.is(invite, invite1, 'repeat the invitation must return same id');
 
@@ -159,7 +135,6 @@ test('should send email', async t => {
       u1.token.token,
       workspace.id,
       u2.email,
-      'Admin',
       true
     );
 
@@ -224,20 +199,8 @@ test('should support pagination for member', async t => {
   const u3 = await signUp(app, 'u3', 'u3@affine.pro', '1');
 
   const workspace = await createWorkspace(app, u1.token.token);
-  const invite1 = await inviteUser(
-    app,
-    u1.token.token,
-    workspace.id,
-    u2.email,
-    'Admin'
-  );
-  const invite2 = await inviteUser(
-    app,
-    u1.token.token,
-    workspace.id,
-    u3.email,
-    'Admin'
-  );
+  const invite1 = await inviteUser(app, u1.token.token, workspace.id, u2.email);
+  const invite2 = await inviteUser(app, u1.token.token, workspace.id, u3.email);
 
   await acceptInviteById(app, workspace.id, invite1, false);
   await acceptInviteById(app, workspace.id, invite2, false);
@@ -267,13 +230,7 @@ test('should limit member count correctly', async t => {
     const workspace = await createWorkspace(app, u1.token.token);
     await Promise.allSettled(
       Array.from({ length: 10 }).map(async (_, i) =>
-        inviteUser(
-          app,
-          u1.token.token,
-          workspace.id,
-          `u${i}@affine.pro`,
-          'Admin'
-        )
+        inviteUser(app, u1.token.token, workspace.id, `u${i}@affine.pro`)
       )
     );
 

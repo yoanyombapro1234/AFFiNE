@@ -1,15 +1,17 @@
 import { Button, type ButtonProps } from '@affine/component/ui/button';
 import { Tooltip } from '@affine/component/ui/tooltip';
-import { authAtom } from '@affine/core/components/atoms';
 import { generateSubscriptionCallbackLink } from '@affine/core/components/hooks/affine/use-subscription-notify';
 import { useAsyncCallback } from '@affine/core/components/hooks/affine-async-hooks';
-import { AuthService, SubscriptionService } from '@affine/core/modules/cloud';
+import {
+  AuthService,
+  ServerService,
+  SubscriptionService,
+} from '@affine/core/modules/cloud';
+import { GlobalDialogService } from '@affine/core/modules/dialogs';
 import {
   type CreateCheckoutSessionInput,
-  SubscriptionRecurring,
-} from '@affine/graphql';
-import {
   SubscriptionPlan,
+  SubscriptionRecurring,
   SubscriptionStatus,
   SubscriptionVariant,
 } from '@affine/graphql';
@@ -18,7 +20,6 @@ import { track } from '@affine/track';
 import { DoneIcon } from '@blocksuite/icons/rc';
 import { useLiveData, useService } from '@toeverything/infra';
 import clsx from 'clsx';
-import { useSetAtom } from 'jotai';
 import { nanoid } from 'nanoid';
 import type { PropsWithChildren } from 'react';
 import { useCallback, useMemo, useState } from 'react';
@@ -92,6 +93,20 @@ export const PlanCard = (props: PlanCardProps) => {
   );
 };
 
+const getSignUpText = (
+  plan: SubscriptionPlan,
+  t: ReturnType<typeof useI18n>
+) => {
+  switch (plan) {
+    case SubscriptionPlan.Free:
+      return t['com.affine.payment.sign-up-free']();
+    case SubscriptionPlan.Team:
+      return t['com.affine.payment.upgrade']();
+    default:
+      return t['com.affine.payment.buy-pro']();
+  }
+};
+
 const ActionButton = ({ detail, recurring }: PlanCardProps) => {
   const t = useI18n();
   const loggedIn =
@@ -106,12 +121,18 @@ const ActionButton = ({ detail, recurring }: PlanCardProps) => {
   const isOnetime = useLiveData(subscriptionService.subscription.isOnetimePro$);
   const isFree = detail.plan === SubscriptionPlan.Free;
 
+  const signUpText = useMemo(
+    () => getSignUpText(detail.plan, t),
+    [detail.plan, t]
+  );
+
   // branches:
   //  if contact                                => 'Contact Sales'
   //  if not signed in:
   //    if free                                 => 'Sign up free'
   //    else                                    => 'Buy Pro'
   //  else
+  //    if team                                 => 'Start 14-day free trial'
   //    if isBeliever                           => 'Included in Lifetime'
   //    if onetime
   //      if free                               => 'Included in Pro'
@@ -123,20 +144,14 @@ const ActionButton = ({ detail, recurring }: PlanCardProps) => {
   //    if currentRecurring !== recurring       => 'Change to {recurring} Billing'
   //    else                                    => 'Upgrade'
 
-  // contact
-  if (detail.type === 'dynamic') {
-    return <BookDemo plan={detail.plan} />;
-  }
-
   // not signed in
   if (!loggedIn) {
-    return (
-      <SignUpAction>
-        {detail.plan === SubscriptionPlan.Free
-          ? t['com.affine.payment.sign-up-free']()
-          : t['com.affine.payment.buy-pro']()}
-      </SignUpAction>
-    );
+    return <SignUpAction>{signUpText}</SignUpAction>;
+  }
+
+  // team
+  if (detail.plan === SubscriptionPlan.Team) {
+    return <UpgradeToTeam recurring={recurring} />;
   }
 
   // lifetime
@@ -184,7 +199,10 @@ const ActionButton = ({ detail, recurring }: PlanCardProps) => {
       disabled={isCanceled}
     />
   ) : (
-    <Upgrade recurring={recurring as SubscriptionRecurring} />
+    <Upgrade
+      recurring={recurring as SubscriptionRecurring}
+      plan={SubscriptionPlan.Pro}
+    />
   );
 };
 
@@ -227,18 +245,10 @@ const Downgrade = ({ disabled }: { disabled?: boolean }) => {
   );
 };
 
-const BookDemo = ({ plan }: { plan: SubscriptionPlan }) => {
+const UpgradeToTeam = ({ recurring }: { recurring: SubscriptionRecurring }) => {
   const t = useI18n();
-  const url = useMemo(() => {
-    switch (plan) {
-      case SubscriptionPlan.Team:
-        return 'https://6dxre9ihosp.typeform.com/to/niBcdkvs';
-      case SubscriptionPlan.Enterprise:
-        return 'https://6dxre9ihosp.typeform.com/to/rFfobTjf';
-      default:
-        return 'https://affine.pro/pricing';
-    }
-  }, [plan]);
+  const serverService = useService(ServerService);
+  const url = `${serverService.server.baseUrl}/upgrade-to-team?recurring=${recurring}`;
 
   return (
     <a
@@ -250,10 +260,9 @@ const BookDemo = ({ plan }: { plan: SubscriptionPlan }) => {
       <Button
         className={styles.planAction}
         variant="primary"
-        data-event-props="$.settingsPanel.billing.bookDemo"
         data-event-args-url={url}
       >
-        {t['com.affine.payment.tell-us-use-case']()}
+        {t['com.affine.payment.upgrade']()}
       </Button>
     </a>
   );
@@ -262,43 +271,60 @@ const BookDemo = ({ plan }: { plan: SubscriptionPlan }) => {
 export const Upgrade = ({
   className,
   recurring,
+  plan,
+  workspaceId,
   children,
   checkoutInput,
+  onCheckoutSuccess,
+  onBeforeCheckout,
   ...btnProps
 }: ButtonProps & {
   recurring: SubscriptionRecurring;
+  plan: SubscriptionPlan;
+  workspaceId?: string;
   checkoutInput?: Partial<CreateCheckoutSessionInput>;
+  onBeforeCheckout?: () => void;
+  onCheckoutSuccess?: () => void;
 }) => {
   const t = useI18n();
   const authService = useService(AuthService);
 
-  const onBeforeCheckout = useCallback(() => {
+  const handleBeforeCheckout = useCallback(() => {
     track.$.settingsPanel.plans.checkout({
-      plan: SubscriptionPlan.Pro,
+      plan: plan,
       recurring: recurring,
     });
-  }, [recurring]);
+    onBeforeCheckout?.();
+  }, [onBeforeCheckout, plan, recurring]);
 
   const checkoutOptions = useMemo(
     () => ({
       recurring,
-      plan: SubscriptionPlan.Pro,
+      plan: plan,
       variant: null,
       coupon: null,
       successCallbackLink: generateSubscriptionCallbackLink(
         authService.session.account$.value,
-        SubscriptionPlan.Pro,
-        recurring
+        plan,
+        recurring,
+        workspaceId
       ),
       ...checkoutInput,
     }),
-    [authService.session.account$.value, checkoutInput, recurring]
+    [
+      authService.session.account$.value,
+      checkoutInput,
+      plan,
+      recurring,
+      workspaceId,
+    ]
   );
 
   return (
     <CheckoutSlot
-      onBeforeCheckout={onBeforeCheckout}
+      onBeforeCheckout={handleBeforeCheckout}
       checkoutOptions={checkoutOptions}
+      onCheckoutSuccess={onCheckoutSuccess}
       renderer={props => (
         <Button
           className={clsx(styles.planAction, className)}
@@ -383,20 +409,20 @@ const ChangeRecurring = ({
   );
 };
 
-const SignUpAction = ({ children }: PropsWithChildren) => {
-  const setOpen = useSetAtom(authAtom);
+export const SignUpAction = ({
+  children,
+  className,
+}: PropsWithChildren<{ className?: string }>) => {
+  const globalDialogService = useService(GlobalDialogService);
 
   const onClickSignIn = useCallback(() => {
-    setOpen(state => ({
-      ...state,
-      openModal: true,
-    }));
-  }, [setOpen]);
+    globalDialogService.open('sign-in', {});
+  }, [globalDialogService]);
 
   return (
     <Button
       onClick={onClickSignIn}
-      className={styles.planAction}
+      className={clsx(styles.planAction, className)}
       variant="primary"
     >
       {children}
@@ -438,9 +464,13 @@ const redeemCodeCheckoutInput = { variant: SubscriptionVariant.Onetime };
 export const RedeemCode = ({
   className,
   recurring = SubscriptionRecurring.Yearly,
+  plan,
   children,
   ...btnProps
-}: ButtonProps & { recurring?: SubscriptionRecurring }) => {
+}: ButtonProps & {
+  recurring?: SubscriptionRecurring;
+  plan?: SubscriptionPlan;
+}) => {
   const t = useI18n();
 
   return (
@@ -448,6 +478,7 @@ export const RedeemCode = ({
       recurring={recurring}
       className={className}
       checkoutInput={redeemCodeCheckoutInput}
+      plan={plan ?? SubscriptionPlan.Pro}
       {...btnProps}
     >
       {children ?? t['com.affine.payment.redeem-code']()}

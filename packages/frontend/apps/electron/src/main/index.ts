@@ -33,6 +33,7 @@ if (overrideSession) {
   app.setPath('sessionData', userDataPath);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 if (require('electron-squirrel-startup')) app.quit();
 
 if (process.env.SKIP_ONBOARDING) {

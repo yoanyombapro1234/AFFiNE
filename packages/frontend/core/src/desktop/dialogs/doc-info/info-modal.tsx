@@ -5,8 +5,11 @@ import {
   PropertyCollapsibleContent,
   PropertyCollapsibleSection,
 } from '@affine/component';
+import { BacklinkGroups } from '@affine/core/components/blocksuite/block-suite-editor/bi-directional-link-panel';
 import { CreatePropertyMenuItems } from '@affine/core/components/doc-properties/menu/create-doc-property';
 import { DocPropertyRow } from '@affine/core/components/doc-properties/table';
+import type { DocCustomPropertyInfo } from '@affine/core/modules/db';
+import { DocsService } from '@affine/core/modules/doc';
 import { DocDatabaseBacklinkInfo } from '@affine/core/modules/doc-info';
 import type {
   DatabaseRow,
@@ -16,13 +19,7 @@ import { DocsSearchService } from '@affine/core/modules/docs-search';
 import { useI18n } from '@affine/i18n';
 import track from '@affine/track';
 import { PlusIcon } from '@blocksuite/icons/rc';
-import {
-  type DocCustomPropertyInfo,
-  DocsService,
-  LiveData,
-  useLiveData,
-  useServices,
-} from '@toeverything/infra';
+import { LiveData, useLiveData, useServices } from '@toeverything/infra';
 import { useCallback, useMemo, useState } from 'react';
 
 import * as styles from './info-modal.css';
@@ -48,11 +45,23 @@ export const InfoTable = ({
       [docId, docsSearchService]
     )
   );
+
   const backlinks = useLiveData(
-    useMemo(
-      () => LiveData.from(docsSearchService.watchRefsTo(docId), null),
-      [docId, docsSearchService]
-    )
+    useMemo(() => {
+      return LiveData.from(docsSearchService.watchRefsTo(docId), []).map(
+        links => {
+          const visitedDoc = new Set<string>();
+          // for each doc, we only show the first block
+          return links.filter(link => {
+            if (visitedDoc.has(link.docId)) {
+              return false;
+            }
+            visitedDoc.add(link.docId);
+            return true;
+          });
+        }
+      );
+    }, [docId, docsSearchService])
   );
 
   const onBacklinkPropertyChange = useCallback(
@@ -72,28 +81,31 @@ export const InfoTable = ({
     });
   }, []);
 
+  const onPropertyChange = useCallback(
+    (property: DocCustomPropertyInfo, _value: unknown) => {
+      track.$.docInfoPanel.property.editProperty({
+        type: property.type,
+      });
+    },
+    []
+  );
+
+  const onPropertyInfoChange = useCallback(
+    (
+      property: DocCustomPropertyInfo,
+      field: keyof DocCustomPropertyInfo,
+      _value: string
+    ) => {
+      track.$.docInfoPanel.property.editPropertyMeta({
+        type: property.type,
+        field,
+      });
+    },
+    []
+  );
+
   return (
     <>
-      {backlinks && backlinks.length > 0 ? (
-        <>
-          <LinksRow
-            references={backlinks}
-            onClick={onClose}
-            label={t['com.affine.page-properties.backlinks']()}
-          />
-          <Divider size="thinner" />
-        </>
-      ) : null}
-      {links && links.length > 0 ? (
-        <>
-          <LinksRow
-            references={links}
-            onClick={onClose}
-            label={t['com.affine.page-properties.outgoing-links']()}
-          />
-          <Divider size="thinner" />
-        </>
-      ) : null}
       <PropertyCollapsibleSection
         title={t.t('com.affine.workspace.properties')}
       >
@@ -122,6 +134,10 @@ export const InfoTable = ({
               key={property.id}
               propertyInfo={property}
               defaultOpenEditMenu={newPropertyId === property.id}
+              onChange={value => onPropertyChange(property, value)}
+              onPropertyInfoChange={(...args) =>
+                onPropertyInfoChange(property, ...args)
+              }
             />
           ))}
           <Menu
@@ -144,6 +160,28 @@ export const InfoTable = ({
       </PropertyCollapsibleSection>
       <Divider size="thinner" />
       <DocDatabaseBacklinkInfo onChange={onBacklinkPropertyChange} />
+      {backlinks && backlinks.length > 0 ? (
+        <>
+          <LinksRow
+            count={backlinks.length}
+            references={<BacklinkGroups />}
+            onClick={onClose}
+            label={t['com.affine.page-properties.backlinks']()}
+          />
+          <Divider size="thinner" />
+        </>
+      ) : null}
+      {links && links.length > 0 ? (
+        <>
+          <LinksRow
+            count={links.length}
+            references={links}
+            onClick={onClose}
+            label={t['com.affine.page-properties.outgoing-links']()}
+          />
+          <Divider size="thinner" />
+        </>
+      ) : null}
     </>
   );
 };

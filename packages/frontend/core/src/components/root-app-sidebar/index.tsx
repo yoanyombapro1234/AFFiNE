@@ -22,6 +22,7 @@ import {
 } from '@affine/core/modules/explorer';
 import { ExplorerTags } from '@affine/core/modules/explorer/views/sections/tags';
 import { CMDKQuickSearchService } from '@affine/core/modules/quicksearch/services/cmdk';
+import type { Workspace } from '@affine/core/modules/workspace';
 import { useI18n } from '@affine/i18n';
 import { track } from '@affine/track';
 import type { Doc } from '@blocksuite/affine/store';
@@ -32,7 +33,6 @@ import {
   JournalIcon,
   SettingsIcon,
 } from '@blocksuite/icons/rc';
-import type { Workspace } from '@toeverything/infra';
 import { useLiveData, useService, useServices } from '@toeverything/infra';
 import type { ReactElement } from 'react';
 import { memo, useCallback } from 'react';

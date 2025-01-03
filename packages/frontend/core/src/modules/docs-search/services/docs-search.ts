@@ -1,16 +1,12 @@
 import { toURLSearchParams } from '@affine/core/modules/navigation';
 import type { ReferenceParams } from '@blocksuite/blocks';
-import type { WorkspaceService } from '@toeverything/infra';
-import {
-  fromPromise,
-  OnEvent,
-  Service,
-  WorkspaceEngineBeforeStart,
-} from '@toeverything/infra';
+import { fromPromise, OnEvent, Service } from '@toeverything/infra';
 import { isEmpty, omit } from 'lodash-es';
 import { map, type Observable, switchMap } from 'rxjs';
 import { z } from 'zod';
 
+import type { WorkspaceService } from '../../workspace';
+import { WorkspaceEngineBeforeStart } from '../../workspace';
 import { DocsIndexer } from '../entities/docs-indexer';
 
 @OnEvent(WorkspaceEngineBeforeStart, s => s.handleWorkspaceEngineBeforeStart)
@@ -478,9 +474,16 @@ export class DocsSearchService extends Service {
         'docId',
         {
           hits: {
-            fields: ['docId', 'blockId'],
+            fields: [
+              'docId',
+              'blockId',
+              'parentBlockId',
+              'parentFlavour',
+              'additional',
+              'markdownPreview',
+            ],
             pagination: {
-              limit: 1,
+              limit: 5, // the max number of backlinks to show for each doc
             },
           },
           pagination: {
@@ -495,15 +498,60 @@ export class DocsSearchService extends Service {
               buckets.map(bucket => bucket.key)
             );
 
-            return buckets.map(bucket => {
+            return buckets.flatMap(bucket => {
               const title =
                 docData.find(doc => doc.id === bucket.key)?.get('title') ?? '';
-              const blockId = bucket.hits.nodes[0]?.fields.blockId ?? '';
-              return {
-                docId: bucket.key,
-                blockId: typeof blockId === 'string' ? blockId : blockId[0],
-                title: typeof title === 'string' ? title : title[0],
-              };
+
+              return bucket.hits.nodes.map(node => {
+                const blockId = node.fields.blockId ?? '';
+                const markdownPreview = node.fields.markdownPreview ?? '';
+                const additional =
+                  typeof node.fields.additional === 'string'
+                    ? node.fields.additional
+                    : node.fields.additional[0];
+
+                const additionalData: {
+                  displayMode?: string;
+                  noteBlockId?: string;
+                } = JSON.parse(additional || '{}');
+
+                const displayMode = additionalData.displayMode ?? '';
+                const noteBlockId = additionalData.noteBlockId ?? '';
+                const parentBlockId =
+                  typeof node.fields.parentBlockId === 'string'
+                    ? node.fields.parentBlockId
+                    : node.fields.parentBlockId[0];
+                const parentFlavour =
+                  typeof node.fields.parentFlavour === 'string'
+                    ? node.fields.parentFlavour
+                    : node.fields.parentFlavour[0];
+
+                return {
+                  docId: bucket.key,
+                  blockId: typeof blockId === 'string' ? blockId : blockId[0],
+                  title: typeof title === 'string' ? title : title[0],
+                  markdownPreview:
+                    typeof markdownPreview === 'string'
+                      ? markdownPreview
+                      : markdownPreview[0],
+                  displayMode:
+                    typeof displayMode === 'string'
+                      ? displayMode
+                      : displayMode[0],
+                  noteBlockId:
+                    typeof noteBlockId === 'string'
+                      ? noteBlockId
+                      : noteBlockId[0],
+                  parentBlockId:
+                    typeof parentBlockId === 'string'
+                      ? parentBlockId
+                      : parentBlockId[0],
+                  parentFlavour:
+                    typeof parentFlavour === 'string'
+                      ? parentFlavour
+                      : parentFlavour[0],
+                };
+              });
             });
           });
         })
@@ -580,10 +628,31 @@ export class DocsSearchService extends Service {
       );
   }
 
-  async getDocTitle(docId: string) {
-    const doc = await this.indexer.docIndex.get(docId);
-    const title = doc?.get('title');
-    return typeof title === 'string' ? title : title?.[0];
+  watchDocSummary(docId: string) {
+    return this.indexer.docIndex
+      .search$(
+        {
+          type: 'match',
+          field: 'docId',
+          match: docId,
+        },
+        {
+          fields: ['summary'],
+          pagination: {
+            limit: 1,
+          },
+        }
+      )
+      .pipe(
+        map(({ nodes }) => {
+          const node = nodes.at(0);
+          return (
+            (typeof node?.fields.summary === 'string'
+              ? node?.fields.summary
+              : node?.fields.summary[0]) ?? null
+          );
+        })
+      );
   }
 
   override dispose(): void {

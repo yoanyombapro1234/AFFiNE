@@ -1,7 +1,7 @@
-import type { GlobalCache, GlobalState } from '@toeverything/infra';
 import { Observable } from 'rxjs';
 
 import type { DesktopApiService } from '../../desktop-api';
+import type { GlobalCache, GlobalState } from '../providers/global';
 
 export class ElectronGlobalState implements GlobalState {
   constructor(private readonly electronApi: DesktopApiService) {}

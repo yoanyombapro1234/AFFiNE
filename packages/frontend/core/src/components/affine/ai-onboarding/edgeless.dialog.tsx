@@ -51,7 +51,7 @@ export const AIOnboardingEdgeless = () => {
   const generalAIOnboardingOpened = useLiveData(showAIOnboardingGeneral$);
   const aiSubscription = useLiveData(subscriptionService.subscription.ai$);
   const globalDialogService = useService(GlobalDialogService);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const mode = useLiveData(editorService.editor.mode$);
 
@@ -67,7 +67,9 @@ export const AIOnboardingEdgeless = () => {
     if (generalAIOnboardingOpened) return;
     if (notifyId) return;
     if (mode !== 'edgeless') return;
-    clearTimeout(timeoutRef.current);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
     timeoutRef.current = setTimeout(() => {
       // try to close local onboarding
       notify.dismiss(localNotifyId$.value);

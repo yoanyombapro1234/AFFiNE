@@ -1,5 +1,4 @@
 import { usePageHelper } from '@affine/core/components/blocksuite/block-suite-page-list/utils';
-import { useAsyncCallback } from '@affine/core/components/hooks/affine-async-hooks';
 import {
   AllPageListOperationsMenu,
   PageDisplayMenu,
@@ -7,12 +6,16 @@ import {
 } from '@affine/core/components/page-list';
 import { Header } from '@affine/core/components/pure/header';
 import { WorkspaceModeFilterTab } from '@affine/core/components/pure/workspace-mode-filter-tab';
+import { WorkspaceDialogService } from '@affine/core/modules/dialogs';
+import { WorkbenchService } from '@affine/core/modules/workbench';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import { isNewTabTrigger } from '@affine/core/utils';
 import type { Filter } from '@affine/env/filter';
 import { track } from '@affine/track';
 import { PlusIcon } from '@blocksuite/icons/rc';
-import { useServices, WorkspaceService } from '@toeverything/infra';
+import { useServices } from '@toeverything/infra';
 import clsx from 'clsx';
+import { useCallback } from 'react';
 
 import * as styles from './all-page.css';
 
@@ -25,26 +28,49 @@ export const AllPageHeader = ({
   filters: Filter[];
   onChangeFilters: (filters: Filter[]) => void;
 }) => {
-  const { workspaceService } = useServices({
-    WorkspaceService,
-  });
+  const { workspaceService, workspaceDialogService, workbenchService } =
+    useServices({
+      WorkspaceService,
+      WorkspaceDialogService,
+      WorkbenchService,
+    });
+  const workbench = workbenchService.workbench;
   const workspace = workspaceService.workspace;
-  const { importFile, createEdgeless, createPage } = usePageHelper(
-    workspace.docCollection
+  const { createEdgeless, createPage } = usePageHelper(workspace.docCollection);
+
+  const handleOpenDocs = useCallback(
+    (result: {
+      docIds: string[];
+      entryId?: string;
+      isWorkspaceFile?: boolean;
+    }) => {
+      const { docIds, entryId, isWorkspaceFile } = result;
+      // If the imported file is a workspace file, open the entry page.
+      if (isWorkspaceFile && entryId) {
+        workbench.openDoc(entryId);
+      } else if (!docIds.length) {
+        return;
+      }
+      // Open all the docs when there are multiple docs imported.
+      if (docIds.length > 1) {
+        workbench.openAll();
+      } else {
+        // Otherwise, open the only doc.
+        workbench.openDoc(docIds[0]);
+      }
+    },
+    [workbench]
   );
 
-  const onImportFile = useAsyncCallback(async () => {
-    const options = await importFile();
-    if (options.isWorkspaceFile) {
-      track.allDocs.header.actions.createWorkspace({
-        control: 'import',
-      });
-    } else {
-      track.allDocs.header.actions.createDoc({
-        control: 'import',
-      });
-    }
-  }, [importFile]);
+  const onImportFile = useCallback(() => {
+    track.$.header.importModal.open();
+    workspaceDialogService.open('import', undefined, payload => {
+      if (!payload) {
+        return;
+      }
+      handleOpenDocs(payload);
+    });
+  }, [workspaceDialogService, handleOpenDocs]);
 
   return (
     <Header

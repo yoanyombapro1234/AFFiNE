@@ -17,8 +17,7 @@ const webDir = path.join(
   'packages',
   'frontend',
   'apps',
-  'electron',
-  'renderer'
+  'electron-renderer'
 );
 const affineWebOutDir = path.join(webDir, 'dist');
 const publicAffineOutDir = path.join(publicDistDir, `web-static`);
@@ -43,20 +42,18 @@ if (releaseVersionEnv && electronPackageJson.version !== releaseVersionEnv) {
 }
 // copy web dist files to electron dist
 
-process.env.DISTRIBUTION = 'desktop';
-
 const cwd = repoRootDir;
 
 // step 1: build web dist
 if (!process.env.SKIP_WEB_BUILD) {
-  spawnSync('yarn', ['build'], {
+  spawnSync('yarn', ['affine', '@affine/electron-renderer', 'build'], {
     stdio: 'inherit',
     env: process.env,
     cwd,
     shell: true,
   });
 
-  spawnSync('yarn', ['workspace', '@affine/electron', 'build'], {
+  spawnSync('yarn', ['affine', '@affine/electron', 'build'], {
     stdio: 'inherit',
     env: process.env,
     cwd,

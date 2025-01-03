@@ -1,4 +1,4 @@
-import { cssVar } from '@toeverything/theme';
+import { cssVarV2 } from '@toeverything/theme/v2';
 import { globalStyle, style } from '@vanilla-extract/css';
 
 export const root = style({
@@ -25,5 +25,5 @@ export const affineDocViewport = style({
   userSelect: 'none',
   containerName: 'viewport',
   containerType: 'inline-size',
-  background: cssVar('backgroundPrimaryColor'),
+  background: cssVarV2('layer/background/mobile/secondary'),
 });

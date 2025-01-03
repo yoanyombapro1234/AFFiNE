@@ -70,9 +70,10 @@ export const createLinkedPage = async (page: Page, pageName?: string) => {
   await expect(linkedPagePopover).toBeVisible();
   await type(page, pageName || 'Untitled');
 
-  await page.keyboard.press('ArrowUp');
-  await page.keyboard.press('ArrowUp');
-  await page.keyboard.press('Enter', { delay: 50 });
+  await linkedPagePopover
+    .locator(`icon-button`)
+    .filter({ hasText: `New "${pageName}" page` })
+    .click();
 };
 
 export async function clickPageMoreActions(page: Page) {
@@ -94,52 +95,88 @@ export const getPageByTitle = (page: Page, title: string) => {
   return page.getByTestId('page-list-item').getByText(title);
 };
 
+export type DragLocation =
+  | 'top-left'
+  | 'top'
+  | 'bottom'
+  | 'center'
+  | 'left'
+  | 'right';
+
+export const toPosition = (
+  rect: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  },
+  location: DragLocation
+) => {
+  switch (location) {
+    case 'center':
+      return {
+        x: rect.width / 2,
+        y: rect.height / 2,
+      };
+    case 'top':
+      return { x: rect.width / 2, y: 1 };
+    case 'bottom':
+      return { x: rect.width / 2, y: rect.height - 1 };
+
+    case 'left':
+      return { x: 1, y: rect.height / 2 };
+
+    case 'right':
+      return { x: rect.width - 1, y: rect.height / 2 };
+
+    case 'top-left':
+    default:
+      return { x: 1, y: 1 };
+  }
+};
+
 export const dragTo = async (
   page: Page,
   locator: Locator,
   target: Locator,
-  location:
-    | 'top-left'
-    | 'top'
-    | 'bottom'
-    | 'center'
-    | 'left'
-    | 'right' = 'center'
+  location: DragLocation = 'center'
 ) => {
   await locator.hover();
+  const locatorElement = await locator.boundingBox();
+  if (!locatorElement) {
+    throw new Error('locator element not found');
+  }
+  const locatorCenter = toPosition(locatorElement, 'center');
+  await page.mouse.move(
+    locatorElement.x + locatorCenter.x,
+    locatorElement.y + locatorCenter.y
+  );
   await page.mouse.down();
-  await page.mouse.move(1, 1);
+  await page.waitForTimeout(100);
+  await page.mouse.move(
+    locatorElement.x + locatorCenter.x + 1,
+    locatorElement.y + locatorCenter.y + 1
+  );
+
+  await page.mouse.move(1, 1, {
+    steps: 10,
+  });
+
+  await target.hover();
 
   const targetElement = await target.boundingBox();
   if (!targetElement) {
     throw new Error('target element not found');
   }
-  const position = (() => {
-    switch (location) {
-      case 'center':
-        return {
-          x: targetElement.width / 2,
-          y: targetElement.height / 2,
-        };
-      case 'top':
-        return { x: targetElement.width / 2, y: 1 };
-      case 'bottom':
-        return { x: targetElement.width / 2, y: targetElement.height - 1 };
-
-      case 'left':
-        return { x: 1, y: targetElement.height / 2 };
-
-      case 'right':
-        return { x: targetElement.width - 1, y: targetElement.height / 2 };
-
-      case 'top-left':
-      default:
-        return { x: 1, y: 1 };
+  const targetPosition = toPosition(targetElement, location);
+  await page.mouse.move(
+    targetElement.x + targetPosition.x,
+    targetElement.y + targetPosition.y,
+    {
+      steps: 10,
     }
-  })();
-  await target.hover({
-    position: position,
-  });
+  );
+  await page.waitForTimeout(100);
   await page.mouse.up();
 };
 

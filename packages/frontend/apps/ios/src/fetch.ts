@@ -3,7 +3,7 @@
  *
  * for support arraybuffer response type
  */
-import { FetchProvider } from '@affine/core/modules/cloud/provider/fetch';
+import { RawFetchProvider } from '@affine/core/modules/cloud/provider/fetch';
 import { CapacitorHttp } from '@capacitor/core';
 import type { Framework } from '@toeverything/infra';
 
@@ -115,13 +115,13 @@ const convertBody = async (body: unknown, contentType: string) => {
 };
 function base64ToUint8Array(base64: string) {
   const binaryString = atob(base64);
-  const binaryArray = binaryString.split('').map(function (char) {
+  const binaryArray = [...binaryString].map(function (char) {
     return char.charCodeAt(0);
   });
   return new Uint8Array(binaryArray);
 }
 export function configureFetchProvider(framework: Framework) {
-  framework.override(FetchProvider, {
+  framework.override(RawFetchProvider, {
     fetch: async (input, init) => {
       const request = new Request(input, init);
       const { method } = request;

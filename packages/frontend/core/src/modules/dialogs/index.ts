@@ -1,6 +1,6 @@
 import type { Framework } from '@toeverything/infra';
-import { WorkspaceScope } from '@toeverything/infra';
 
+import { WorkspaceScope } from '../workspace';
 import { GlobalDialogService } from './services/dialog';
 import { WorkspaceDialogService } from './services/workspace-dialog';
 

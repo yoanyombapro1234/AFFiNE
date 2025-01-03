@@ -12,9 +12,6 @@
   },
   "references": [
     {
-      "path": "../../../tests/fixtures"
-    },
-    {
       "path": "../../../tests/kit"
     }
   ],

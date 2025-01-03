@@ -232,7 +232,7 @@ test('image preview should be shown', async ({ page, browser }) => {
   const title = getBlockSuiteEditorTitle(page);
   await title.click();
   await page.keyboard.press('Enter');
-  await importImage(page, 'http://localhost:8081/large-image.png');
+  await importImage(page, 'large-image.png');
 
   // enable share page and copy page link
   await enableShare(page);
@@ -290,7 +290,7 @@ test('The reference links in the shared page should be accessible normally and c
   const linkedPagePopover = page.locator('.linked-doc-popover');
   await expect(linkedPagePopover).toBeVisible();
   await page.keyboard.type('Test linked doc', { delay: 50 });
-  await page.keyboard.press('Enter');
+  await page.locator('icon-button:has-text("Test linked doc")').first().click();
 
   // enable share page and copy page link
   await enableShare(page);
@@ -339,4 +339,14 @@ test('The reference links in the shared page should be accessible normally and c
       'Test linked content'
     );
   }
+});
+
+test('Should show no permission page when the share page is not found', async ({
+  page,
+}) => {
+  await page.goto('http://localhost:8080/workspace/abc/123');
+
+  await expect(
+    page.getByText('You do not have access or this content does not exist.')
+  ).toBeVisible();
 });

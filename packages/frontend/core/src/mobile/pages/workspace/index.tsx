@@ -2,11 +2,8 @@ import { AffineErrorBoundary } from '@affine/core/components/affine/affine-error
 import { AffineErrorComponent } from '@affine/core/components/affine/affine-error-boundary/affine-error-fallback';
 import { PageNotFound } from '@affine/core/desktop/pages/404';
 import { workbenchRoutes } from '@affine/core/mobile/workbench-router';
-import {
-  useLiveData,
-  useServices,
-  WorkspacesService,
-} from '@toeverything/infra';
+import { WorkspacesService } from '@affine/core/modules/workspace';
+import { useLiveData, useServices } from '@toeverything/infra';
 import {
   lazy as reactLazy,
   Suspense,

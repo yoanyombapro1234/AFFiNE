@@ -4,27 +4,25 @@ import {
 } from '@affine/component/setting-components';
 import { Avatar } from '@affine/component/ui/avatar';
 import { Tooltip } from '@affine/component/ui/tooltip';
-import { WorkspaceAvatar } from '@affine/component/workspace-avatar';
 import { UserPlanButton } from '@affine/core/components/affine/auth/user-plan-button';
-import { authAtom } from '@affine/core/components/atoms';
+import { useCatchEventCallback } from '@affine/core/components/hooks/use-catch-event-hook';
 import { useWorkspaceInfo } from '@affine/core/components/hooks/use-workspace-info';
+import { WorkspaceAvatar } from '@affine/core/components/workspace-avatar';
 import { AuthService } from '@affine/core/modules/cloud';
 import { UserFeatureService } from '@affine/core/modules/cloud/services/user-feature';
+import { GlobalDialogService } from '@affine/core/modules/dialogs';
 import type { SettingTab } from '@affine/core/modules/dialogs/constant';
+import { GlobalContextService } from '@affine/core/modules/global-context';
+import {
+  type WorkspaceMetadata,
+  WorkspacesService,
+} from '@affine/core/modules/workspace';
 import { UNTITLED_WORKSPACE_NAME } from '@affine/env/constant';
 import { useI18n } from '@affine/i18n';
 import { track } from '@affine/track';
 import { Logo1Icon } from '@blocksuite/icons/rc';
-import type { WorkspaceMetadata } from '@toeverything/infra';
-import {
-  GlobalContextService,
-  useLiveData,
-  useService,
-  useServices,
-  WorkspacesService,
-} from '@toeverything/infra';
+import { useLiveData, useService, useServices } from '@toeverything/infra';
 import clsx from 'clsx';
-import { useSetAtom } from 'jotai/react';
 import {
   type MouseEvent,
   Suspense,
@@ -38,11 +36,24 @@ import * as style from './style.css';
 
 export type UserInfoProps = {
   onAccountSettingClick: () => void;
+  onTabChange: (
+    key: SettingTab,
+    workspaceMetadata: WorkspaceMetadata | null
+  ) => void;
   active?: boolean;
 };
 
-export const UserInfo = ({ onAccountSettingClick, active }: UserInfoProps) => {
+export const UserInfo = ({
+  onAccountSettingClick,
+  onTabChange,
+  active,
+}: UserInfoProps) => {
   const account = useLiveData(useService(AuthService).session.account$);
+
+  const onClick = useCatchEventCallback(() => {
+    onTabChange('plans', null);
+  }, [onTabChange]);
+
   if (!account) {
     // TODO(@eyhn): loading ui
     return;
@@ -68,7 +79,7 @@ export const UserInfo = ({ onAccountSettingClick, active }: UserInfoProps) => {
           <div className="name" title={account.label}>
             {account.label}
           </div>
-          <UserPlanButton />
+          <UserPlanButton onClick={onClick} />
         </div>
 
         <div className="email" title={account.email}>
@@ -81,14 +92,14 @@ export const UserInfo = ({ onAccountSettingClick, active }: UserInfoProps) => {
 
 export const SignInButton = () => {
   const t = useI18n();
-  const setAuthModal = useSetAtom(authAtom);
+  const globalDialogService = useService(GlobalDialogService);
 
   return (
     <div
       className={style.accountButton}
       onClick={useCallback(() => {
-        setAuthModal({ openModal: true, state: 'signIn' });
-      }, [setAuthModal])}
+        globalDialogService.open('sign-in', {});
+      }, [globalDialogService])}
     >
       <div className="avatar not-sign">
         <Logo1Icon />
@@ -193,6 +204,7 @@ export const SettingSidebar = ({
             <UserInfo
               onAccountSettingClick={onAccountSettingClick}
               active={activeTab === 'account'}
+              onTabChange={onTabChange}
             />
           </Suspense>
         ) : null}
@@ -237,20 +249,6 @@ export const WorkspaceList = ({
   );
 };
 
-const subTabConfigs = [
-  {
-    key: 'workspace:preference',
-    title: 'com.affine.settings.workspace.preferences',
-  },
-  {
-    key: 'workspace:properties',
-    title: 'com.affine.settings.workspace.properties',
-  },
-] satisfies {
-  key: SettingTab;
-  title: keyof ReturnType<typeof useI18n>;
-}[];
-
 const WorkspaceListItem = ({
   activeTab,
   meta,
@@ -280,7 +278,30 @@ const WorkspaceListItem = ({
     onClick('workspace:preference');
   }, [onClick]);
 
+  const showBilling = information?.isTeam && information?.isOwner;
   const subTabs = useMemo(() => {
+    const subTabConfigs = [
+      {
+        key: 'workspace:preference',
+        title: 'com.affine.settings.workspace.preferences',
+      },
+      {
+        key: 'workspace:properties',
+        title: 'com.affine.settings.workspace.properties',
+      },
+      ...(showBilling
+        ? [
+            {
+              key: 'workspace:billing' as SettingTab,
+              title: 'com.affine.settings.workspace.billing',
+            },
+          ]
+        : []),
+    ] satisfies {
+      key: SettingTab;
+      title: keyof ReturnType<typeof useI18n>;
+    }[];
+
     return subTabConfigs.map(({ key, title }) => {
       return (
         <div
@@ -297,7 +318,7 @@ const WorkspaceListItem = ({
         </div>
       );
     });
-  }, [activeTab, onClick, t]);
+  }, [activeTab, onClick, showBilling, t]);
 
   return (
     <>

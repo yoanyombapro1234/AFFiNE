@@ -7,9 +7,9 @@ import type { TestFn } from 'ava';
 import ava from 'ava';
 import Sinon from 'sinon';
 
+import { ConfigModule } from '../src/base/config';
 import { AuthService } from '../src/core/auth';
 import { WorkspaceModule } from '../src/core/workspaces';
-import { ConfigModule } from '../src/fundamentals/config';
 import { CopilotModule } from '../src/plugins/copilot';
 import { prompts, PromptService } from '../src/plugins/copilot/prompt';
 import {
@@ -40,6 +40,7 @@ import {
   MockCopilotTestProvider,
   sse2array,
   textToEventStream,
+  unsplashSearch,
 } from './utils/copilot';
 
 const test = ava as TestFn<{
@@ -62,6 +63,7 @@ test.beforeEach(async t => {
             fal: {
               apiKey: '1',
             },
+            unsplashKey: process.env.UNSPLASH_ACCESS_KEY || '1',
           },
         },
       }),
@@ -145,13 +147,7 @@ test('should create session correctly', async t => {
       );
     });
 
-    const inviteId = await inviteUser(
-      app,
-      token,
-      id,
-      'darksky@affine.pro',
-      'Admin'
-    );
+    const inviteId = await inviteUser(app, token, id, 'darksky@affine.pro');
     await acceptInviteById(app, id, inviteId, false);
     await assertCreateSession(
       id,
@@ -238,13 +234,7 @@ test('should fork session correctly', async t => {
       }
     );
 
-    const inviteId = await inviteUser(
-      app,
-      token,
-      id,
-      'test@affine.pro',
-      'Admin'
-    );
+    const inviteId = await inviteUser(app, token, id, 'test@affine.pro');
     await acceptInviteById(app, id, inviteId, false);
     await assertForkSession(
       newToken,
@@ -607,8 +597,7 @@ test('should reject request that user have not permission', async t => {
       app,
       anotherToken,
       workspaceId,
-      'darksky@affine.pro',
-      'Admin'
+      'darksky@affine.pro'
     );
     await acceptInviteById(app, workspaceId, inviteId, false);
 
@@ -644,4 +633,11 @@ test('should reject request that user have not permission', async t => {
       'should not list history created by another user'
     );
   }
+});
+
+test('should be able to search image from unsplash', async t => {
+  const { app } = t.context;
+
+  const resp = await unsplashSearch(app, token);
+  t.not(resp.status, 404, 'route should be exists');
 });

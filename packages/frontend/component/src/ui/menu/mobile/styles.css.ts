@@ -103,6 +103,7 @@ export const backButton = style({
   fontSize: 17,
   paddingLeft: 0,
   marginLeft: 20,
+  maxWidth: 'calc(100% - 20px)',
 });
 
 export const scrollArea = style({

@@ -2,7 +2,7 @@ import {
   defineRuntimeConfig,
   defineStartupConfig,
   ModuleConfig,
-} from '../../fundamentals/config';
+} from '../../base/config';
 
 export interface AuthStartupConfigurations {
   /**
@@ -59,7 +59,7 @@ export interface AuthRuntimeConfigurations {
   };
 }
 
-declare module '../../fundamentals/config' {
+declare module '../../base/config' {
   interface AppConfig {
     auth: ModuleConfig<AuthStartupConfigurations, AuthRuntimeConfigurations>;
   }

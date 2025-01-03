@@ -1,12 +1,14 @@
 import { PropertyValue } from '@affine/component';
+import { DocService } from '@affine/core/modules/doc';
 import { TagService } from '@affine/core/modules/tag';
 import { useI18n } from '@affine/i18n';
-import { DocService, useLiveData, useService } from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 
 import { TagsInlineEditor } from '../tags-inline-editor';
 import * as styles from './tags.css';
+import type { PropertyValueProps } from './types';
 
-export const TagsValue = () => {
+export const TagsValue = ({ onChange }: PropertyValueProps) => {
   const t = useI18n();
 
   const doc = useService(DocService).doc;
@@ -27,6 +29,7 @@ export const TagsValue = () => {
           'com.affine.page-properties.property-value-placeholder'
         ]()}
         pageId={doc.id}
+        onChange={value => onChange(value, true)}
       />
     </PropertyValue>
   );

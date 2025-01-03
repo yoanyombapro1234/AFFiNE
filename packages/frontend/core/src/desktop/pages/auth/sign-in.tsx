@@ -1,12 +1,12 @@
+import { notify } from '@affine/component';
 import { AffineOtherPageLayout } from '@affine/component/affine-other-page-layout';
 import { SignInPageContainer } from '@affine/component/auth-components';
-import { AuthService } from '@affine/core/modules/cloud';
-import { useLiveData, useService } from '@toeverything/infra';
-import { useEffect } from 'react';
-// eslint-disable-next-line @typescript-eslint/no-restricted-imports
+import { SignInPanel } from '@affine/core/components/sign-in';
+import type { AuthSessionStatus } from '@affine/core/modules/cloud/entities/session';
+import { useI18n } from '@affine/i18n';
+import { useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { AuthPanel } from '../../../components/affine/auth';
 import {
   RouteLogic,
   useNavigateHelper,
@@ -17,33 +17,56 @@ export const SignIn = ({
 }: {
   redirectUrl?: string;
 }) => {
-  const session = useService(AuthService).session;
-  const status = useLiveData(session.status$);
-  const isRevalidating = useLiveData(session.isRevalidating$);
+  const t = useI18n();
   const navigate = useNavigate();
   const { jumpToIndex } = useNavigateHelper();
   const [searchParams] = useSearchParams();
-  const isLoggedIn = status === 'authenticated' && !isRevalidating;
   const redirectUrl = redirectUrlFromProps ?? searchParams.get('redirect_uri');
 
+  const server = searchParams.get('server') ?? undefined;
+  const error = searchParams.get('error');
+
   useEffect(() => {
-    if (isLoggedIn) {
-      if (redirectUrl) {
-        navigate(redirectUrl, {
-          replace: true,
-        });
-      } else {
-        jumpToIndex(RouteLogic.REPLACE, {
-          search: searchParams.toString(),
-        });
-      }
+    if (error) {
+      notify.error({
+        title: t['com.affine.auth.toast.title.failed'](),
+        message: error,
+      });
     }
-  }, [jumpToIndex, navigate, isLoggedIn, redirectUrl, searchParams]);
+  }, [error, t]);
+
+  const handleClose = useCallback(() => {
+    jumpToIndex(RouteLogic.REPLACE, {
+      search: searchParams.toString(),
+    });
+  }, [jumpToIndex, searchParams]);
+
+  const handleAuthenticated = useCallback(
+    (status: AuthSessionStatus) => {
+      if (status === 'authenticated') {
+        if (redirectUrl) {
+          navigate(redirectUrl, {
+            replace: true,
+          });
+        } else {
+          handleClose();
+        }
+      }
+    },
+    [handleClose, navigate, redirectUrl]
+  );
+
+  const initStep = server ? 'addSelfhosted' : 'signIn';
 
   return (
     <SignInPageContainer>
       <div style={{ maxWidth: '400px', width: '100%' }}>
-        <AuthPanel onSkip={jumpToIndex} redirectUrl={redirectUrl} />
+        <SignInPanel
+          onSkip={handleClose}
+          onAuthenticated={handleAuthenticated}
+          initStep={initStep}
+          server={server}
+        />
       </div>
     </SignInPageContainer>
   );

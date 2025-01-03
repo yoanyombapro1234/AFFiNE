@@ -10,13 +10,14 @@ import type {
 } from '@blocksuite/affine/presets';
 import type { InlineEditor } from '@blocksuite/inline';
 import { effect } from '@preact/signals-core';
-import type { DocService, WorkspaceService } from '@toeverything/infra';
 import { Entity, LiveData } from '@toeverything/infra';
 import { defaults, isEqual, omit } from 'lodash-es';
 import { skip } from 'rxjs';
 
+import type { DocService } from '../../doc';
 import { paramsParseOptions, preprocessParams } from '../../navigation/utils';
 import type { WorkbenchView } from '../../workbench';
+import type { WorkspaceService } from '../../workspace';
 import { EditorScope } from '../scopes/editor';
 import type { EditorSelector } from '../types';
 
@@ -153,17 +154,6 @@ export class Editor extends Entity {
         if (!isEqual(selector, omit(editorParams, ['mode']))) {
           this.setSelector(selector);
         }
-
-        if (params.databaseId && params.databaseRowId) {
-          const defaultOpenProperty: DefaultOpenProperty = {
-            type: 'database',
-            databaseId: params.databaseId,
-            databaseRowId: params.databaseRowId,
-          };
-          if (!isEqual(defaultOpenProperty, this.defaultOpenProperty$.value)) {
-            this.setDefaultOpenProperty(defaultOpenProperty);
-          }
-        }
       } finally {
         updating = false;
       }
@@ -229,7 +219,15 @@ export class Editor extends Entity {
         const title = docTitle?.querySelector<
           HTMLElement & { inlineEditor: InlineEditor | null }
         >('rich-text');
-        title?.inlineEditor?.focusEnd();
+        // Only focus on the title when it's empty on mobile edition.
+        if (BUILD_CONFIG.isMobileEdition) {
+          const titleText = this.doc.title$.value;
+          if (!titleText?.length) {
+            title?.inlineEditor?.focusEnd();
+          }
+        } else {
+          title?.inlineEditor?.focusEnd();
+        }
       } else {
         const selection = editorContainer.host?.std.selection;
 

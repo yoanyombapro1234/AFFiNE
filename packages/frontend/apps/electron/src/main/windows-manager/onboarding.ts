@@ -4,6 +4,7 @@ import type { Display } from 'electron';
 import { BrowserWindow, screen } from 'electron';
 
 import { isMacOS } from '../../shared/utils';
+import { isDev } from '../config';
 import { onboardingViewUrl } from '../constants';
 // import { getExposedMeta } from './exposed';
 import { logger } from '../logger';
@@ -89,6 +90,10 @@ async function createOnboardingWindow(additionalArguments: string[]) {
   browserWindow.on('moved', () => {
     fullscreenAndCenter(browserWindow);
   });
+
+  if (isDev) {
+    browserWindow.webContents.openDevTools();
+  }
 
   await browserWindow.loadURL(onboardingViewUrl);
 

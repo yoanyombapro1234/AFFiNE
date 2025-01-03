@@ -93,6 +93,10 @@ const getRendererProps = (
         ? activePeekView.target.element
         : undefined,
     mode: getMode(activePeekView.info),
+    animation:
+      activePeekView.target.element && getMode(activePeekView.info) !== 'full'
+        ? 'zoom'
+        : 'fade',
     dialogFrame: activePeekView.info.type !== 'image',
   };
 };
@@ -124,8 +128,8 @@ export const PeekViewManagerModal = () => {
   return (
     <PeekViewModalContainer
       {...renderProps}
+      animation={show?.animation ? renderProps?.animation : 'none'}
       open={!!show?.value && !!renderProps}
-      animation={show?.animation || 'none'}
       onOpenChange={open => {
         if (!open) {
           peekViewEntity.close();

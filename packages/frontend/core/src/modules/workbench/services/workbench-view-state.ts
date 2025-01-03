@@ -1,8 +1,8 @@
-import type { GlobalStateService } from '@toeverything/infra';
 import { createIdentifier, Service } from '@toeverything/infra';
 import { nanoid } from 'nanoid';
 
 import type { DesktopApiService, TabViewsMetaSchema } from '../../desktop-api';
+import type { GlobalStateService } from '../../storage';
 import type { ViewIconName } from '../constants';
 
 export type WorkbenchDefaultState = {

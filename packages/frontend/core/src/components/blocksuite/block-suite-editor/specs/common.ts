@@ -6,19 +6,16 @@ import {
 import { AIChatBlockSpec } from '@affine/core/blocksuite/presets/blocks/ai-chat-block';
 import type { ExtensionType } from '@blocksuite/affine/block-std';
 import {
+  AdapterFactoryExtensions,
+  AttachmentBlockSpec,
   BookmarkBlockSpec,
   CodeBlockSpec,
   DatabaseBlockSpec,
   DataViewBlockSpec,
   DividerBlockSpec,
   EditPropsStore,
-  EmbedFigmaBlockSpec,
-  EmbedGithubBlockSpec,
-  EmbedHtmlBlockSpec,
-  EmbedLinkedDocBlockSpec,
-  EmbedLoomBlockSpec,
-  EmbedSyncedDocBlockSpec,
-  EmbedYoutubeBlockSpec,
+  EmbedExtensions,
+  FontLoaderService,
   ImageBlockSpec,
   LatexBlockSpec,
   ListBlockSpec,
@@ -27,10 +24,8 @@ import {
   RichTextExtensions,
 } from '@blocksuite/affine/blocks';
 
-import { CustomAttachmentBlockSpec } from './custom/attachment-block';
-
 const CommonBlockSpecs: ExtensionType[] = [
-  RefNodeSlotsExtension(),
+  RefNodeSlotsExtension,
   EditPropsStore,
   RichTextExtensions,
   LatexBlockSpec,
@@ -38,16 +33,11 @@ const CommonBlockSpecs: ExtensionType[] = [
   DatabaseBlockSpec,
   DataViewBlockSpec,
   DividerBlockSpec,
+  EmbedExtensions,
   BookmarkBlockSpec,
-  EmbedFigmaBlockSpec,
-  EmbedGithubBlockSpec,
-  EmbedYoutubeBlockSpec,
-  EmbedLoomBlockSpec,
-  EmbedHtmlBlockSpec,
-  EmbedSyncedDocBlockSpec,
-  EmbedLinkedDocBlockSpec,
-  // special
-  CustomAttachmentBlockSpec,
+  AttachmentBlockSpec,
+  AdapterFactoryExtensions,
+  FontLoaderService,
 ].flat();
 
 export const DefaultBlockSpecs: ExtensionType[] = [

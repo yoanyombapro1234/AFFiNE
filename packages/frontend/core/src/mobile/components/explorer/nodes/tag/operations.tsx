@@ -8,10 +8,14 @@ import {
 import { usePageHelper } from '@affine/core/components/blocksuite/block-suite-page-list/utils';
 import { IsFavoriteIcon } from '@affine/core/components/pure/icons';
 import { WorkspaceDialogService } from '@affine/core/modules/dialogs';
+import { DocsService } from '@affine/core/modules/doc';
 import type { NodeOperation } from '@affine/core/modules/explorer';
 import { FavoriteService } from '@affine/core/modules/favorite';
+import { FeatureFlagService } from '@affine/core/modules/feature-flag';
+import { GlobalCacheService } from '@affine/core/modules/storage';
 import { TagService } from '@affine/core/modules/tag';
 import { WorkbenchService } from '@affine/core/modules/workbench';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import { useI18n } from '@affine/i18n';
 import { track } from '@affine/track';
 import {
@@ -20,15 +24,7 @@ import {
   PlusIcon,
   SplitViewIcon,
 } from '@blocksuite/icons/rc';
-import {
-  DocsService,
-  FeatureFlagService,
-  GlobalCacheService,
-  useLiveData,
-  useService,
-  useServices,
-  WorkspaceService,
-} from '@toeverything/infra';
+import { useLiveData, useService, useServices } from '@toeverything/infra';
 import { useCallback, useMemo } from 'react';
 
 import { TagRenameSubMenu } from './dialog';

@@ -52,7 +52,7 @@ jobs:
       - name: Setup @sentry/cli
         uses: ./.github/actions/setup-sentry
       - name: generate-assets
-        run: yarn workspace @affine/electron generate-assets
+        run: yarn affine @affine/electron generate-assets
         env:
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: 'affine'
@@ -60,7 +60,6 @@ jobs:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           SENTRY_RELEASE: ${{ steps.version.outputs.APP_VERSION }}
           RELEASE_VERSION: ${{ steps.version.outputs.APP_VERSION }}
-          SKIP_NX_CACHE: 'true'
           MIXPANEL_TOKEN: ${{ secrets.MIXPANEL_TOKEN }}
 
       - name: Upload web artifact
@@ -71,6 +70,7 @@ jobs:
 
   make-distribution:
     strategy:
+      fail-fast: false
       matrix:
         spec:
           - runner: macos-14
@@ -97,6 +97,7 @@ jobs:
       SENTRY_PROJECT: 'affine'
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      SENTRY_RELEASE: ${{ needs.before-make.outputs.RELEASE_VERSION }}
       MIXPANEL_TOKEN: ${{ secrets.MIXPANEL_TOKEN }}
     steps:
       - uses: actions/checkout@v4
@@ -107,7 +108,7 @@ jobs:
         timeout-minutes: 10
         uses: ./.github/actions/setup-node
         with:
-          extra-flags: workspaces focus @affine/electron @affine/monorepo
+          extra-flags: workspaces focus @affine/electron @affine/monorepo @affine/nbstore @toeverything/infra
           hard-link-nm: false
           nmHoistingLimits: workspaces
           enableScripts: false
@@ -116,14 +117,13 @@ jobs:
         with:
           target: ${{ matrix.spec.target }}
           package: '@affine/native'
-          nx_token: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
       - uses: actions/download-artifact@v4
         with:
           name: web
           path: packages/frontend/apps/electron/resources/web-static
 
       - name: Build Desktop Layers
-        run: yarn workspace @affine/electron build
+        run: yarn affine @affine/electron build
 
       - name: Signing By Apple Developer ID
         if: ${{ matrix.spec.platform == 'darwin' }}
@@ -143,11 +143,10 @@ jobs:
           git config --global protocol.file.allow always
 
       - name: make
-        run: yarn workspace @affine/electron make --platform=${{ matrix.spec.platform }} --arch=${{ matrix.spec.arch }}
+        run: yarn affine @affine/electron make --platform=${{ matrix.spec.platform }} --arch=${{ matrix.spec.arch }}
         env:
           SKIP_WEB_BUILD: 1
           HOIST_NODE_MODULES: 1
-          DEBUG: '*'
 
       - name: signing DMG
         if: ${{ matrix.spec.platform == 'darwin' }}
@@ -169,14 +168,14 @@ jobs:
           mv packages/frontend/apps/electron/out/*/make/deb/${{ matrix.spec.arch }}/*.deb ./builds/affine-${{ needs.before-make.outputs.RELEASE_VERSION }}-${{ env.BUILD_TYPE }}-linux-${{ matrix.spec.arch }}.deb
           mv packages/frontend/apps/electron/out/*/make/flatpak/*/*.flatpak ./builds/affine-${{ needs.before-make.outputs.RELEASE_VERSION }}-${{ env.BUILD_TYPE }}-linux-${{ matrix.spec.arch }}.flatpak
 
-      - uses: actions/attest-build-provenance@v1
+      - uses: actions/attest-build-provenance@v2
         if: ${{ matrix.spec.platform == 'darwin' }}
         with:
           subject-path: |
             ./builds/affine-${{ needs.before-make.outputs.RELEASE_VERSION }}-${{ env.BUILD_TYPE }}-macos-${{ matrix.spec.arch }}.zip
             ./builds/affine-${{ needs.before-make.outputs.RELEASE_VERSION }}-${{ env.BUILD_TYPE }}-macos-${{ matrix.spec.arch }}.dmg
 
-      - uses: actions/attest-build-provenance@v1
+      - uses: actions/attest-build-provenance@v2
         if: ${{ matrix.spec.platform == 'linux' }}
         with:
           subject-path: |
@@ -192,6 +191,7 @@ jobs:
   package-distribution-windows:
     environment: ${{ github.event.inputs.build-type }}
     strategy:
+      fail-fast: false
       matrix:
         spec:
           - runner: windows-latest
@@ -213,6 +213,7 @@ jobs:
       SENTRY_PROJECT: 'affine'
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      SENTRY_RELEASE: ${{ needs.before-make.outputs.RELEASE_VERSION }}
       MIXPANEL_TOKEN: ${{ secrets.MIXPANEL_TOKEN }}
     steps:
       - uses: actions/checkout@v4
@@ -223,7 +224,7 @@ jobs:
         timeout-minutes: 10
         uses: ./.github/actions/setup-node
         with:
-          extra-flags: workspaces focus @affine/electron @affine/monorepo
+          extra-flags: workspaces focus @affine/electron @affine/monorepo @affine/nbstore @toeverything/infra
           hard-link-nm: false
           nmHoistingLimits: workspaces
       - name: Build AFFiNE native
@@ -231,17 +232,16 @@ jobs:
         with:
           target: ${{ matrix.spec.target }}
           package: '@affine/native'
-          nx_token: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
       - uses: actions/download-artifact@v4
         with:
           name: web
           path: packages/frontend/apps/electron/resources/web-static
 
       - name: Build Desktop Layers
-        run: yarn workspace @affine/electron build
+        run: yarn affine @affine/electron build
 
       - name: package
-        run: yarn workspace @affine/electron package --platform=${{ matrix.spec.platform }} --arch=${{ matrix.spec.arch }}
+        run: yarn affine @affine/electron package --platform=${{ matrix.spec.platform }} --arch=${{ matrix.spec.arch }}
         env:
           SKIP_WEB_BUILD: 1
           HOIST_NODE_MODULES: 1
@@ -283,6 +283,7 @@ jobs:
       - sign-packaged-artifacts-windows_x64
       - sign-packaged-artifacts-windows_arm64
     strategy:
+      fail-fast: false
       matrix:
         spec:
           - platform: win32
@@ -316,10 +317,10 @@ jobs:
         run: Expand-Archive -Path signed.zip -DestinationPath packages/frontend/apps/electron/out
 
       - name: Make squirrel.windows installer
-        run: yarn workspace @affine/electron make-squirrel --platform=${{ matrix.spec.platform }} --arch=${{ matrix.spec.arch }}
+        run: yarn affine @affine/electron make-squirrel --platform=${{ matrix.spec.platform }} --arch=${{ matrix.spec.arch }}
 
       - name: Make nsis.windows installer
-        run: yarn workspace @affine/electron make-nsis --platform=${{ matrix.spec.platform }} --arch=${{ matrix.spec.arch }}
+        run: yarn affine @affine/electron make-nsis --platform=${{ matrix.spec.platform }} --arch=${{ matrix.spec.arch }}
 
       - name: Zip artifacts for faster upload
         run: Compress-Archive -CompressionLevel Fastest -Path packages/frontend/apps/electron/out/${{ env.BUILD_TYPE }}/make/* -DestinationPath archive.zip
@@ -359,6 +360,7 @@ jobs:
         before-make,
       ]
     strategy:
+      fail-fast: false
       matrix:
         spec:
           - runner: windows-latest
@@ -384,7 +386,7 @@ jobs:
           mv packages/frontend/apps/electron/out/*/make/squirrel.windows/${{ matrix.spec.arch }}/*.exe ./builds/affine-${{ needs.before-make.outputs.RELEASE_VERSION }}-${{ env.BUILD_TYPE }}-windows-${{ matrix.spec.arch }}.exe
           mv packages/frontend/apps/electron/out/*/make/nsis.windows/${{ matrix.spec.arch }}/*.exe ./builds/affine-${{ needs.before-make.outputs.RELEASE_VERSION }}-${{ env.BUILD_TYPE }}-windows-${{ matrix.spec.arch }}.nsis.exe
 
-      - uses: actions/attest-build-provenance@v1
+      - uses: actions/attest-build-provenance@v2
         with:
           subject-path: |
             ./builds/affine-${{ needs.before-make.outputs.RELEASE_VERSION }}-${{ env.BUILD_TYPE }}-windows-${{ matrix.spec.arch }}.zip
@@ -413,33 +415,37 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: affine-darwin-x64-builds
-          path: ./
+          path: ./release
       - name: Download Artifacts (macos-arm64)
         uses: actions/download-artifact@v4
         with:
           name: affine-darwin-arm64-builds
-          path: ./
+          path: ./release
       - name: Download Artifacts (windows-x64)
         uses: actions/download-artifact@v4
         with:
           name: affine-win32-x64-builds
-          path: ./
+          path: ./release
       - name: Download Artifacts (windows-arm64)
         uses: actions/download-artifact@v4
         with:
           name: affine-win32-arm64-builds
-          path: ./
+          path: ./release
       - name: Download Artifacts (linux-x64)
         uses: actions/download-artifact@v4
         with:
           name: affine-linux-x64-builds
-          path: ./
+          path: ./release
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Copy Selfhost Release Files
+        run: |
+          cp ./.docker/selfhost/compose.yml ./release/docker-compose.yml
+          cp ./.docker/selfhost/.env.example ./release/.env.example
       - name: Generate Release yml
         run: |
-          node ./packages/frontend/apps/electron/scripts/generate-yml.js
+          node ./scripts/generate-release-yml.mjs
         env:
           RELEASE_VERSION: ${{ needs.before-make.outputs.RELEASE_VERSION }}
       - name: Create Release Draft
@@ -451,15 +457,8 @@ jobs:
           draft: ${{ github.event.inputs.is-draft }}
           prerelease: ${{ github.event.inputs.is-pre-release }}
           files: |
-            ./VERSION
-            ./*.zip
-            ./*.dmg
-            ./*.exe
-            ./*.appimage
-            ./*.deb
-            ./*.flatpak
-            ./*.apk
-            ./*.yml
+            ./release/*
+            ./release/.env.example
       - name: Create Nightly Release Draft
         if: ${{ github.ref_type == 'branch' }}
         uses: softprops/action-gh-release@v2
@@ -475,12 +474,5 @@ jobs:
           draft: false
           prerelease: true
           files: |
-            ./VERSION
-            ./*.zip
-            ./*.dmg
-            ./*.exe
-            ./*.appimage
-            ./*.deb
-            ./*.apk
-            ./*.flatpak
-            ./*.yml
+            ./release/*
+            ./release/.env.example

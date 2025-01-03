@@ -1,7 +1,8 @@
 import { WorkspacePermissionService } from '@affine/core/modules/permissions';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import { useI18n } from '@affine/i18n';
-import type { Workspace } from '@toeverything/infra';
-import { useLiveData, useService, WorkspaceService } from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
+import { cssVarV2 } from '@toeverything/theme/v2';
 import { useEffect, useMemo } from 'react';
 
 import * as style from './style.css';
@@ -12,6 +13,7 @@ type WorkspaceStatus =
   | 'selfHosted'
   | 'joinedWorkspace'
   | 'availableOffline'
+  | 'teamWorkspace'
   | 'publishedToWeb';
 
 type LabelProps = {
@@ -38,14 +40,23 @@ const Label = ({ value, background }: LabelProps) => {
 
 const getConditions = (
   isOwner: boolean | null,
-  workspace: Workspace
+  flavour: string,
+  isTeam: boolean | null
 ): labelConditionsProps[] => {
   return [
     { condition: !isOwner, label: 'joinedWorkspace' },
-    { condition: workspace.flavour === 'local', label: 'local' },
+    { condition: flavour === 'local', label: 'local' },
     {
-      condition: workspace.flavour === 'affine-cloud',
+      condition: flavour === 'affine-cloud',
       label: 'syncCloud',
+    },
+    {
+      condition: !!isTeam,
+      label: 'teamWorkspace',
+    },
+    {
+      condition: flavour !== 'affine-cloud' && flavour !== 'local',
+      label: 'selfHosted',
     },
   ];
 };
@@ -53,27 +64,31 @@ const getConditions = (
 const getLabelMap = (t: ReturnType<typeof useI18n>): LabelMap => ({
   local: {
     value: t['com.affine.settings.workspace.state.local'](),
-    background: 'var(--affine-tag-orange)',
+    background: cssVarV2('chip/label/orange'),
   },
   syncCloud: {
     value: t['com.affine.settings.workspace.state.sync-affine-cloud'](),
-    background: 'var(--affine-tag-blue)',
+    background: cssVarV2('chip/label/blue'),
   },
   selfHosted: {
     value: t['com.affine.settings.workspace.state.self-hosted'](),
-    background: 'var(--affine-tag-purple)',
+    background: cssVarV2('chip/label/purple'),
   },
   joinedWorkspace: {
     value: t['com.affine.settings.workspace.state.joined'](),
-    background: 'var(--affine-tag-yellow)',
+    background: cssVarV2('chip/label/yellow'),
   },
   availableOffline: {
     value: t['com.affine.settings.workspace.state.available-offline'](),
-    background: 'var(--affine-tag-green)',
+    background: cssVarV2('chip/label/green'),
   },
   publishedToWeb: {
     value: t['com.affine.settings.workspace.state.published'](),
-    background: 'var(--affine-tag-blue)',
+    background: cssVarV2('chip/label/blue'),
+  },
+  teamWorkspace: {
+    value: t['com.affine.settings.workspace.state.team'](),
+    background: cssVarV2('chip/label/purple'),
   },
 });
 
@@ -81,6 +96,7 @@ export const LabelsPanel = () => {
   const workspace = useService(WorkspaceService).workspace;
   const permissionService = useService(WorkspacePermissionService);
   const isOwner = useLiveData(permissionService.permission.isOwner$);
+  const isTeam = useLiveData(permissionService.permission.isTeam$);
   const t = useI18n();
 
   useEffect(() => {
@@ -90,8 +106,8 @@ export const LabelsPanel = () => {
   const labelMap = useMemo(() => getLabelMap(t), [t]);
 
   const labelConditions = useMemo(
-    () => getConditions(isOwner, workspace),
-    [isOwner, workspace]
+    () => getConditions(isOwner, workspace.flavour, isTeam),
+    [isOwner, isTeam, workspace.flavour]
   );
 
   return (

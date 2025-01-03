@@ -100,7 +100,7 @@ export class MockCopilotTestProvider
     // make some time gap for history test case
     await sleep(100);
     const result = 'generate text to text stream';
-    for await (const message of result) {
+    for (const message of result) {
       yield message;
       if (options.signal?.aborted) {
         break;
@@ -284,6 +284,18 @@ export async function chatWithImages(
   messageId?: string
 ) {
   return chatWithText(app, userToken, sessionId, messageId, '/images');
+}
+
+export async function unsplashSearch(
+  app: INestApplication,
+  userToken: string,
+  params: Record<string, string> = {}
+) {
+  const query = new URLSearchParams(params);
+  const res = await request(app.getHttpServer())
+    .get(`/api/copilot/unsplash/photos?${query}`)
+    .auth(userToken, { type: 'bearer' });
+  return res;
 }
 
 export function sse2array(eventSource: string) {

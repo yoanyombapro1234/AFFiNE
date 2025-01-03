@@ -3,6 +3,7 @@ import request from 'supertest';
 
 import type { WorkspaceType } from '../../src/core/workspaces';
 import { gql } from './common';
+import { PermissionEnum } from './utils';
 
 export async function createWorkspace(
   app: INestApplication,
@@ -70,7 +71,7 @@ export async function getWorkspace(
       query: `
             query {
               workspace(id: "${workspaceId}") {
-                id, members(skip: ${skip}, take: ${take}) { id, name, email, permission, inviteId }
+                id, members(skip: ${skip}, take: ${take}) { id, name, email, permission, inviteId, status }
               }
             }
           `,
@@ -149,4 +150,33 @@ export async function revokePublicPage(
     })
     .expect(200);
   return res.body.errors?.[0]?.message || res.body.data?.revokePublicPage;
+}
+
+export async function grantMember(
+  app: INestApplication,
+  token: string,
+  workspaceId: string,
+  userId: string,
+  permission: PermissionEnum
+) {
+  const res = await request(app.getHttpServer())
+    .post(gql)
+    .auth(token, { type: 'bearer' })
+    .set({ 'x-request-id': 'test', 'x-operation-name': 'test' })
+    .send({
+      query: `
+          mutation {
+            grantMember(
+              workspaceId: "${workspaceId}"
+              userId: "${userId}"
+              permission: ${permission}
+            )
+          }
+          `,
+    })
+    .expect(200);
+  if (res.body.errors) {
+    throw new Error(res.body.errors[0].message);
+  }
+  return res.body.data?.grantMember;
 }

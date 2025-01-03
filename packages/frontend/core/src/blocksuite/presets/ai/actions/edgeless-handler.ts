@@ -3,7 +3,6 @@ import type {
   AffineAIPanelWidget,
   AIError,
   EdgelessCopilotWidget,
-  MindmapElementModel,
 } from '@blocksuite/affine/blocks';
 import {
   BlocksUtils,
@@ -17,19 +16,14 @@ import {
 import { assertExists } from '@blocksuite/affine/global/utils';
 import { Slice } from '@blocksuite/affine/store';
 import { GfxControllerIdentifier } from '@blocksuite/block-std/gfx';
-import { AIChatBlockModel } from '@toeverything/infra';
 import type { TemplateResult } from 'lit';
 
-import { createTextRenderer, getContentFromSlice } from '../../_common';
-import { getAIPanel } from '../ai-panel';
-import {
-  createMindmapExecuteRenderer,
-  createMindmapRenderer,
-} from '../messages/mindmap';
-import { createSlidesRenderer } from '../messages/slides-renderer';
-import { createIframeRenderer, createImageRenderer } from '../messages/wrapper';
+import { AIChatBlockModel } from '../../../blocks';
+import { getContentFromSlice } from '../../_common';
 import { AIProvider } from '../provider';
 import { reportResponse } from '../utils/action-reporter';
+import { getAIPanelWidget } from '../utils/ai-widgets';
+import { AIContext } from '../utils/context';
 import {
   getEdgelessCopilotWidget,
   isMindmapChild,
@@ -41,62 +35,15 @@ import {
   getSelectedNoteAnchor,
   getSelections,
 } from '../utils/selection-utils';
-import { EXCLUDING_COPY_ACTIONS, IMAGE_ACTIONS } from './consts';
+import { actionToAnswerRenderer } from './answer-renderer';
+import { EXCLUDING_COPY_ACTIONS } from './consts';
 import { bindTextStream } from './doc-handler';
 import {
   actionToErrorResponse,
   actionToGenerating,
   actionToResponse,
   getElementToolbar,
-  responses,
 } from './edgeless-response';
-import type { CtxRecord } from './types';
-
-type AnswerRenderer = NonNullable<
-  AffineAIPanelWidget['config']
->['answerRenderer'];
-
-function actionToRenderer<T extends keyof BlockSuitePresets.AIActions>(
-  id: T,
-  host: EditorHost,
-  ctx: CtxRecord
-): AnswerRenderer {
-  if (id === 'brainstormMindmap') {
-    const selectedElements = ctx.get()[
-      'selectedElements'
-    ] as BlockSuite.EdgelessModel[];
-
-    if (
-      isMindMapRoot(selectedElements[0] || isMindmapChild(selectedElements[0]))
-    ) {
-      const mindmap = selectedElements[0].group as MindmapElementModel;
-
-      return createMindmapRenderer(host, ctx, mindmap.style);
-    }
-
-    return createMindmapRenderer(host, ctx);
-  }
-
-  if (id === 'expandMindmap') {
-    return createMindmapExecuteRenderer(host, ctx, ctx => {
-      responses['expandMindmap']?.(host, ctx);
-    });
-  }
-
-  if (id === 'createSlides') {
-    return createSlidesRenderer(host, ctx);
-  }
-
-  if (id === 'makeItReal') {
-    return createIframeRenderer(host, { height: 300 });
-  }
-
-  if (IMAGE_ACTIONS.includes(id)) {
-    return createImageRenderer(host, { height: 300 });
-  }
-
-  return createTextRenderer(host, { maxHeight: 320 });
-}
 
 async function getContentFromEmbedSyncedDocModel(
   host: EditorHost,
@@ -211,7 +158,7 @@ function actionToStream<T extends keyof BlockSuitePresets.AIActions>(
   >,
   extract?: (
     host: EditorHost,
-    ctx: CtxRecord
+    ctx: AIContext
   ) => Promise<{
     content?: string;
     attachments?: (string | Blob)[];
@@ -225,7 +172,7 @@ function actionToStream<T extends keyof BlockSuitePresets.AIActions>(
   if (!action || typeof action !== 'function') return;
 
   if (extract && typeof extract === 'function') {
-    return (host: EditorHost, ctx: CtxRecord): BlockSuitePresets.TextStream => {
+    return (host: EditorHost, ctx: AIContext): BlockSuitePresets.TextStream => {
       let stream: BlockSuitePresets.TextStream | undefined;
       const control = trackerOptions?.control || 'format-bar';
       const where = trackerOptions?.where || 'ai-panel';
@@ -269,7 +216,7 @@ function actionToStream<T extends keyof BlockSuitePresets.AIActions>(
     let stream: BlockSuitePresets.TextStream | undefined;
     return {
       async *[Symbol.asyncIterator]() {
-        const panel = getAIPanel(host);
+        const panel = getAIPanelWidget(host);
         const models = getCopilotSelectedElems(host);
         const markdown = await getTextFromSelected(panel.host);
 
@@ -303,7 +250,7 @@ function actionToGeneration<T extends keyof BlockSuitePresets.AIActions>(
   >,
   extract?: (
     host: EditorHost,
-    ctx: CtxRecord
+    ctx: AIContext
   ) => Promise<{
     content?: string;
     attachments?: (string | Blob)[];
@@ -311,7 +258,7 @@ function actionToGeneration<T extends keyof BlockSuitePresets.AIActions>(
   } | void>,
   trackerOptions?: BlockSuitePresets.TrackerOptions
 ) {
-  return (host: EditorHost, ctx: CtxRecord) => {
+  return (host: EditorHost, ctx: AIContext) => {
     return ({
       input,
       signal,
@@ -351,14 +298,14 @@ function updateEdgelessAIPanelConfig<
   edgelessCopilot: EdgelessCopilotWidget,
   id: T,
   generatingIcon: TemplateResult<1>,
-  ctx: CtxRecord,
+  ctx: AIContext,
   variants?: Omit<
     Parameters<BlockSuitePresets.AIActions[T]>[0],
     keyof BlockSuitePresets.AITextActionOptions
   >,
   customInput?: (
     host: EditorHost,
-    ctx: CtxRecord
+    ctx: AIContext
   ) => Promise<{
     input?: string;
     content?: string;
@@ -370,7 +317,7 @@ function updateEdgelessAIPanelConfig<
   const host = aiPanel.host;
   const { config } = aiPanel;
   assertExists(config);
-  config.answerRenderer = actionToRenderer(id, host, ctx);
+  config.answerRenderer = actionToAnswerRenderer(id, host, ctx);
   config.generateAnswer = actionToGeneration(
     id,
     variants,
@@ -419,33 +366,21 @@ export function actionToHandler<T extends keyof BlockSuitePresets.AIActions>(
   >,
   customInput?: (
     host: EditorHost,
-    ctx: CtxRecord
+    ctx: AIContext
   ) => Promise<{
     input?: string;
     content?: string;
     attachments?: (string | Blob)[];
     seed?: string;
   } | void>,
-  trackerOptions?: BlockSuitePresets.TrackerOptions,
-  toggleEmptyInput?: boolean
+  trackerOptions?: BlockSuitePresets.TrackerOptions
 ) {
   return (host: EditorHost) => {
-    const aiPanel = getAIPanel(host);
+    const aiPanel = getAIPanelWidget(host);
     const edgelessCopilot = getEdgelessCopilotWidget(host);
-    let internal: Record<string, unknown> = {};
     const selectedElements = getCopilotSelectedElems(host);
     const { selectedBlocks } = getSelections(host);
-    const ctx = {
-      get() {
-        return {
-          ...internal,
-          selectedElements,
-        };
-      },
-      set(data: Record<string, unknown>) {
-        internal = data;
-      },
-    };
+    const ctx = new AIContext({ selectedElements });
 
     edgelessCopilot.hideCopilotPanel();
     edgelessCopilot.lockToolbar(true);
@@ -490,7 +425,7 @@ export function actionToHandler<T extends keyof BlockSuitePresets.AIActions>(
 
     if (isCreateImageAction || isMakeItRealAction) {
       togglePanel = async () => {
-        if (isEmpty || toggleEmptyInput) return true;
+        if (isEmpty) return true;
         const { notes, shapes, images, edgelessTexts, embedSyncedDocs } =
           BlocksUtils.splitElements(selectedElements);
         const blocks = [

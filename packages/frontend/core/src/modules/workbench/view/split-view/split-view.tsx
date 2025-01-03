@@ -14,7 +14,7 @@ import {
 import { useService } from '@toeverything/infra';
 import clsx from 'clsx';
 import type { HTMLAttributes, RefObject } from 'react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import type { View } from '../../entities/view';
@@ -49,6 +49,10 @@ export const SplitView = ({
   const [resizingViewId, setResizingViewId] = useState<View['id'] | null>(null);
   const { appSettings } = useAppSettingHelper();
   const workbench = useService(WorkbenchService).workbench;
+
+  // blocksuite's lit host element has an issue on remounting.
+  // Add a workaround here to force remounting after dropping.
+  const [visible, setVisibility] = useState(true);
 
   const sensors = useSensors(
     useSensor(
@@ -102,10 +106,24 @@ export const SplitView = ({
         const fromIndex = views.findIndex(v => v.id === active.id);
         const toIndex = views.findIndex(v => v.id === over?.id);
         onMove?.(fromIndex, toIndex);
+        setVisibility(false);
       }
     },
     [onMove, views]
   );
+
+  useEffect(() => {
+    if (!visible) {
+      const timeoutId = setTimeout(() => {
+        setVisibility(true);
+      }, 0);
+
+      return () => {
+        clearTimeout(timeoutId);
+      };
+    }
+    return;
+  }, [visible]);
 
   return (
     <div
@@ -121,11 +139,13 @@ export const SplitView = ({
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={views} strategy={horizontalListSortingStrategy}>
-          {views.map((view, index) => (
-            <SplitViewPanel view={view} key={view.id} setSlots={setSlots}>
-              {resizeHandleRenderer(view, index)}
-            </SplitViewPanel>
-          ))}
+          {views.map((view, index) =>
+            visible ? (
+              <SplitViewPanel view={view} key={view.id} setSlots={setSlots}>
+                {resizeHandleRenderer(view, index)}
+              </SplitViewPanel>
+            ) : null
+          )}
         </SortableContext>
       </DndContext>
 

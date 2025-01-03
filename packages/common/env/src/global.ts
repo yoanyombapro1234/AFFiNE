@@ -17,6 +17,7 @@ export type BUILD_CONFIG_TYPE = {
   isMobileWeb: boolean;
   isIOS: boolean;
   isAndroid: boolean;
+  isAdmin: boolean;
 
   // this is for the electron app
   /**

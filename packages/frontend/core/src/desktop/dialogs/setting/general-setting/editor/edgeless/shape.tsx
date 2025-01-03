@@ -15,15 +15,12 @@ import type {
   ShapeName,
 } from '@blocksuite/affine/blocks';
 import {
-  createEnumMap,
+  DefaultTheme,
   FontFamily,
   FontFamilyMap,
   FontStyle,
   FontWeightMap,
   getShapeName,
-  LineColor,
-  LineColorMap,
-  ShapeFillColor,
   ShapeStyle,
   ShapeType,
   StrokeStyle,
@@ -31,6 +28,7 @@ import {
 } from '@blocksuite/affine/blocks';
 import type { Doc } from '@blocksuite/affine/store';
 import { useFramework, useLiveData } from '@toeverything/infra';
+import { isEqual } from 'lodash-es';
 import { useCallback, useMemo, useState } from 'react';
 
 import { DropdownMenu } from '../menu';
@@ -40,7 +38,7 @@ import {
   settingWrapper,
   shapeIndicator,
 } from '../style.css';
-import { sortedFontWeightEntries, useColor } from '../utils';
+import { sortedFontWeightEntries, usePalettes } from '../utils';
 import type { DocName } from './docs';
 import { Point } from './point';
 import { EdgelessSnapshot } from './snapshot';
@@ -55,14 +53,20 @@ enum ShapeTextFontSize {
   '64px' = '64',
 }
 
-const ShapeFillColorMap = createEnumMap(ShapeFillColor);
-
 export const ShapeSettings = () => {
   const t = useI18n();
   const framework = useFramework();
   const { editorSetting } = framework.get(EditorSettingService);
   const settings = useLiveData(editorSetting.settings$);
-  const getColorFromMap = useColor();
+  const {
+    palettes: strokeColorPalettes,
+    getCurrentColor: getCurrentStrokeColor,
+  } = usePalettes(
+    DefaultTheme.StrokeColorPalettes,
+    DefaultTheme.shapeStrokeColor
+  );
+  const { palettes: fillColorPalettes, getCurrentColor: getCurrentFillColor } =
+    usePalettes(DefaultTheme.FillColorPalettes, DefaultTheme.shapeFillColor);
 
   const [currentShape, setCurrentShape] = useState<ShapeName>(ShapeType.Rect);
 
@@ -206,43 +210,43 @@ export const ShapeSettings = () => {
 
   const fillColorItems = useMemo(() => {
     const { fillColor } = settings[`shape:${currentShape}`];
-    return Object.entries(ShapeFillColor).map(([name, value]) => {
+    return fillColorPalettes.map(({ key, value, resolvedValue }) => {
       const handler = () => {
         editorSetting.set(`shape:${currentShape}`, { fillColor: value });
       };
-      const isSelected = fillColor === value;
+      const isSelected = isEqual(fillColor, value);
       return (
         <MenuItem
-          key={name}
+          key={key}
           onSelect={handler}
           selected={isSelected}
-          prefix={<Point color={value} />}
+          prefix={<Point color={resolvedValue} />}
         >
-          {name}
+          {key}
         </MenuItem>
       );
     });
-  }, [editorSetting, settings, currentShape]);
+  }, [editorSetting, settings, currentShape, fillColorPalettes]);
 
-  const borderColorItems = useMemo(() => {
+  const strokeColorItems = useMemo(() => {
     const { strokeColor } = settings[`shape:${currentShape}`];
-    return Object.entries(LineColor).map(([name, value]) => {
+    return strokeColorPalettes.map(({ key, value, resolvedValue }) => {
       const handler = () => {
         editorSetting.set(`shape:${currentShape}`, { strokeColor: value });
       };
-      const isSelected = strokeColor === value;
+      const isSelected = isEqual(strokeColor, value);
       return (
         <MenuItem
-          key={name}
+          key={key}
           onSelect={handler}
           selected={isSelected}
-          prefix={<Point color={value} />}
+          prefix={<Point color={resolvedValue} />}
         >
-          {name}
+          {key}
         </MenuItem>
       );
     });
-  }, [editorSetting, settings, currentShape]);
+  }, [editorSetting, settings, currentShape, strokeColorPalettes]);
 
   const borderThickness = settings[`shape:${currentShape}`].strokeWidth;
   const setBorderThickness = useCallback(
@@ -316,23 +320,23 @@ export const ShapeSettings = () => {
 
   const textColorItems = useMemo(() => {
     const { color } = settings[`shape:${currentShape}`];
-    return Object.entries(LineColor).map(([name, value]) => {
+    return strokeColorPalettes.map(({ key, value, resolvedValue }) => {
       const handler = () => {
         editorSetting.set(`shape:${currentShape}`, { color: value });
       };
       const isSelected = color === value;
       return (
         <MenuItem
-          key={name}
+          key={key}
           onSelect={handler}
           selected={isSelected}
-          prefix={<Point color={value} />}
+          prefix={<Point color={resolvedValue} />}
         >
-          {name}
+          {key}
         </MenuItem>
       );
     });
-  }, [editorSetting, settings, currentShape]);
+  }, [editorSetting, settings, currentShape, strokeColorPalettes]);
 
   const getElements = useCallback(
     (doc: Doc) => {
@@ -355,33 +359,33 @@ export const ShapeSettings = () => {
       ) as EdgelessRootService;
       const surface = getSurfaceBlock(doc);
       if (!surface) return;
-      doc.awarenessStore.setReadonly(doc.blockCollection, false);
+      doc.readonly = false;
       surface.getElementsByType('shape').forEach(node => {
         const shape = node as ShapeElementModel;
         const { shapeType, radius } = shape;
         const shapeName = getShapeName(shapeType, radius);
         const props = editorSetting.get(`shape:${shapeName}`);
-        edgelessService.updateElement(shape.id, props);
+        edgelessService.crud.updateElement(shape.id, props);
       });
-      doc.awarenessStore.setReadonly(doc.blockCollection, true);
+      doc.readonly = true;
     },
     [editorSetting]
   );
 
   const fillColor = useMemo(() => {
     const color = settings[`shape:${currentShape}`].fillColor;
-    return getColorFromMap(color, ShapeFillColorMap);
-  }, [currentShape, getColorFromMap, settings]);
+    return getCurrentFillColor(color);
+  }, [currentShape, getCurrentFillColor, settings]);
 
-  const borderColor = useMemo(() => {
+  const strokeColor = useMemo(() => {
     const color = settings[`shape:${currentShape}`].strokeColor;
-    return getColorFromMap(color, LineColorMap);
-  }, [currentShape, getColorFromMap, settings]);
+    return getCurrentStrokeColor(color);
+  }, [currentShape, getCurrentStrokeColor, settings]);
 
   const textColor = useMemo(() => {
     const color = settings[`shape:${currentShape}`].color;
-    return getColorFromMap(color, LineColorMap);
-  }, [currentShape, getColorFromMap, settings]);
+    return getCurrentStrokeColor(color);
+  }, [currentShape, getCurrentStrokeColor, settings]);
 
   const height = currentDoc === 'flow' ? 456 : 180;
   return (
@@ -443,7 +447,7 @@ export const ShapeSettings = () => {
             trigger={
               <MenuTrigger
                 className={menuTrigger}
-                prefix={<Point color={fillColor.value} />}
+                prefix={<Point color={fillColor.resolvedValue} />}
               >
                 {fillColor.key}
               </MenuTrigger>
@@ -457,15 +461,15 @@ export const ShapeSettings = () => {
         ]()}
         desc={''}
       >
-        {borderColor ? (
+        {strokeColor ? (
           <DropdownMenu
-            items={borderColorItems}
+            items={strokeColorItems}
             trigger={
               <MenuTrigger
                 className={menuTrigger}
-                prefix={<Point color={borderColor.value} />}
+                prefix={<Point color={strokeColor.resolvedValue} />}
               >
-                {borderColor.key}
+                {strokeColor.key}
               </MenuTrigger>
             }
           />
@@ -513,7 +517,7 @@ export const ShapeSettings = () => {
             trigger={
               <MenuTrigger
                 className={menuTrigger}
-                prefix={<Point color={textColor.value} />}
+                prefix={<Point color={textColor.resolvedValue} />}
               >
                 {textColor.key}
               </MenuTrigger>

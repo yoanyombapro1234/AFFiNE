@@ -50,6 +50,6 @@ export const SpellCheckStateSchema = z.object({
   enabled: z.boolean().optional(),
 });
 
-export const SpellCheckStateKey = 'spellCheckState';
-export type SpellCheckStateKey = typeof SpellCheckStateKey;
+export const SpellCheckStateKey = 'spellCheckState' as const;
+// eslint-disable-next-line no-redeclare
 export type SpellCheckStateSchema = z.infer<typeof SpellCheckStateSchema>;

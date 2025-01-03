@@ -51,11 +51,22 @@ const contentHideSlideBottom = keyframes({
   from: { transform: 'translateY(0)' },
   to: { transform: 'translateY(100%)' },
 });
+const contentShowSlideRight = keyframes({
+  from: { transform: 'translateX(100%)' },
+  to: { transform: 'translateX(0)' },
+});
+const contentHideSlideRight = keyframes({
+  from: { transform: 'translateX(0)' },
+  to: { transform: 'translateX(100%)' },
+});
 const modalContentViewTransitionNameFadeScaleTop = generateIdentifier(
   'modal-content-fade-scale-top'
 );
 const modalContentViewTransitionNameSlideBottom = generateIdentifier(
   'modal-content-slide-bottom'
+);
+const modalContentViewTransitionNameSlideRight = generateIdentifier(
+  'modal-content-slide-right'
 );
 export const modalOverlay = style({
   position: 'fixed',
@@ -68,7 +79,7 @@ export const modalOverlay = style({
       animation: 'none',
     },
     '&.mobile': {
-      backgroundColor: cssVarV2('layer/mobile/modal'),
+      backgroundColor: cssVarV2('layer/background/mobile/modal'),
     },
   },
 });
@@ -105,6 +116,13 @@ export const modalContentWrapper = style({
     [`${vtScopeSelector(modalVTScope)} &.anim-slideBottom.vt-active`]: {
       viewTransitionName: modalContentViewTransitionNameSlideBottom,
     },
+    '&.anim-slideRight': {
+      animation: `${contentShowSlideRight} 0.23s ease`,
+      animationFillMode: 'forwards',
+    },
+    [`${vtScopeSelector(modalVTScope)} &.anim-slideRight.vt-active`]: {
+      viewTransitionName: modalContentViewTransitionNameSlideRight,
+    },
   },
 });
 globalStyle(
@@ -118,6 +136,13 @@ globalStyle(
   `::view-transition-old(${modalContentViewTransitionNameSlideBottom})`,
   {
     animation: `${contentHideSlideBottom} 0.23s ease`,
+    animationFillMode: 'forwards',
+  }
+);
+globalStyle(
+  `::view-transition-old(${modalContentViewTransitionNameSlideRight})`,
+  {
+    animation: `${contentHideSlideRight} 0.23s ease`,
     animationFillMode: 'forwards',
   }
 );
@@ -148,12 +173,12 @@ export const modalContent = style({
   selectors: {
     '[data-full-screen="true"] &': {
       vars: {
-        [widthVar]: '100vw',
-        [heightVar]: '100vh',
-        [minHeightVar]: '100vh',
+        [widthVar]: '100dvw',
+        [heightVar]: '100dvh',
+        [minHeightVar]: '100dvh',
       },
-      maxWidth: '100vw',
-      maxHeight: '100vh',
+      maxWidth: '100dvw',
+      maxHeight: '100dvh',
       borderRadius: 0,
     },
   },

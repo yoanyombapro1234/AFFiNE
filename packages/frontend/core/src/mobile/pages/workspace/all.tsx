@@ -1,18 +1,14 @@
-import { SafeArea, useThemeColorV2 } from '@affine/component';
+import { useThemeColorV2 } from '@affine/component';
 
-import { AppTabs } from '../../components';
-import { AllDocList, AllDocsHeader, AllDocsMenu } from '../../views';
+import { Page } from '../../components/page';
+import { AllDocList, AllDocsHeader } from '../../views';
 
 export const Component = () => {
-  useThemeColorV2('layer/background/secondary');
+  useThemeColorV2('layer/background/mobile/primary');
 
   return (
-    <>
-      <AllDocsHeader operations={<AllDocsMenu />} />
-      <SafeArea bottom>
-        <AllDocList />
-      </SafeArea>
-      <AppTabs />
-    </>
+    <Page header={<AllDocsHeader />} tab>
+      <AllDocList />
+    </Page>
   );
 };

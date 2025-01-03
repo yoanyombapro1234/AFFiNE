@@ -9,8 +9,8 @@ export const dialogHandlers = {
   loadDBFile: async () => {
     return loadDBFile();
   },
-  saveDBFileAs: async (workspaceId: string) => {
-    return saveDBFileAs(workspaceId);
+  saveDBFileAs: async (id: string) => {
+    return saveDBFileAs(id);
   },
   selectDBFileLocation: async () => {
     return selectDBFileLocation();

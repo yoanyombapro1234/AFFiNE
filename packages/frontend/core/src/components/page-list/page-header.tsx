@@ -6,7 +6,7 @@ import { MultiSelectIcon } from '@blocksuite/icons/rc';
 import clsx from 'clsx';
 import { selectAtom } from 'jotai/utils';
 import type { MouseEventHandler } from 'react';
-import { useCallback } from 'react';
+import { memo, useCallback } from 'react';
 
 import { ListHeaderCell } from './components/list-header-cell';
 import * as styles from './page-header.css';
@@ -82,11 +82,11 @@ export const ListHeaderTitleCell = () => {
 const hideHeaderAtom = selectAtom(listPropsAtom, props => props?.hideHeader);
 
 // the table header for page list
-export const ListTableHeader = ({
+export const ListTableHeader = memo(function ListTableHeader({
   headerCols,
 }: {
   headerCols: HeaderColDef[];
-}) => {
+}) {
   const [sorter, setSorter] = useAtom(sorterAtom);
   const hideHeader = useAtomValue(hideHeaderAtom);
   const selectionState = useAtomValue(selectionStateAtom);
@@ -136,4 +136,4 @@ export const ListTableHeader = ({
       })}
     </div>
   );
-};
+});

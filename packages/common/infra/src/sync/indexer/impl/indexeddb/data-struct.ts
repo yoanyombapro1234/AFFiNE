@@ -143,12 +143,15 @@ export class DataStruct {
 
     if (nid) {
       await trx.objectStore('records').delete(nid);
+    } else {
+      return;
     }
 
     const indexIds = await trx
       .objectStore('invertedIndex')
       .index('nid')
       .getAllKeys(nid);
+
     for (const indexId of indexIds) {
       await trx.objectStore('invertedIndex').delete(indexId);
     }

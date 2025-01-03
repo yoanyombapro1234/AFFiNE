@@ -1,7 +1,7 @@
 import { Readable } from 'node:stream';
 
 import { HttpStatus, INestApplication } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, WorkspaceMemberStatus } from '@prisma/client';
 import ava, { TestFn } from 'ava';
 import Sinon from 'sinon';
 import request from 'supertest';
@@ -182,6 +182,7 @@ test('should be able to get permission granted workspace', async t => {
       userId: u1.id,
       type: 1,
       accepted: true,
+      status: WorkspaceMemberStatus.Accepted,
     },
   });
 

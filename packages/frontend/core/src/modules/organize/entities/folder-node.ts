@@ -14,7 +14,6 @@ export class FolderNode extends Entity<{
 
   info$ = LiveData.from<{
     data: string;
-    // eslint-disable-next-line @typescript-eslint/ban-types
     type: (string & {}) | 'folder' | 'doc' | 'tag' | 'collection';
     index: string;
     id: string;

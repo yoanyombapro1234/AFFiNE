@@ -1,11 +1,7 @@
-import {
-  DocScope,
-  DocService,
-  type Framework,
-  WorkspaceScope,
-  WorkspaceService,
-} from '@toeverything/infra';
+import { type Framework } from '@toeverything/infra';
 
+import { DocScope, DocService } from '../doc';
+import { WorkspaceScope, WorkspaceService } from '../workspace';
 import { Editor } from './entities/editor';
 import { EditorScope } from './scopes/editor';
 import { EditorService } from './services/editor';

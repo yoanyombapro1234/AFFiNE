@@ -4,13 +4,14 @@ import { useActiveBlocksuiteEditor } from '@affine/core/components/hooks/use-blo
 import { usePageDocumentTitle } from '@affine/core/components/hooks/use-global-state';
 import { useNavigateHelper } from '@affine/core/components/hooks/use-navigate-helper';
 import { PageDetailEditor } from '@affine/core/components/page-detail-editor';
-import { SharePageNotFoundError } from '@affine/core/components/share-page-not-found-error';
 import { AppContainer } from '@affine/core/desktop/components/app-container';
 import {
   AuthService,
   FetchService,
   GraphQLService,
+  ServerService,
 } from '@affine/core/modules/cloud';
+import { type Doc, DocsService } from '@affine/core/modules/doc';
 import {
   type Editor,
   type EditorSelector,
@@ -20,8 +21,11 @@ import {
 import { PeekViewManagerModal } from '@affine/core/modules/peek-view';
 import { ShareReaderService } from '@affine/core/modules/share-doc';
 import { ViewIcon, ViewTitle } from '@affine/core/modules/workbench';
+import {
+  type Workspace,
+  WorkspacesService,
+} from '@affine/core/modules/workspace';
 import { CloudBlobStorage } from '@affine/core/modules/workspace-engine';
-import { WorkspaceFlavour } from '@affine/env/workspace';
 import { useI18n } from '@affine/i18n';
 import {
   type DocMode,
@@ -31,16 +35,13 @@ import {
 import type { AffineEditorContainer } from '@blocksuite/affine/presets';
 import { DisposableGroup } from '@blocksuite/global/utils';
 import { Logo1Icon } from '@blocksuite/icons/rc';
-import type { Doc, Workspace } from '@toeverything/infra';
 import {
-  DocsService,
   EmptyBlobStorage,
   FrameworkScope,
   ReadonlyDocStorage,
   useLiveData,
   useService,
   useServices,
-  WorkspacesService,
 } from '@toeverything/infra';
 import clsx from 'clsx';
 import {
@@ -64,8 +65,9 @@ export const SharePage = ({
   workspaceId: string;
   docId: string;
 }) => {
-  const { shareReaderService } = useServices({
+  const { shareReaderService, serverService } = useServices({
     ShareReaderService,
+    ServerService,
   });
 
   const isLoading = useLiveData(shareReaderService.reader.isLoading$);
@@ -104,11 +106,14 @@ export const SharePage = ({
     }, [location.search]);
 
   useEffect(() => {
-    shareReaderService.reader.loadShare({ workspaceId, docId });
-  }, [shareReaderService, docId, workspaceId]);
+    shareReaderService.reader.loadShare({
+      serverId: serverService.server.id,
+      workspaceId,
+      docId,
+    });
+  }, [shareReaderService, docId, workspaceId, serverService.server.id]);
 
   let element: ReactNode = null;
-
   if (isLoading) {
     element = null;
   } else if (data) {
@@ -126,7 +131,8 @@ export const SharePage = ({
       />
     );
   } else if (error) {
-    element = <SharePageNotFoundError />;
+    // TODO(@JimmFly): handle error
+    element = <PageNotFound />;
   } else {
     element = <PageNotFound noPermission />;
   }
@@ -170,7 +176,7 @@ const SharePageInner = ({
       {
         metadata: {
           id: workspaceId,
-          flavour: WorkspaceFlavour.AFFINE_CLOUD,
+          flavour: 'affine-cloud',
         },
         isSharedMode: true,
       },
@@ -205,10 +211,7 @@ const SharePageInner = ({
       .then(() => {
         const { doc } = workspace.scope.get(DocsService).open(docId);
 
-        workspace.docCollection.awarenessStore.setReadonly(
-          doc.blockSuiteDoc.blockCollection,
-          true
-        );
+        doc.blockSuiteDoc.readonly = true;
 
         setPage(doc);
 

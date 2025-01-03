@@ -1,3 +1,4 @@
+import { GraphQLService } from '@affine/core/modules/cloud';
 import type {
   GraphQLQuery,
   MutationOptions,
@@ -5,7 +6,7 @@ import type {
   QueryVariables,
   RecursiveMaybeFields,
 } from '@affine/graphql';
-import { fetcher } from '@affine/graphql';
+import { useService } from '@toeverything/infra';
 import type { GraphQLError } from 'graphql';
 import { useMemo } from 'react';
 import type { Key } from 'swr';
@@ -51,10 +52,15 @@ export function useMutation(
   options: Omit<MutationOptions<GraphQLQuery>, 'variables'>,
   config?: any
 ) {
+  const graphqlService = useService(GraphQLService);
   return useSWRMutation(
     () => ['cloud', options.mutation.id],
     (_: unknown[], { arg }: { arg: any }) =>
-      fetcher({ ...options, query: options.mutation, variables: arg }),
+      graphqlService.gql({
+        ...options,
+        query: options.mutation,
+        variables: arg,
+      }),
     config
   );
 }

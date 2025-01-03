@@ -3,15 +3,19 @@ import {
   useConfirmModal,
   useLitPortalFactory,
 } from '@affine/component';
+import type { DocCustomPropertyInfo } from '@affine/core/modules/db';
+import { DocService, DocsService } from '@affine/core/modules/doc';
 import type {
   DatabaseRow,
   DatabaseValueCell,
 } from '@affine/core/modules/doc-info/types';
 import { EditorService } from '@affine/core/modules/editor';
 import { EditorSettingService } from '@affine/core/modules/editor-setting';
+import { FeatureFlagService } from '@affine/core/modules/feature-flag';
 import { JournalService } from '@affine/core/modules/journal';
 import { toURLSearchParams } from '@affine/core/modules/navigation';
 import { PeekViewService } from '@affine/core/modules/peek-view/services/peek-view';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import track from '@affine/track';
 import type { DocMode } from '@blocksuite/affine/blocks';
 import {
@@ -21,14 +25,10 @@ import {
 } from '@blocksuite/affine/presets';
 import type { Doc } from '@blocksuite/affine/store';
 import {
-  type DocCustomPropertyInfo,
-  DocService,
-  DocsService,
   useFramework,
   useLiveData,
   useService,
   useServices,
-  WorkspaceService,
 } from '@toeverything/infra';
 import React, {
   forwardRef,
@@ -54,8 +54,10 @@ import {
   patchDocModeService,
   patchEdgelessClipboard,
   patchEmbedLinkedDocBlockConfig,
+  patchForAttachmentEmbedViews,
   patchForMobile,
   patchForSharedPage,
+  patchGenerateDocUrlExtension,
   patchNotificationService,
   patchParseDocUrlExtension,
   patchPeekViewService,
@@ -96,12 +98,14 @@ const usePatchSpecs = (shared: boolean, mode: DocMode) => {
     docsService,
     editorService,
     workspaceService,
+    featureFlagService,
   } = useServices({
     PeekViewService,
     DocService,
     DocsService,
     WorkspaceService,
     EditorService,
+    FeatureFlagService,
   });
   const framework = useFramework();
   const referenceRenderer: ReferenceReactRenderer = useMemo(() => {
@@ -112,6 +116,8 @@ const usePatchSpecs = (shared: boolean, mode: DocMode) => {
       const pageId = data.pageId;
       if (!pageId) return <span />;
 
+      // title alias
+      const title = data.title;
       const params = toURLSearchParams(data.params);
 
       if (workspaceService.workspace.openOptions.isSharedMode) {
@@ -120,11 +126,14 @@ const usePatchSpecs = (shared: boolean, mode: DocMode) => {
             docCollection={workspaceService.workspace.docCollection}
             pageId={pageId}
             params={params}
+            title={title}
           />
         );
       }
 
-      return <AffinePageReference pageId={pageId} params={params} />;
+      return (
+        <AffinePageReference pageId={pageId} params={params} title={title} />
+      );
     };
   }, [workspaceService]);
 
@@ -143,10 +152,16 @@ const usePatchSpecs = (shared: boolean, mode: DocMode) => {
     let patched = specs.concat(
       patchReferenceRenderer(reactToLit, referenceRenderer)
     );
+
+    if (featureFlagService.flags.enable_pdf_embed_preview.value) {
+      patched = patched.concat(patchForAttachmentEmbedViews(reactToLit));
+    }
+
     patched = patched.concat(patchNotificationService(confirmModal));
     patched = patched.concat(patchPeekViewService(peekViewService));
     patched = patched.concat(patchEdgelessClipboard());
     patched = patched.concat(patchParseDocUrlExtension(framework));
+    patched = patched.concat(patchGenerateDocUrlExtension(framework));
     patched = patched.concat(patchQuickSearchService(framework));
     patched = patched.concat(patchEmbedLinkedDocBlockConfig(framework));
     if (shared) {
@@ -170,6 +185,7 @@ const usePatchSpecs = (shared: boolean, mode: DocMode) => {
     referenceRenderer,
     shared,
     specs,
+    featureFlagService,
   ]);
 
   return [
@@ -272,9 +288,19 @@ export const BlocksuiteDocEditor = forwardRef<
     []
   );
 
+  const onPropertyInfoChange = useCallback(
+    (property: DocCustomPropertyInfo, field: string) => {
+      track.doc.inlineDocInfo.property.editPropertyMeta({
+        type: property.type,
+        field,
+      });
+    },
+    []
+  );
+
   return (
     <>
-      <div className={styles.affineDocViewport} style={{ height: '100%' }}>
+      <div className={styles.affineDocViewport}>
         {!isJournal ? (
           <adapted.DocTitle doc={page} ref={onTitleRef} />
         ) : (
@@ -287,6 +313,7 @@ export const BlocksuiteDocEditor = forwardRef<
               onDatabasePropertyChange={onDatabasePropertyChange}
               onPropertyChange={onPropertyChange}
               onPropertyAdded={onPropertyAdded}
+              onPropertyInfoChange={onPropertyInfoChange}
               defaultOpenProperty={defaultOpenProperty}
             />
           </div>
@@ -344,9 +371,9 @@ export const BlocksuiteEdgelessEditor = forwardRef<
   }, []);
 
   return (
-    <>
+    <div className={styles.affineEdgelessDocViewport}>
       <adapted.EdgelessEditor ref={onDocRef} doc={page} specs={specs} />
       {portals}
-    </>
+    </div>
   );
 });

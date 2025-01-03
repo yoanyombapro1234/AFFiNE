@@ -8,7 +8,9 @@ import {
 import { filterPage } from '@affine/core/components/page-list';
 import { CollectionService } from '@affine/core/modules/collection';
 import { WorkspaceDialogService } from '@affine/core/modules/dialogs';
+import { DocsService } from '@affine/core/modules/doc';
 import { CompatibleFavoriteItemsAdapter } from '@affine/core/modules/favorite';
+import { GlobalContextService } from '@affine/core/modules/global-context';
 import { ShareDocsListService } from '@affine/core/modules/share-doc';
 import type { AffineDNDData } from '@affine/core/types/dnd';
 import type { Collection } from '@affine/env/filter';
@@ -18,8 +20,6 @@ import { track } from '@affine/track';
 import type { DocMeta } from '@blocksuite/affine/store';
 import { FilterMinusIcon } from '@blocksuite/icons/rc';
 import {
-  DocsService,
-  GlobalContextService,
   LiveData,
   useLiveData,
   useService,
@@ -124,6 +124,9 @@ export const ExplorerCollectionNode = ({
             type: 'link',
             target: 'doc',
             control: 'drag',
+          });
+          track.$.navigationPanel.collections.drop({
+            type: data.source.data.entity.type,
           });
         }
       } else {

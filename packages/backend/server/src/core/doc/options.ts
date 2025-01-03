@@ -7,7 +7,8 @@ import {
   Config,
   mergeUpdatesInApplyWay as yotcoMergeUpdates,
   metrics,
-} from '../../fundamentals';
+  Runtime,
+} from '../../base';
 import { PermissionService } from '../permission';
 import { QuotaService } from '../quota';
 import { DocStorageOptions as IDocStorageOptions } from './storage';
@@ -35,6 +36,7 @@ export class DocStorageOptions implements IDocStorageOptions {
 
   constructor(
     private readonly config: Config,
+    private readonly runtime: Runtime,
     private readonly permission: PermissionService,
     private readonly quota: QuotaService
   ) {}
@@ -43,9 +45,7 @@ export class DocStorageOptions implements IDocStorageOptions {
     const doc = await this.recoverDoc(updates);
     const yjsResult = Buffer.from(Y.encodeStateAsUpdate(doc));
 
-    const useYocto = await this.config.runtime.fetch(
-      'doc/experimentalMergeWithYOcto'
-    );
+    const useYocto = await this.runtime.fetch('doc/experimentalMergeWithYOcto');
 
     if (useYocto) {
       metrics.jwst.counter('codec_merge_counter').add(1);

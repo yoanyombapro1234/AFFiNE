@@ -10,6 +10,8 @@ import { sessionUser } from '../../src/core/auth/service';
 import { UserService, type UserType } from '../../src/core/user';
 import { gql } from './common';
 
+export type UserAuthedType = UserType & { token: ClientTokenType };
+
 export async function internalSignIn(app: INestApplication, userId: string) {
   const auth = app.get(AuthService);
 
@@ -49,7 +51,7 @@ export async function signUp(
   email: string,
   password: string,
   autoVerifyEmail = true
-): Promise<UserType & { token: ClientTokenType }> {
+): Promise<UserAuthedType> {
   const user = await app.get(UserService).createUser({
     name,
     email,
@@ -176,7 +178,7 @@ export async function changeEmail(
   userToken: string,
   token: string,
   email: string
-): Promise<UserType & { token: ClientTokenType }> {
+): Promise<UserAuthedType> {
   const res = await request(app.getHttpServer())
     .post(gql)
     .auth(userToken, { type: 'bearer' })

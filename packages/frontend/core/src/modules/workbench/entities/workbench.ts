@@ -43,8 +43,10 @@ export class Workbench extends Entity {
   activeView$ = LiveData.computed(get => {
     const activeIndex = get(this.activeViewIndex$);
     const views = get(this.views$);
-    return views[activeIndex]; // todo: this could be null
+    // activeIndex could be out of bounds when reordering views
+    return views.at(activeIndex) || views[0];
   });
+
   location$ = LiveData.computed(get => {
     return get(get(this.activeView$).location$);
   });
@@ -124,7 +126,12 @@ export class Workbench extends Entity {
   }
 
   openDoc(
-    id: string | ({ docId: string } & ReferenceParams),
+    id:
+      | string
+      | ({ docId: string } & (
+          | ReferenceParams
+          | Record<string, string | undefined>
+        )),
     options?: WorkbenchOpenOptions
   ) {
     const isString = typeof id === 'string';

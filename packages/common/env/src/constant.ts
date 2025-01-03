@@ -1,8 +1,10 @@
 // This file should has not side effect
-import type { DocCollection } from '@blocksuite/affine/store';
+// oxlint-disable-next-line
+// @ts-ignore FIXME: typecheck error
+import type { Workspace } from '@blocksuite/affine/store';
 
 declare global {
-  // eslint-disable-next-line no-var
+  // oxlint-disable-next-line no-var
   var __appInfo: {
     electron: boolean;
     scheme: string;
@@ -89,10 +91,10 @@ export const Messages = {
 };
 
 export class PageNotFoundError extends TypeError {
-  readonly docCollection: DocCollection;
+  readonly docCollection: Workspace;
   readonly pageId: string;
 
-  constructor(docCollection: DocCollection, pageId: string) {
+  constructor(docCollection: Workspace, pageId: string) {
     super();
     this.docCollection = docCollection;
     this.pageId = pageId;

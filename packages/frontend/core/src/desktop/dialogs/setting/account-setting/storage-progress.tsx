@@ -5,7 +5,7 @@ import { cssVar } from '@toeverything/theme';
 import { useEffect, useMemo } from 'react';
 
 import {
-  ServerConfigService,
+  ServerService,
   SubscriptionService,
   UserQuotaService,
 } from '../../../../modules/cloud';
@@ -34,9 +34,9 @@ export const StorageProgress = ({ onUpgrade }: StorageProgressProgress) => {
   const maxFormatted = useLiveData(quota.maxFormatted$);
   const percent = useLiveData(quota.percent$);
 
-  const serverConfigService = useService(ServerConfigService);
+  const serverService = useService(ServerService);
   const hasPaymentFeature = useLiveData(
-    serverConfigService.serverConfig.features$.map(f => f?.payment)
+    serverService.server.features$.map(f => f?.payment)
   );
   const subscription = useService(SubscriptionService).subscription;
   useEffect(() => {

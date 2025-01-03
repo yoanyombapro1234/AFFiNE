@@ -10,8 +10,8 @@ import { TestingModule } from '@nestjs/testing';
 import type { TestFn } from 'ava';
 import ava from 'ava';
 
+import { ConfigModule } from '../src/base/config';
 import { AuthService } from '../src/core/auth/service';
-import { ConfigModule } from '../src/fundamentals/config';
 import { createTestingModule } from './utils';
 
 const test = ava as TestFn<{

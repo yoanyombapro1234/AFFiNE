@@ -11,7 +11,9 @@ export const pageModalContent = style({
   backgroundColor: cssVarV2('layer/background/secondary'),
 });
 
-export const popupModalContent = style({});
+export const popupModalContent = style({
+  padding: '12px',
+});
 
 export const pageTitle = style([
   bodyEmphasized,
@@ -30,6 +32,8 @@ export const popupTitle = style([
     alignItems: 'center',
     gap: 8,
     color: cssVarV2('text/primary'),
+    padding: '0 8px',
+    height: 44,
   },
 ]);
 
@@ -43,7 +47,7 @@ export const pageContent = style({
 export const popupContent = style({
   display: 'flex',
   flexDirection: 'column',
-  gap: 16,
+  gap: 24,
 });
 
 export const doneButton = style([
@@ -53,8 +57,15 @@ export const doneButton = style([
   },
 ]);
 
+export const bottomDoneButtonContainer = style({
+  padding: '4px',
+});
+
 export const bottomDoneButton = style({
   width: '100%',
+  height: 44,
+  fontSize: 17,
+  alignSelf: 'center',
 });
 
 export const group = style({

@@ -8,6 +8,8 @@ export const container = style({
   padding: '20px 0',
   alignSelf: 'start',
   marginTop: '120px',
+  maxHeight: 'calc(100dvh - 240px)',
+  overflow: 'auto',
 });
 
 export const titleContainer = style({

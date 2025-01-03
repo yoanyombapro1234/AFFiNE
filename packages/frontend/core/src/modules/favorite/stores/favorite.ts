@@ -1,40 +1,44 @@
-import { WorkspaceFlavour } from '@affine/env/workspace';
-import type { WorkspaceDBService, WorkspaceService } from '@toeverything/infra';
 import { LiveData, Store } from '@toeverything/infra';
 import { map } from 'rxjs';
 
-import type { AuthService } from '../../cloud';
-import type { FavoriteSupportType } from '../constant';
+import { AuthService, type WorkspaceServerService } from '../../cloud';
+import type { WorkspaceDBService } from '../../db';
+import type { WorkspaceService } from '../../workspace';
+import type { FavoriteSupportTypeUnion } from '../constant';
 import { isFavoriteSupportType } from '../constant';
 
 export interface FavoriteRecord {
-  type: FavoriteSupportType;
+  type: FavoriteSupportTypeUnion;
   id: string;
   index: string;
 }
 
 export class FavoriteStore extends Store {
+  authService = this.workspaceServerService.server?.scope.get(AuthService);
   constructor(
-    private readonly authService: AuthService,
     private readonly workspaceDBService: WorkspaceDBService,
-    private readonly workspaceService: WorkspaceService
+    private readonly workspaceService: WorkspaceService,
+    private readonly workspaceServerService: WorkspaceServerService
   ) {
     super();
   }
 
   private get userdataDB$() {
-    return this.authService.session.account$.map(account => {
-      // if is local workspace or no account, use __local__ userdata
-      // sometimes we may have cloud workspace but no account for a short time, we also use __local__ userdata
-      if (
-        this.workspaceService.workspace.meta.flavour ===
-          WorkspaceFlavour.LOCAL ||
-        !account
-      ) {
-        return this.workspaceDBService.userdataDB('__local__');
-      }
-      return this.workspaceDBService.userdataDB(account.id);
-    });
+    // if is local workspace or no account, use __local__ userdata
+    // sometimes we may have cloud workspace but no account for a short time, we also use __local__ userdata
+    if (
+      this.workspaceService.workspace.meta.flavour === 'local' ||
+      !this.authService
+    ) {
+      return new LiveData(this.workspaceDBService.userdataDB('__local__'));
+    } else {
+      return this.authService.session.account$.map(account => {
+        if (!account) {
+          return this.workspaceDBService.userdataDB('__local__');
+        }
+        return this.workspaceDBService.userdataDB(account.id);
+      });
+    }
   }
 
   watchIsLoading() {
@@ -55,7 +59,7 @@ export class FavoriteStore extends Store {
   }
 
   addFavorite(
-    type: FavoriteSupportType,
+    type: FavoriteSupportTypeUnion,
     id: string,
     index: string
   ): FavoriteRecord {
@@ -67,17 +71,17 @@ export class FavoriteStore extends Store {
     return this.toRecord(raw) as FavoriteRecord;
   }
 
-  reorderFavorite(type: FavoriteSupportType, id: string, index: string) {
+  reorderFavorite(type: FavoriteSupportTypeUnion, id: string, index: string) {
     const db = this.userdataDB$.value;
     db.favorite.update(this.encodeKey(type, id), { index });
   }
 
-  removeFavorite(type: FavoriteSupportType, id: string) {
+  removeFavorite(type: FavoriteSupportTypeUnion, id: string) {
     const db = this.userdataDB$.value;
     db.favorite.delete(this.encodeKey(type, id));
   }
 
-  watchFavorite(type: FavoriteSupportType, id: string) {
+  watchFavorite(type: FavoriteSupportTypeUnion, id: string) {
     const db = this.userdataDB$.value;
     return LiveData.from<FavoriteRecord | undefined>(
       db.favorite
@@ -109,7 +113,7 @@ export class FavoriteStore extends Store {
    * @returns null if key is invalid
    */
   private parseKey(key: string): {
-    type: FavoriteSupportType;
+    type: FavoriteSupportTypeUnion;
     id: string;
   } | null {
     const [type, id] = key.split(':');
@@ -119,10 +123,10 @@ export class FavoriteStore extends Store {
     if (!isFavoriteSupportType(type)) {
       return null;
     }
-    return { type: type as FavoriteSupportType, id };
+    return { type: type as FavoriteSupportTypeUnion, id };
   }
 
-  private encodeKey(type: FavoriteSupportType, id: string) {
+  private encodeKey(type: FavoriteSupportTypeUnion, id: string) {
     return `${type}:${id}`;
   }
 }

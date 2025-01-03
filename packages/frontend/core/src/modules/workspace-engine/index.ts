@@ -1,45 +1,33 @@
-import {
-  AuthService,
-  FetchService,
-  GraphQLService,
-  WebSocketService,
-} from '@affine/core/modules/cloud';
-import {
-  type Framework,
-  GlobalState,
-  WorkspaceFlavourProvider,
-} from '@toeverything/infra';
+import { type Framework } from '@toeverything/infra';
 
+import { ServersService } from '../cloud/services/servers';
 import { DesktopApiService } from '../desktop-api';
-import { CloudWorkspaceFlavourProviderService } from './impls/cloud';
+import { GlobalState } from '../storage';
+import { WorkspaceFlavoursProvider } from '../workspace';
+import { CloudWorkspaceFlavoursProvider } from './impls/cloud';
 import { IndexedDBBlobStorage } from './impls/engine/blob-indexeddb';
 import { SqliteBlobStorage } from './impls/engine/blob-sqlite';
 import { IndexedDBDocStorage } from './impls/engine/doc-indexeddb';
 import { SqliteDocStorage } from './impls/engine/doc-sqlite';
 import {
   LOCAL_WORKSPACE_LOCAL_STORAGE_KEY,
-  LocalWorkspaceFlavourProvider,
+  LocalWorkspaceFlavoursProvider,
 } from './impls/local';
 import { WorkspaceEngineStorageProvider } from './providers/engine';
 
 export { CloudBlobStorage } from './impls/engine/blob-cloud';
+export { base64ToUint8Array, uint8ArrayToBase64 } from './utils/base64';
 
 export function configureBrowserWorkspaceFlavours(framework: Framework) {
   framework
-    .impl(WorkspaceFlavourProvider('LOCAL'), LocalWorkspaceFlavourProvider, [
+    .impl(WorkspaceFlavoursProvider('LOCAL'), LocalWorkspaceFlavoursProvider, [
       WorkspaceEngineStorageProvider,
     ])
-    .service(CloudWorkspaceFlavourProviderService, [
+    .impl(WorkspaceFlavoursProvider('CLOUD'), CloudWorkspaceFlavoursProvider, [
       GlobalState,
-      AuthService,
       WorkspaceEngineStorageProvider,
-      GraphQLService,
-      WebSocketService,
-      FetchService,
-    ])
-    .impl(WorkspaceFlavourProvider('CLOUD'), p =>
-      p.get(CloudWorkspaceFlavourProviderService)
-    );
+      ServersService,
+    ]);
 }
 
 export function configureIndexedDBWorkspaceEngineStorageProvider(

@@ -1,3 +1,4 @@
+export * from './context';
 export * from './draggable';
 export * from './drop-indicator';
 export * from './drop-target';

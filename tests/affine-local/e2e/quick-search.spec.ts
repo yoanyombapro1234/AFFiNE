@@ -479,7 +479,7 @@ test('can use @ to open quick search to search for doc and insert into canvas', 
   await insertInputText(page, url);
 
   // expect the default page to be selected
-  await expect(page.locator('[cmdk-group-items] [cmdk-item]')).toHaveCount(3);
+  await expect(page.locator('[cmdk-group-items] [cmdk-item]')).toHaveCount(5);
 
   // press enter to insert the page to canvas
   await page.keyboard.press('Enter');

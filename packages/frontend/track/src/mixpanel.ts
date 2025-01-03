@@ -1,4 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { DebugLogger } from '@affine/debug';
 import type { OverridedMixpanel } from 'mixpanel-browser';
 import mixpanelBrowser from 'mixpanel-browser';
@@ -79,8 +79,14 @@ function createMixpanel() {
       return mixpanel.people;
     },
     track_pageview(properties?: { location?: string }) {
-      logger.debug('track_pageview', properties);
-      mixpanel.track_pageview(properties);
+      const middlewareProperties = Array.from(middlewares).reduce(
+        (acc, middleware) => {
+          return middleware('track_pageview', acc);
+        },
+        properties as Record<string, unknown>
+      );
+      logger.debug('track_pageview', middlewareProperties);
+      mixpanel.track_pageview(middlewareProperties);
     },
   };
 

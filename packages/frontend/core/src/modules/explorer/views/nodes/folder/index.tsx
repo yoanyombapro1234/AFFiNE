@@ -12,10 +12,12 @@ import {
 import { usePageHelper } from '@affine/core/components/blocksuite/block-suite-page-list/utils';
 import { WorkspaceDialogService } from '@affine/core/modules/dialogs';
 import { CompatibleFavoriteItemsAdapter } from '@affine/core/modules/favorite';
+import { FeatureFlagService } from '@affine/core/modules/feature-flag';
 import {
   type FolderNode,
   OrganizeService,
 } from '@affine/core/modules/organize';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import type { AffineDNDData } from '@affine/core/types/dnd';
 import { Unreachable } from '@affine/env/constant';
 import { useI18n } from '@affine/i18n';
@@ -29,12 +31,7 @@ import {
   RemoveFolderIcon,
   TagsIcon,
 } from '@blocksuite/icons/rc';
-import {
-  FeatureFlagService,
-  useLiveData,
-  useServices,
-  WorkspaceService,
-} from '@toeverything/infra';
+import { useLiveData, useServices } from '@toeverything/infra';
 import { difference } from 'lodash-es';
 import { useCallback, useMemo, useState } from 'react';
 
@@ -241,6 +238,11 @@ const ExplorerFolderNodeFolder = ({
 
   const handleDropOnFolder = useCallback(
     (data: DropTargetDropEvent<AffineDNDData>) => {
+      if (data.source.data.entity?.type) {
+        track.$.navigationPanel.folders.drop({
+          type: data.source.data.entity.type,
+        });
+      }
       if (data.treeInstruction?.type === 'make-child') {
         if (data.source.data.entity?.type === 'folder') {
           if (
@@ -313,6 +315,11 @@ const ExplorerFolderNodeFolder = ({
 
   const handleDropOnPlaceholder = useCallback(
     (data: DropTargetDropEvent<AffineDNDData>) => {
+      if (data.source.data.entity?.type) {
+        track.$.navigationPanel.folders.drop({
+          type: data.source.data.entity.type,
+        });
+      }
       if (data.source.data.entity?.type === 'folder') {
         if (
           node.id === data.source.data.entity.id ||
@@ -352,6 +359,11 @@ const ExplorerFolderNodeFolder = ({
     (data: DropTargetDropEvent<AffineDNDData>, dropAtNode?: FolderNode) => {
       if (!dropAtNode || !dropAtNode.id) {
         return;
+      }
+      if (data.source.data.entity?.type) {
+        track.$.navigationPanel.folders.drop({
+          type: data.source.data.entity.type,
+        });
       }
       if (
         data.treeInstruction?.type === 'reorder-above' ||
@@ -712,7 +724,6 @@ const ExplorerFolderNodeFolder = ({
   }, [additionalOperations, folderOperations]);
 
   const childrenOperations = useCallback(
-    // eslint-disable-next-line @typescript-eslint/ban-types
     (type: string, node: FolderNode) => {
       if (type === 'doc' || type === 'collection' || type === 'tag') {
         return [

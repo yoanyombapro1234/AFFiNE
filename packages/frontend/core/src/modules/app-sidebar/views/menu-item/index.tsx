@@ -1,13 +1,13 @@
 import { WorkbenchLink } from '@affine/core/modules/workbench';
 import { ArrowDownSmallIcon } from '@blocksuite/icons/rc';
 import clsx from 'clsx';
-import React from 'react';
+import React, { type SVGAttributes } from 'react';
 import type { To } from 'react-router-dom';
 
 import * as styles from './index.css';
 
 export interface MenuItemProps extends React.HTMLAttributes<HTMLDivElement> {
-  icon?: React.ReactElement;
+  icon?: React.ReactElement<SVGAttributes<SVGElement>>;
   active?: boolean;
   disabled?: boolean;
   // true, false, undefined. undefined means no collapse

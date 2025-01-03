@@ -13,6 +13,7 @@ import type * as Y from 'yjs';
 
 import type { DatabaseCellRendererProps } from '../../../types';
 import { useBlockStdScope } from '../../../utils';
+import * as styles from './rich-text.css';
 
 // todo(@pengx17): handle markdown/keyboard shortcuts
 const renderRichText = ({
@@ -67,7 +68,7 @@ const RichTextInput = ({
     }
     return () => {};
   }, [dataSource.doc, onChange, std, text]);
-  return <div ref={ref} style={style} />;
+  return <div className={styles.richTextInput} ref={ref} style={style} />;
 };
 
 const DesktopRichTextCell = ({
@@ -97,7 +98,8 @@ const MobileRichTextCell = ({
   const [open, setOpen] = useState(false);
   const name = useLiveData(cell.property.name$);
   return (
-    <PropertyValue onClick={() => setOpen(true)}>
+    <>
+      <PropertyValue onClick={() => setOpen(true)}></PropertyValue>
       <ConfigModal
         onBack={() => setOpen(false)}
         open={open}
@@ -125,7 +127,7 @@ const MobileRichTextCell = ({
         onChange={onChange}
         rowId={rowId}
       />
-    </PropertyValue>
+    </>
   );
 };
 

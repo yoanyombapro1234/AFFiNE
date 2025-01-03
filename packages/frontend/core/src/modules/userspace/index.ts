@@ -3,6 +3,7 @@ export { UserspaceService as UserDBService } from './services/userspace';
 import type { Framework } from '@toeverything/infra';
 
 import { AuthService, WebSocketService } from '../cloud';
+import { ServerScope } from '../cloud/scopes/server';
 import { DesktopApiService } from '../desktop-api/service/desktop-api';
 import { CurrentUserDB } from './entities/current-user-db';
 import { UserDB } from './entities/user-db';
@@ -15,6 +16,7 @@ import { UserspaceService } from './services/userspace';
 
 export function configureUserspaceModule(framework: Framework) {
   framework
+    .scope(ServerScope)
     .service(UserspaceService)
     .entity(CurrentUserDB, [UserspaceService, AuthService])
     .entity(UserDB)

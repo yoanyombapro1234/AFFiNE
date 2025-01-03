@@ -131,6 +131,7 @@ declare global {
 }
 
 export function AIChatErrorRenderer(host: EditorHost, error: AIError) {
+  console.error(error);
   if (error instanceof PaymentRequiredError) {
     return PaymentRequiredErrorRenderer(host);
   } else if (error instanceof UnauthorizedError) {

@@ -9,12 +9,12 @@ import type {
   SurfaceRefBlockModel,
 } from '@blocksuite/affine/blocks';
 import { AffineReference } from '@blocksuite/affine/blocks';
-import type { BlockModel } from '@blocksuite/affine/store';
-import type { AIChatBlockModel } from '@toeverything/infra';
+import type { Block, BlockModel } from '@blocksuite/affine/store';
 import { Entity, LiveData } from '@toeverything/infra';
 import type { TemplateResult } from 'lit';
 import { firstValueFrom, map, race } from 'rxjs';
 
+import type { AIChatBlockModel } from '../../../blocksuite/blocks';
 import { resolveLinkToDoc } from '../../navigation';
 import type { WorkbenchService } from '../../workbench';
 
@@ -24,6 +24,7 @@ export type DocReferenceInfo = {
   blockIds?: string[];
   elementIds?: string[];
   databaseId?: string;
+  databaseDocId?: string;
   databaseRowId?: string;
   /**
    * viewport in edgeless mode
@@ -35,7 +36,8 @@ export type PeekViewElement =
   | HTMLElement
   | BlockComponent
   | AffineReference
-  | HTMLAnchorElement;
+  | HTMLAnchorElement
+  | Block;
 
 export interface PeekViewTarget {
   element?: PeekViewElement;
@@ -54,7 +56,7 @@ export type ImagePeekViewInfo = {
 
 export type AttachmentPeekViewInfo = {
   type: 'attachment';
-  docRef: DocReferenceInfo;
+  docRef: DocReferenceInfo & { filetype?: string };
 };
 
 export type AIChatBlockPeekViewInfo = {
@@ -172,6 +174,7 @@ function resolvePeekInfoFromPeekTarget(
           docRef: {
             docId: blockModel.doc.id,
             blockIds: [blockModel.id],
+            filetype: blockModel.type,
           },
         };
       } else if (isImageBlockModel(blockModel)) {
@@ -182,7 +185,7 @@ function resolvePeekInfoFromPeekTarget(
             blockIds: [blockModel.id],
           },
         };
-      } else if (isAIChatBlockModel(blockModel)) {
+      } else if (isAIChatBlockModel(blockModel) && 'host' in element) {
         return {
           type: 'ai-chat-block',
           docRef: {
@@ -220,10 +223,10 @@ export type PeekViewMode = 'full' | 'fit' | 'max';
 export class PeekViewEntity extends Entity {
   private readonly _active$ = new LiveData<ActivePeekView | null>(null);
   private readonly _show$ = new LiveData<{
-    animation: PeekViewAnimation;
+    animation: boolean;
     value: boolean;
   }>({
-    animation: 'zoom',
+    animation: true,
     value: false,
   });
 
@@ -258,7 +261,7 @@ export class PeekViewEntity extends Entity {
     this._active$.next({ target, info: resolvedInfo });
     this._show$.next({
       value: true,
-      animation: target.element ? 'zoom' : 'fade',
+      animation: true,
     });
 
     if (abortSignal) {
@@ -281,10 +284,10 @@ export class PeekViewEntity extends Entity {
     return firstValueFrom(race(this._active$, this.show$).pipe(map(() => {})));
   };
 
-  close = (animation?: PeekViewAnimation) => {
+  close = (animation = true) => {
     this._show$.next({
       value: false,
-      animation: animation ?? this._show$.value.animation,
+      animation,
     });
   };
 }

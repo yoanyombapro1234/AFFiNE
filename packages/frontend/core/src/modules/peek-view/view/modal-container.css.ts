@@ -35,11 +35,18 @@ export const modalContentContainer = style({
     'screen and (width <= 640px)': {
       selectors: {
         [`${modalContentWrapper}:is([data-mode="max"], [data-mode="fit"]) &`]: {
-          height: '60%',
+          height: '80%',
           width: 'calc(100% - 32px)',
           paddingRight: 0,
           paddingBottom: 32,
           alignSelf: 'flex-end',
+        },
+      },
+    },
+    'screen and (width > 640px) and (width <= 1024px)': {
+      selectors: {
+        [`${modalContentWrapper}[data-mode="fit"] &`]: {
+          paddingRight: 12,
         },
       },
     },
@@ -103,6 +110,12 @@ export const modalControls = style({
   '@media': {
     'screen and (width <= 640px)': {
       top: -48,
+      right: 0,
+      left: 0,
+      padding: '8px',
+    },
+    'screen and (width > 640px) and (width <= 1024px)': {
+      paddingLeft: 0,
     },
   },
 });

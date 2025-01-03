@@ -77,11 +77,11 @@ export const EdgelessSnapshot = (props: Props) => {
     ) as EdgelessRootService;
     const elements = getElements(doc);
     const props = editorSetting.get(keyName) as any;
-    doc.awarenessStore.setReadonly(doc.blockCollection, false);
+    doc.readonly = false;
     elements.forEach(element => {
-      edgelessService.updateElement(element.id, props);
+      edgelessService.crud.updateElement(element.id, props);
     });
-    doc.awarenessStore.setReadonly(doc.blockCollection, true);
+    doc.readonly = true;
   }, [editorSetting, getElements, keyName]);
 
   const renderEditor = useCallback(async () => {
@@ -112,7 +112,7 @@ export const EdgelessSnapshot = (props: Props) => {
     ) as EdgelessRootService;
     edgelessService.specSlots.viewConnected.once(({ component }) => {
       const edgelessBlock = component as any;
-      doc.awarenessStore.setReadonly(doc.blockCollection, false);
+      doc.readonly = false;
       edgelessBlock.editorViewportSelector = 'ref-viewport';
       const frame = getFrameBlock(doc);
       if (frame) {
@@ -121,7 +121,7 @@ export const EdgelessSnapshot = (props: Props) => {
       }
       const bound = boundMap.get(docName);
       bound && edgelessService.viewport.setViewportByBound(bound);
-      doc.awarenessStore.setReadonly(doc.blockCollection, true);
+      doc.readonly = true;
     });
 
     // append to dom node

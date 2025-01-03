@@ -3,9 +3,10 @@ import type {
   DialogComponentProps,
   WORKSPACE_DIALOG_SCHEMA,
 } from '@affine/core/modules/dialogs';
+import { DocsService } from '@affine/core/modules/doc';
 import { DocDisplayMetaService } from '@affine/core/modules/doc-display-meta';
 import { useI18n } from '@affine/i18n';
-import { DocsService, useLiveData, useService } from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import { cssVarV2 } from '@toeverything/theme/v2';
 import { useMemo } from 'react';
 
@@ -19,11 +20,9 @@ const DocIcon = ({ docId }: { docId: string }) => {
 };
 
 const DocLabel = ({ docId }: { docId: string }) => {
-  const t = useI18n();
   const docDisplayMetaService = useService(DocDisplayMetaService);
   const label = useLiveData(docDisplayMetaService.title$(docId));
-
-  return typeof label === 'string' ? label : t[label.i18nKey]();
+  return label;
 };
 
 export const DocSelectorDialog = ({

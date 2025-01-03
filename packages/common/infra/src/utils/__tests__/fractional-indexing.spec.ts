@@ -25,7 +25,6 @@ test('fractional-indexing', () => {
 
       if (set.has(s1) || set.has(s2) || s1 === s2) {
         throw new Error('Duplicate key, ' + set.size + ', ' + s1 + ', ' + s2);
-        break;
       }
       set.add(s1);
       set.add(s2);
@@ -56,4 +55,20 @@ test('no postfix', () => {
   expect(
     generateFractionalIndexingKeyBetween('a0', 'a01').startsWith('a00V')
   ).toBe(true);
+});
+
+test('edge cases', () => {
+  for (let i = 0; i < 100; i++) {
+    let a = generateFractionalIndexingKeyBetween(null, null);
+    let b = generateFractionalIndexingKeyBetween(null, null);
+    if (a > b) {
+      [a, b] = [b, a];
+    }
+    const c = generateFractionalIndexingKeyBetween(a, b);
+    const d = generateFractionalIndexingKeyBetween(c, b);
+    expect(a < c).toBeTruthy();
+    expect(c < b).toBeTruthy();
+    expect(c < d).toBeTruthy();
+    expect(d < b).toBeTruthy();
+  }
 });

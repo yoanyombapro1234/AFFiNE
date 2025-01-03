@@ -74,7 +74,12 @@ export const AISubscribe = ({
       onBeforeCheckout={onBeforeCheckout}
       checkoutOptions={checkoutOptions}
       renderer={props => (
-        <Button variant="primary" {...props} {...btnProps}>
+        <Button
+          variant="primary"
+          {...props}
+          {...btnProps}
+          data-testid="ai-subscribe-button"
+        >
           {btnProps.children ?? `${priceReadable} / ${priceFrequency}`}
           {displayedFrequency === 'monthly' ? (
             <span

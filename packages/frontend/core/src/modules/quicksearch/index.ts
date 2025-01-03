@@ -1,23 +1,26 @@
+import { type Framework } from '@toeverything/infra';
+
+import { CollectionService } from '../collection';
+import { WorkspaceDialogService } from '../dialogs';
+import { DocsService } from '../doc';
+import { DocDisplayMetaService } from '../doc-display-meta';
+import { DocsSearchService } from '../docs-search';
+import { GlobalContextService } from '../global-context';
+import { JournalService } from '../journal';
+import { TagService } from '../tag';
+import { WorkbenchService } from '../workbench';
 import {
-  DocsService,
-  type Framework,
-  GlobalContextService,
   WorkspaceLocalState,
   WorkspaceScope,
   WorkspaceService,
-} from '@toeverything/infra';
-
-import { CollectionService } from '../collection';
-import { DocDisplayMetaService } from '../doc-display-meta/services/doc-display-meta';
-import { DocsSearchService } from '../docs-search';
-import { TagService } from '../tag';
-import { WorkbenchService } from '../workbench';
+} from '../workspace';
 import { QuickSearch } from './entities/quick-search';
 import { CollectionsQuickSearchSession } from './impls/collections';
 import { CommandsQuickSearchSession } from './impls/commands';
 import { CreationQuickSearchSession } from './impls/creation';
 import { DocsQuickSearchSession } from './impls/docs';
 import { ExternalLinksQuickSearchSession } from './impls/external-links';
+import { JournalsQuickSearchSession } from './impls/journals';
 import { LinksQuickSearchSession } from './impls/links';
 import { RecentDocsQuickSearchSession } from './impls/recent-docs';
 import { TagsQuickSearchSession } from './impls/tags';
@@ -67,6 +70,11 @@ export function configureQuickSearchModule(framework: Framework) {
     .entity(TagsQuickSearchSession, [TagService])
     .entity(RecentDocsQuickSearchSession, [
       RecentDocsService,
+      DocDisplayMetaService,
+    ])
+    .entity(JournalsQuickSearchSession, [
+      JournalService,
+      WorkspaceDialogService,
       DocDisplayMetaService,
     ]);
 }

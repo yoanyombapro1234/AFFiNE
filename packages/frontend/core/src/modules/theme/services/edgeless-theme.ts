@@ -1,6 +1,7 @@
-import type { DocRecord } from '@toeverything/infra';
-import { DocCreated, OnEvent, Service } from '@toeverything/infra';
+import { OnEvent, Service } from '@toeverything/infra';
 
+import type { DocRecord } from '../../doc';
+import { DocCreated } from '../../doc';
 import type { EditorSettingService } from '../../editor-setting';
 import type { EdgelessDefaultTheme } from '../../editor-setting/schema';
 import type { AppThemeService } from './theme';

@@ -1,13 +1,12 @@
 import { Menu, type MenuProps } from '@affine/component';
 import { useNavigateHelper } from '@affine/core/components/hooks/use-navigate-helper';
-import { track } from '@affine/track';
+import { GlobalContextService } from '@affine/core/modules/global-context';
 import {
-  GlobalContextService,
-  useLiveData,
-  useServices,
   type WorkspaceMetadata,
   WorkspacesService,
-} from '@toeverything/infra';
+} from '@affine/core/modules/workspace';
+import { track } from '@affine/track';
+import { useLiveData, useServices } from '@toeverything/infra';
 import { useCallback, useEffect, useState } from 'react';
 
 import { UserWithWorkspaceList } from './user-with-workspace-list';
@@ -109,6 +108,7 @@ export const WorkspaceSelector = ({
           showArrowDownIcon={showArrowDownIcon}
           disable={disable}
           hideCollaborationIcon={true}
+          hideTeamWorkspaceIcon={true}
           data-testid="current-workspace-card"
         />
       ) : (

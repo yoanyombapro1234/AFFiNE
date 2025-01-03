@@ -25,9 +25,9 @@ import {
   type SerializedXYWH,
 } from '@blocksuite/affine/global/utils';
 import type { Doc } from '@blocksuite/affine/store';
-import type { ChatMessage } from '@toeverything/infra/blocksuite';
 import type { TemplateResult } from 'lit';
 
+import type { ChatMessage } from '../../../blocks';
 import { insertFromMarkdown } from '../../_common';
 import { AIProvider, type AIUserInfo } from '../provider';
 import { reportResponse } from '../utils/action-reporter';
@@ -508,7 +508,7 @@ const CREATE_AS_LINKED_DOC = {
       y = viewportCenter.y - height / 2;
     }
 
-    service.addBlock(
+    service.crud.addBlock(
       'affine:embed-linked-doc',
       {
         xywh: `[${x}, ${y}, ${width}, ${height}]`,

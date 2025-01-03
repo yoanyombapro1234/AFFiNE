@@ -1,15 +1,13 @@
 import { SettingRow } from '@affine/component/setting-components';
 import { Button } from '@affine/component/ui/button';
 import { useEnableCloud } from '@affine/core/components/hooks/affine/use-enable-cloud';
-import { UNTITLED_WORKSPACE_NAME } from '@affine/env/constant';
-import { WorkspaceFlavour } from '@affine/env/workspace';
-import { useI18n } from '@affine/i18n';
 import {
-  useLiveData,
-  useService,
   type Workspace,
   WorkspaceService,
-} from '@toeverything/infra';
+} from '@affine/core/modules/workspace';
+import { UNTITLED_WORKSPACE_NAME } from '@affine/env/constant';
+import { useI18n } from '@affine/i18n';
+import { useLiveData, useService } from '@toeverything/infra';
 import { useCallback } from 'react';
 
 export interface PublishPanelProps {
@@ -37,7 +35,7 @@ export const EnableCloudPanel = ({
     });
   }, [confirmEnableCloud, onCloseSetting, workspace]);
 
-  if (flavour !== WorkspaceFlavour.LOCAL) {
+  if (flavour !== 'local') {
     return null;
   }
 

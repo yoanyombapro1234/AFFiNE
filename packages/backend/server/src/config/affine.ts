@@ -8,22 +8,12 @@
 // Any changes in this file won't take effect before server restarted.
 //
 //
-// > Configurations merge order
-//   1. load environment variables (`.env` if provided, and from system)
-//   2. load `src/fundamentals/config/default.ts` for all default settings
-//   3. apply `./affine.ts` patches (this file)
-//   4. apply `./affine.env.ts` patches
-//
-//
 // ###############################################################
 // ##                       General settings                    ##
 // ###############################################################
 //
-// /* The unique identity of the server */
-// AFFiNE.serverId = 'some-randome-uuid';
-//
 // /* The name of AFFiNE Server, may show on the UI */
-// AFFiNE.serverName = 'Your Cool AFFiNE Selfhosted Cloud';
+AFFiNE.serverName = 'My Selfhosted AFFiNE Cloud';
 //
 // /* Whether the server is deployed behind a HTTPS proxied environment */
 AFFiNE.server.https = false;
@@ -80,14 +70,6 @@ AFFiNE.server.port = 3010;
 // ###############################################################
 // ##                        Plugins settings                   ##
 // ###############################################################
-//
-// /* Redis Plugin */
-// /* Provide caching and session storing backed by Redis. */
-// /* Useful when you deploy AFFiNE server in a cluster. */
-// AFFiNE.use('redis', {
-//   /* override options */
-// });
-//
 //
 // /* Payment Plugin */
 // AFFiNE.use('payment', {

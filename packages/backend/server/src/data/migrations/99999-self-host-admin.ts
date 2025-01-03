@@ -1,8 +1,8 @@
 import { ModuleRef } from '@nestjs/core';
 import { PrismaClient } from '@prisma/client';
 
+import { Config } from '../../base';
 import { FeatureManagementService } from '../../core/features';
-import { Config } from '../../fundamentals';
 
 export class SelfHostAdmin1 {
   // do the migration

@@ -20,6 +20,10 @@ export const getOpenUrlInDesktopAppLink = (
     if (newTab) {
       params.set('new-tab', '1');
     }
+    if (environment.isSelfHosted) {
+      // assume self-hosted server is the current origin
+      params.set('server', location.origin);
+    }
     return new URL(
       `${scheme}://${urlObject.host}${urlObject.pathname}?${params.toString()}#${urlObject.hash}`
     ).toString();

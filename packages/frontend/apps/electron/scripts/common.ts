@@ -1,8 +1,8 @@
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// eslint-disable-next-line @typescript-eslint/no-restricted-imports
-import { getBuildConfig } from '@affine/cli/src/webpack/runtime-config';
+import { getBuildConfig } from '@affine-tools/utils/build-config';
+import { Package } from '@affine-tools/utils/workspace';
 import { sentryEsbuildPlugin } from '@sentry/esbuild-plugin';
 import type { BuildOptions, Plugin } from 'esbuild';
 
@@ -24,12 +24,10 @@ export const config = (): BuildOptions => {
     'process.env.NODE_ENV': process.env.NODE_ENV,
     REPLACE_ME_BUILD_ENV: process.env.BUILD_TYPE ?? 'stable',
     ...Object.entries(
-      getBuildConfig({
-        channel: (process.env.BUILD_TYPE as any) ?? 'canary',
-        distribution: 'desktop',
+      getBuildConfig(new Package('@affine/electron'), {
         mode:
           process.env.NODE_ENV === 'production' ? 'production' : 'development',
-        static: false,
+        channel: (process.env.BUILD_TYPE as any) ?? 'canary',
       })
     ).reduce(
       (def, [key, val]) => {

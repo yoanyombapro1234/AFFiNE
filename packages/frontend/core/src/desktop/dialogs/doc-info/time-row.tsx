@@ -1,12 +1,9 @@
 import { PropertyName, PropertyRoot, PropertyValue } from '@affine/component';
+import { DocsService } from '@affine/core/modules/doc';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import { i18nTime, useI18n } from '@affine/i18n';
 import { DateTimeIcon, HistoryIcon } from '@blocksuite/icons/rc';
-import {
-  DocsService,
-  useLiveData,
-  useService,
-  WorkspaceService,
-} from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import clsx from 'clsx';
 import type { ConfigType } from 'dayjs';
 import { useDebouncedValue } from 'foxact/use-debounced-value';

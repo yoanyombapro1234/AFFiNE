@@ -1,20 +1,16 @@
 import { DebugLogger } from '@affine/debug';
-import type {
-  Job,
-  JobQueue,
-  WorkspaceLocalState,
-  WorkspaceService,
-} from '@toeverything/infra';
+import type { Job, JobQueue } from '@toeverything/infra';
 import {
   Entity,
   IndexedDBIndexStorage,
   IndexedDBJobQueue,
   JobRunner,
   LiveData,
-  WorkspaceDBService,
 } from '@toeverything/infra';
 import { map } from 'rxjs';
 
+import { WorkspaceDBService } from '../../db';
+import type { WorkspaceLocalState, WorkspaceService } from '../../workspace';
 import { blockIndexSchema, docIndexSchema } from '../schema';
 import { createWorker, type IndexerWorker } from '../worker/out-worker';
 
@@ -36,7 +32,7 @@ export class DocsIndexer extends Entity {
   /**
    * increase this number to re-index all docs
    */
-  static INDEXER_VERSION = 6;
+  static INDEXER_VERSION = 17;
 
   private readonly jobQueue: JobQueue<IndexerJobPayload> =
     new IndexedDBJobQueue<IndexerJobPayload>(
@@ -85,24 +81,26 @@ export class DocsIndexer extends Entity {
   }
 
   setupListener() {
-    this.workspaceEngine.doc.storage.eventBus.on(event => {
-      if (WorkspaceDBService.isDBDocId(event.docId)) {
-        // skip db doc
-        return;
-      }
-      if (event.clientId === this.workspaceEngine.doc.clientId) {
-        this.jobQueue
-          .enqueue([
-            {
-              batchKey: event.docId,
-              payload: { storageDocId: event.docId },
-            },
-          ])
-          .catch(err => {
-            console.error('Error enqueueing job', err);
-          });
-      }
-    });
+    this.disposables.push(
+      this.workspaceEngine.doc.storage.eventBus.on(event => {
+        if (WorkspaceDBService.isDBDocId(event.docId)) {
+          // skip db doc
+          return;
+        }
+        if (event.clientId === this.workspaceEngine.doc.clientId) {
+          this.jobQueue
+            .enqueue([
+              {
+                batchKey: event.docId,
+                payload: { storageDocId: event.docId },
+              },
+            ])
+            .catch(err => {
+              console.error('Error enqueueing job', err);
+            });
+        }
+      })
+    );
   }
 
   async execJob(jobs: Job<IndexerJobPayload>[], signal: AbortSignal) {
@@ -146,6 +144,7 @@ export class DocsIndexer extends Entity {
         allIndexedDocs,
         rootDocBuffer,
         reindexAll: isUpgrade,
+        rootDocId: this.workspaceId,
       });
     } else {
       const rootDocBuffer =
@@ -167,6 +166,7 @@ export class DocsIndexer extends Entity {
         docBuffer,
         storageDocId,
         rootDocBuffer,
+        rootDocId: this.workspaceId,
       });
     }
 
@@ -296,6 +296,8 @@ export class DocsIndexer extends Entity {
   }
 
   override dispose(): void {
+    super.dispose();
     this.runner.stop();
+    this.worker?.dispose();
   }
 }

@@ -3,13 +3,10 @@ import { DesktopApiService } from '@affine/core/modules/desktop-api';
 import { GlobalDialogService } from '@affine/core/modules/dialogs';
 import { I18nService } from '@affine/core/modules/i18n';
 import { UrlService } from '@affine/core/modules/url';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import { useI18n } from '@affine/i18n';
 import type { AffineEditorContainer } from '@blocksuite/affine/presets';
-import {
-  useService,
-  useServiceOptional,
-  WorkspaceService,
-} from '@toeverything/infra';
+import { useService, useServiceOptional } from '@toeverything/infra';
 import { useStore } from 'jotai';
 import { useTheme } from 'next-themes';
 import { useEffect } from 'react';

@@ -1,10 +1,10 @@
 import { Button } from '@affine/component';
-import { SubscriptionService } from '@affine/core/modules/cloud';
-import { SubscriptionRecurring } from '@affine/graphql';
+import { AuthService, SubscriptionService } from '@affine/core/modules/cloud';
+import { SubscriptionPlan, SubscriptionRecurring } from '@affine/graphql';
 import { Trans, useI18n } from '@affine/i18n';
 import { useLiveData, useService } from '@toeverything/infra';
 
-import { Upgrade } from '../plan-card';
+import { SignUpAction, Upgrade } from '../plan-card';
 import { BelieverCard } from './believer-card';
 import { BelieverBenefits } from './benefits';
 import * as styles from './style.css';
@@ -12,6 +12,8 @@ import * as styles from './style.css';
 export const LifetimePlan = () => {
   const t = useI18n();
   const subscriptionService = useService(SubscriptionService);
+  const loggedIn =
+    useLiveData(useService(AuthService).session.status$) === 'authenticated';
 
   const readableLifetimePrice = useLiveData(
     subscriptionService.prices.readableLifetimePrice$
@@ -32,7 +34,11 @@ export const LifetimePlan = () => {
 
       <div className={styles.price}>{readableLifetimePrice}</div>
 
-      {isBeliever ? (
+      {!loggedIn ? (
+        <SignUpAction className={styles.purchase}>
+          {t['com.affine.payment.sign-up-free']()}
+        </SignUpAction>
+      ) : isBeliever ? (
         <Button className={styles.purchase} size="default" disabled>
           {t['com.affine.payment.lifetime.purchased']()}
         </Button>
@@ -40,6 +46,7 @@ export const LifetimePlan = () => {
         <Upgrade
           className={styles.purchase}
           recurring={SubscriptionRecurring.Lifetime}
+          plan={SubscriptionPlan.Pro}
         >
           {t['com.affine.payment.lifetime.purchase']()}
         </Upgrade>

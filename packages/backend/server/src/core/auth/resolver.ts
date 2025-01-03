@@ -20,7 +20,7 @@ import {
   SkipThrottle,
   Throttle,
   URLHelper,
-} from '../../fundamentals';
+} from '../../base';
 import { Admin } from '../common';
 import { UserService } from '../user';
 import { UserType } from '../user/types';

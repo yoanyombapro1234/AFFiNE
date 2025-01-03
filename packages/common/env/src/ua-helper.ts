@@ -19,7 +19,7 @@ export class UaHelper {
       console.error('Cannot get chrome version');
       return 0;
     }
-    return parseInt(raw[2], 10);
+    return parseInt(raw[2] ?? '', 10);
   };
 
   constructor(private readonly navigator: Navigator) {

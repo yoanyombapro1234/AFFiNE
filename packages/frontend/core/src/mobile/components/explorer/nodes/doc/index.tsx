@@ -1,13 +1,13 @@
 import { Loading } from '@affine/component';
 import { WorkspaceDialogService } from '@affine/core/modules/dialogs';
+import { DocsService } from '@affine/core/modules/doc';
 import { DocDisplayMetaService } from '@affine/core/modules/doc-display-meta';
 import { DocsSearchService } from '@affine/core/modules/docs-search';
 import type { NodeOperation } from '@affine/core/modules/explorer';
+import { FeatureFlagService } from '@affine/core/modules/feature-flag';
+import { GlobalContextService } from '@affine/core/modules/global-context';
 import { useI18n } from '@affine/i18n';
 import {
-  DocsService,
-  FeatureFlagService,
-  GlobalContextService,
   LiveData,
   useLiveData,
   useService,

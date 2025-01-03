@@ -1,12 +1,14 @@
 import { toast, useConfirmModal } from '@affine/component';
 import { useBlockSuiteDocMeta } from '@affine/core/components/hooks/use-block-suite-page-meta';
 import { CollectionService } from '@affine/core/modules/collection';
+import { DocsService } from '@affine/core/modules/doc';
 import type { Tag } from '@affine/core/modules/tag';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import type { Collection, Filter } from '@affine/env/filter';
 import { Trans, useI18n } from '@affine/i18n';
 import type { DocMeta } from '@blocksuite/affine/store';
-import { DocsService, useService, WorkspaceService } from '@toeverything/infra';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useService } from '@toeverything/infra';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
 
 import { ListFloatingToolbar } from '../components/list-floating-toolbar';
 import { usePageItemGroupDefinitions } from '../group-definitions';
@@ -48,7 +50,7 @@ const usePageOperationsRenderer = () => {
   return pageOperationsRenderer;
 };
 
-export const VirtualizedPageList = ({
+export const VirtualizedPageList = memo(function VirtualizedPageList({
   tag,
   collection,
   filters,
@@ -60,7 +62,7 @@ export const VirtualizedPageList = ({
   filters?: Filter[];
   listItem?: DocMeta[];
   setHideHeaderCreateNewPage?: (hide: boolean) => void;
-}) => {
+}) {
   const t = useI18n();
   const listRef = useRef<ItemListHandle>(null);
   const [showFloatingToolbar, setShowFloatingToolbar] = useState(false);
@@ -83,8 +85,8 @@ export const VirtualizedPageList = ({
   }, [filteredPageMetas, listItem]);
 
   const filteredSelectedPageIds = useMemo(() => {
-    const ids = pageMetasToRender.map(page => page.id);
-    return selectedPageIds.filter(id => ids.includes(id));
+    const ids = new Set(pageMetasToRender.map(page => page.id));
+    return selectedPageIds.filter(id => ids.has(id));
   }, [pageMetasToRender, selectedPageIds]);
 
   const hideFloatingToolbar = useCallback(() => {
@@ -200,4 +202,4 @@ export const VirtualizedPageList = ({
       />
     </>
   );
-};
+});

@@ -1,15 +1,13 @@
+import { Page } from '@affine/core/mobile/components/page';
 import type { Tag } from '@affine/core/modules/tag';
 
-import { AppTabs } from '../../../components';
 import { AllDocList } from '../doc';
 import { TagDetailHeader } from './detail-header';
 
 export const TagDetail = ({ tag }: { tag: Tag }) => {
   return (
-    <>
-      <TagDetailHeader tag={tag} />
+    <Page header={<TagDetailHeader tag={tag} />} tab>
       <AllDocList tag={tag} />
-      <AppTabs />
-    </>
+    </Page>
   );
 };

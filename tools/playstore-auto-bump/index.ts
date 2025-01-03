@@ -1,8 +1,7 @@
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
-import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
+import { Package } from '@affine-tools/utils/workspace';
 import {
   androidpublisher_v3,
   auth as google_auth,
@@ -55,13 +54,10 @@ export async function fetchVersionCode(applicationId: string): Promise<number> {
 }
 
 const versionCodeRegexPattern = /(versionCode(?:\s|=)*)(.*)/;
-const gradlePath = join(
-  fileURLToPath(import.meta.url),
-  '..',
-  '..',
-  '..',
-  'packages/frontend/apps/android/App/app/build.gradle'
-);
+
+const gradlePath = new Package('@affine/android').join(
+  'App/app/build.gradle'
+).value;
 
 let gradleVersionCode = 0;
 

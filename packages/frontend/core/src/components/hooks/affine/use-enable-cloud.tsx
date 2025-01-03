@@ -1,14 +1,10 @@
 import { notify, useConfirmModal } from '@affine/component';
-import { authAtom } from '@affine/core/components/atoms';
-import { AuthService } from '@affine/core/modules/cloud';
+import { AuthService, ServersService } from '@affine/core/modules/cloud';
+import { GlobalDialogService } from '@affine/core/modules/dialogs';
+import type { Workspace } from '@affine/core/modules/workspace';
+import { WorkspacesService } from '@affine/core/modules/workspace';
 import { useI18n } from '@affine/i18n';
-import type { Workspace } from '@toeverything/infra';
-import {
-  useLiveData,
-  useService,
-  WorkspacesService,
-} from '@toeverything/infra';
-import { useSetAtom } from 'jotai';
+import { useLiveData, useService } from '@toeverything/infra';
 import { useCallback } from 'react';
 
 import { useNavigateHelper } from '../use-navigate-helper';
@@ -23,6 +19,7 @@ interface ConfirmEnableCloudOptions {
    */
   onFinished?: () => void;
   openPageId?: string;
+  serverId?: string;
 }
 type ConfirmEnableArgs = [Workspace, ConfirmEnableCloudOptions | undefined];
 
@@ -31,9 +28,12 @@ export const useEnableCloud = () => {
   const authService = useService(AuthService);
   const account = useLiveData(authService.session.account$);
   const loginStatus = useLiveData(useService(AuthService).session.status$);
-  const setAuthAtom = useSetAtom(authAtom);
+  const globalDialogService = useService(GlobalDialogService);
   const { openConfirmModal, closeConfirmModal } = useConfirmModal();
   const workspacesService = useService(WorkspacesService);
+  const serversService = useService(ServersService);
+  const serverList = useLiveData(serversService.servers$);
+
   const { jumpToPage } = useNavigateHelper();
 
   const enableCloud = useCallback(
@@ -43,7 +43,8 @@ export const useEnableCloud = () => {
         if (!account) return;
         const { id: newId } = await workspacesService.transformLocalToCloud(
           ws,
-          account.id
+          account.id,
+          'affine-cloud'
         );
         jumpToPage(newId, options?.openPageId || 'all');
         options?.onSuccess?.();
@@ -57,9 +58,13 @@ export const useEnableCloud = () => {
     [account, jumpToPage, t, workspacesService]
   );
 
-  const openSignIn = useCallback(() => {
-    setAuthAtom(prev => ({ ...prev, openModal: true }));
-  }, [setAuthAtom]);
+  const openSignIn = useCallback(
+    () =>
+      globalDialogService.open('sign-in', {
+        step: 'signIn',
+      }),
+    [globalDialogService]
+  );
 
   const signInOrEnableCloud = useCallback(
     async (...args: ConfirmEnableArgs) => {
@@ -77,12 +82,21 @@ export const useEnableCloud = () => {
 
   const confirmEnableCloud = useCallback(
     (ws: Workspace, options?: ConfirmEnableCloudOptions) => {
-      const { onSuccess, onFinished } = options ?? {};
+      const { onSuccess, onFinished, serverId, openPageId } = options ?? {};
 
       const closeOnSuccess = () => {
         closeConfirmModal();
         onSuccess?.();
       };
+
+      if (serverList.length > 1) {
+        globalDialogService.open('enable-cloud', {
+          workspaceId: ws.id,
+          serverId,
+          openPageId,
+        });
+        return;
+      }
 
       openConfirmModal(
         {
@@ -111,7 +125,15 @@ export const useEnableCloud = () => {
         }
       );
     },
-    [closeConfirmModal, loginStatus, openConfirmModal, signInOrEnableCloud, t]
+    [
+      closeConfirmModal,
+      globalDialogService,
+      loginStatus,
+      openConfirmModal,
+      serverList.length,
+      signInOrEnableCloud,
+      t,
+    ]
   );
 
   return confirmEnableCloud;

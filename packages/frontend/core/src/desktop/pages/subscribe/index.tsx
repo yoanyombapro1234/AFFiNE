@@ -34,6 +34,8 @@ const products = {
   pro: 'pro_yearly',
   'monthly-pro': 'pro_monthly',
   believer: 'pro_lifetime',
+  team: 'team_yearly',
+  'monthly-team': 'team_monthly',
   'oneyear-ai': 'ai_yearly_onetime',
   'oneyear-pro': 'pro_yearly_onetime',
   'onemonth-pro': 'pro_monthly_onetime',
@@ -42,6 +44,7 @@ const products = {
 const allowedPlan = {
   ai: SubscriptionPlan.AI,
   pro: SubscriptionPlan.Pro,
+  team: SubscriptionPlan.Team,
 };
 const allowedRecurring = {
   monthly: SubscriptionRecurring.Monthly,

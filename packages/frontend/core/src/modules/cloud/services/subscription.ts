@@ -4,8 +4,8 @@ import { OnEvent, Service } from '@toeverything/infra';
 
 import { Subscription } from '../entities/subscription';
 import { SubscriptionPrices } from '../entities/subscription-prices';
+import { AccountChanged } from '../events/account-changed';
 import type { SubscriptionStore } from '../stores/subscription';
-import { AccountChanged } from './auth';
 
 @OnEvent(AccountChanged, e => e.onAccountChanged)
 export class SubscriptionService extends Service {

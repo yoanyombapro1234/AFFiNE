@@ -6,9 +6,10 @@ export {
 } from './utils';
 export { NavigationButtons } from './view/navigation-buttons';
 
-import { type Framework, WorkspaceScope } from '@toeverything/infra';
+import { type Framework } from '@toeverything/infra';
 
 import { WorkbenchService } from '../workbench/services/workbench';
+import { WorkspaceScope } from '../workspace';
 import { Navigator } from './entities/navigator';
 import { NavigatorService } from './services/navigator';
 

@@ -3,22 +3,18 @@ import { UserFriendlyError } from '@affine/graphql';
 import { fromPromise, Service } from '@toeverything/infra';
 
 import { BackendError, NetworkError } from '../error';
-import type { FetchProvider } from '../provider/fetch';
-
-export function getAffineCloudBaseUrl(): string {
-  if (BUILD_CONFIG.isElectron || BUILD_CONFIG.isIOS || BUILD_CONFIG.isAndroid) {
-    return BUILD_CONFIG.serverUrlPrefix;
-  }
-  const { protocol, hostname, port } = window.location;
-  return `${protocol}//${hostname}${port ? `:${port}` : ''}`;
-}
+import type { RawFetchProvider } from '../provider/fetch';
+import type { ServerService } from './server';
 
 const logger = new DebugLogger('affine:fetch');
 
 export type FetchInit = RequestInit & { timeout?: number };
 
 export class FetchService extends Service {
-  constructor(private readonly fetchProvider: FetchProvider) {
+  constructor(
+    private readonly fetchProvider: RawFetchProvider,
+    private readonly serverService: ServerService
+  ) {
     super();
   }
   rxFetch = (
@@ -55,9 +51,13 @@ export class FetchService extends Service {
     }, timeout);
 
     const res = await this.fetchProvider
-      .fetch(new URL(input, getAffineCloudBaseUrl()), {
+      .fetch(new URL(input, this.serverService.server.serverMetadata.baseUrl), {
         ...init,
         signal: abortController.signal,
+        headers: {
+          ...init?.headers,
+          'x-affine-version': BUILD_CONFIG.appVersion,
+        },
       })
       .catch(err => {
         logger.debug('network error', err);

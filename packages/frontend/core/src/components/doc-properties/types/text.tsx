@@ -78,7 +78,7 @@ const MobileTextValue = ({
 }: PropertyValueProps) => {
   const [open, setOpen] = useState(false);
 
-  const [tempValue, setTempValue] = useState<string>(value);
+  const [tempValue, setTempValue] = useState<string>(value || '');
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     setOpen(true);
@@ -111,20 +111,21 @@ const MobileTextValue = ({
   }, [onChange, tempValue]);
   const t = useI18n();
   useEffect(() => {
-    setTempValue(value);
+    setTempValue(value || '');
   }, [value]);
 
   return (
-    <PropertyValue
-      className={styles.textPropertyValueContainer}
-      onClick={handleClick}
-      isEmpty={!value}
-    >
-      <div className={styles.mobileTextareaPlain} data-empty={!tempValue}>
-        {tempValue ||
-          t['com.affine.page-properties.property-value-placeholder']()}
-      </div>
-
+    <>
+      <PropertyValue
+        className={styles.textPropertyValueContainer}
+        onClick={handleClick}
+        isEmpty={!value}
+      >
+        <div className={styles.mobileTextareaPlain} data-empty={!tempValue}>
+          {tempValue ||
+            t['com.affine.page-properties.property-value-placeholder']()}
+        </div>
+      </PropertyValue>
       <ConfigModal
         open={open}
         onOpenChange={setOpen}
@@ -154,7 +155,7 @@ const MobileTextValue = ({
           </div>
         </div>
       </ConfigModal>
-    </PropertyValue>
+    </>
   );
 };
 

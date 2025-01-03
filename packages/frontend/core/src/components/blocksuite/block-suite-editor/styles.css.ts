@@ -2,15 +2,21 @@ import { cssVar } from '@toeverything/theme';
 import { style, type StyleRule } from '@vanilla-extract/css';
 
 export const docEditorRoot = style({
-  display: 'block',
-  background: cssVar('backgroundPrimaryColor'),
   overflowX: 'clip',
+  display: 'flex',
+  flexDirection: 'column',
 });
 
 export const affineDocViewport = style({
+  height: '100%',
+  flex: 1,
   display: 'flex',
   flexDirection: 'column',
   paddingBottom: '100px',
+});
+export const affineEdgelessDocViewport = style({
+  height: '100%',
+  flex: 1,
 });
 
 export const docContainer = style({

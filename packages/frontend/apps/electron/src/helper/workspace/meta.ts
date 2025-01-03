@@ -1,9 +1,9 @@
 import path from 'node:path';
 
+import type { SpaceType } from '@affine/nbstore';
 import fs from 'fs-extra';
 
 import { isWindows } from '../../shared/utils';
-import type { SpaceType } from '../db/types';
 import { logger } from '../logger';
 import { mainRPC } from '../main-rpc';
 import type { WorkspaceMeta } from '../type';
@@ -22,7 +22,7 @@ export async function getWorkspacesBasePath() {
   return path.join(await getAppDataPath(), 'workspaces');
 }
 
-export async function getWorkspaceBasePath(
+export async function getWorkspaceBasePathV1(
   spaceType: SpaceType,
   workspaceId: string
 ) {
@@ -30,6 +30,34 @@ export async function getWorkspaceBasePath(
     await getAppDataPath(),
     spaceType === 'userspace' ? 'userspaces' : 'workspaces',
     isWindows() ? workspaceId.replace(':', '_') : workspaceId
+  );
+}
+
+export async function getSpaceBasePath(spaceType: SpaceType) {
+  return path.join(
+    await getAppDataPath(),
+    spaceType === 'userspace' ? 'userspaces' : 'workspaces'
+  );
+}
+
+export function escapeFilename(name: string) {
+  // replace all special characters with '_' and replace repeated '_' with a single '_' and remove trailing '_'
+  return name
+    .replaceAll(/[\\/!@#$%^&*()+~`"':;,?<>|]/g, '_')
+    .replaceAll(/_+/g, '_')
+    .replace(/_+$/, '');
+}
+
+export async function getSpaceDBPath(
+  peer: string,
+  spaceType: SpaceType,
+  id: string
+) {
+  return path.join(
+    await getSpaceBasePath(spaceType),
+    escapeFilename(peer),
+    id,
+    'storage.db'
   );
 }
 
@@ -42,7 +70,7 @@ export async function getWorkspaceDBPath(
   workspaceId: string
 ) {
   return path.join(
-    await getWorkspaceBasePath(spaceType, workspaceId),
+    await getWorkspaceBasePathV1(spaceType, workspaceId),
     'storage.db'
   );
 }
@@ -52,7 +80,7 @@ export async function getWorkspaceMetaPath(
   workspaceId: string
 ) {
   return path.join(
-    await getWorkspaceBasePath(spaceType, workspaceId),
+    await getWorkspaceBasePathV1(spaceType, workspaceId),
     'meta.json'
   );
 }
@@ -66,7 +94,7 @@ export async function getWorkspaceMeta(
   workspaceId: string
 ): Promise<WorkspaceMeta> {
   try {
-    const basePath = await getWorkspaceBasePath(spaceType, workspaceId);
+    const basePath = await getWorkspaceBasePathV1(spaceType, workspaceId);
     const metaPath = await getWorkspaceMetaPath(spaceType, workspaceId);
     if (
       !(await fs

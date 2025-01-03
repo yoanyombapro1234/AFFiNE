@@ -6,10 +6,7 @@ import type {
 import { Injectable, UseGuards } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 
-import {
-  ActionForbidden,
-  getRequestResponseFromContext,
-} from '../../fundamentals';
+import { ActionForbidden, getRequestResponseFromContext } from '../../base';
 import { FeatureManagementService } from '../features/management';
 
 @Injectable()

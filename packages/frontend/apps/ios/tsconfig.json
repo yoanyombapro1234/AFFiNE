@@ -8,5 +8,9 @@
     "rootDir": "./src"
   },
   "include": ["./src"],
-  "references": [{ "path": "../../core" }]
+  "references": [
+    { "path": "../../core" },
+    { "path": "../../native" },
+    { "path": "../../../common/nbstore" }
+  ]
 }

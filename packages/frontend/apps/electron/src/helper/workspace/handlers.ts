@@ -2,17 +2,17 @@ import path from 'node:path';
 
 import fs from 'fs-extra';
 
-import { ensureSQLiteDB } from '../db/ensure-db';
 import { logger } from '../logger';
+import { ensureSQLiteDB } from '../nbstore/v1/ensure-db';
 import type { WorkspaceMeta } from '../type';
 import {
   getDeletedWorkspacesBasePath,
-  getWorkspaceBasePath,
+  getWorkspaceBasePathV1,
   getWorkspaceMeta,
 } from './meta';
 
 export async function deleteWorkspace(id: string) {
-  const basePath = await getWorkspaceBasePath('workspace', id);
+  const basePath = await getWorkspaceBasePathV1('workspace', id);
   const movedPath = path.join(await getDeletedWorkspacesBasePath(), `${id}`);
   try {
     const db = await ensureSQLiteDB('workspace', id);
@@ -30,7 +30,7 @@ export async function storeWorkspaceMeta(
   meta: Partial<WorkspaceMeta>
 ) {
   try {
-    const basePath = await getWorkspaceBasePath('workspace', workspaceId);
+    const basePath = await getWorkspaceBasePathV1('workspace', workspaceId);
     await fs.ensureDir(basePath);
     const metaPath = path.join(basePath, 'meta.json');
     const currentMeta = await getWorkspaceMeta('workspace', workspaceId);

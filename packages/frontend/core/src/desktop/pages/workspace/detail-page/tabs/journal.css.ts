@@ -251,7 +251,3 @@ export const journalDateCellDot = style({
   left: '50%',
   transform: 'translateX(-50%)',
 });
-
-export const journalDateCellWrapper = style({
-  height: 34,
-});

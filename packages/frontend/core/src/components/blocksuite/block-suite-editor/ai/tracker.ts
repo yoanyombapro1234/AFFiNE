@@ -255,9 +255,7 @@ export function setupTracker() {
   });
 
   AIProvider.slots.requestLogin.on(() => {
-    track.$.$.auth.signIn({
-      control: 'aiAction',
-    });
+    track.doc.editor.aiActions.requestSignIn();
   });
 
   AIProvider.slots.actions.on(event => {

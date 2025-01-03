@@ -13,6 +13,7 @@ import {
 
 import type { HelperToMain, MainToHelper } from '../shared/type';
 import { MessageEventChannel } from '../shared/utils';
+import { beforeAppQuit } from './cleanup';
 import { logger } from './logger';
 
 const HELPER_PROCESS_PATH = path.join(__dirname, './helper.js');
@@ -65,7 +66,7 @@ class HelperProcessManager {
       });
     });
 
-    app.on('before-quit', () => {
+    beforeAppQuit(() => {
       this.#process.kill();
     });
   }
@@ -78,8 +79,12 @@ class HelperProcessManager {
     renderer.postMessage('helper-connection', null, [rendererPort]);
 
     return () => {
-      helperPort.close();
-      rendererPort.close();
+      try {
+        helperPort.close();
+        rendererPort.close();
+      } catch (err) {
+        logger.error('[helper] close port error', err);
+      }
     };
   }
 

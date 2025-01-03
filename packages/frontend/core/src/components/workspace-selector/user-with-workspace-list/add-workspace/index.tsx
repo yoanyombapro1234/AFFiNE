@@ -1,11 +1,8 @@
 import { MenuItem } from '@affine/component/ui/menu';
+import { FeatureFlagService } from '@affine/core/modules/feature-flag';
 import { useI18n } from '@affine/i18n';
 import { ImportIcon, PlusIcon } from '@blocksuite/icons/rc';
-import {
-  FeatureFlagService,
-  useLiveData,
-  useService,
-} from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 
 import * as styles from './index.css';
 

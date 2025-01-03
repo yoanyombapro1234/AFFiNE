@@ -10,15 +10,15 @@ import {
 import { ConnectedAccount, PrismaClient } from '@prisma/client';
 import type { Request, Response } from 'express';
 
-import { AuthService, Public } from '../../core/auth';
-import { UserService } from '../../core/user';
 import {
   InvalidOauthCallbackState,
   MissingOauthQueryParameter,
   OauthAccountAlreadyConnected,
   OauthStateExpired,
   UnknownOauthProvider,
-} from '../../fundamentals';
+} from '../../base';
+import { AuthService, Public } from '../../core/auth';
+import { UserService } from '../../core/user';
 import { OAuthProviderName } from './config';
 import { OAuthAccount, Tokens } from './providers/def';
 import { OAuthProviderFactory } from './register';

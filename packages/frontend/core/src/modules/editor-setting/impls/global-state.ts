@@ -1,7 +1,7 @@
-import type { GlobalState } from '@toeverything/infra';
 import { Service } from '@toeverything/infra';
 import { map, type Observable } from 'rxjs';
 
+import type { GlobalState } from '../../storage';
 import type { EditorSettingProvider } from '../provider/editor-setting-provider';
 
 const storageKey = 'editor-setting';

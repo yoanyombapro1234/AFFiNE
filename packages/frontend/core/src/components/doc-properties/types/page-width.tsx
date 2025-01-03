@@ -1,13 +1,14 @@
 import { PropertyValue, RadioGroup, type RadioItem } from '@affine/component';
+import { DocService } from '@affine/core/modules/doc';
 import { EditorSettingService } from '@affine/core/modules/editor-setting';
 import { useI18n } from '@affine/i18n';
-import { DocService, useLiveData, useService } from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import { useCallback, useMemo } from 'react';
 
 import { container } from './page-width.css';
-import type { PageLayoutMode } from './types';
+import type { PageLayoutMode, PropertyValueProps } from './types';
 
-export const PageWidthValue = () => {
+export const PageWidthValue = ({ onChange }: PropertyValueProps) => {
   const t = useI18n();
   const editorSetting = useService(EditorSettingService).editorSetting;
   const defaultPageWidth = useLiveData(editorSetting.settings$).fullWidthLayout;
@@ -44,13 +45,14 @@ export const PageWidthValue = () => {
   const handleChange = useCallback(
     (value: PageLayoutMode) => {
       doc.record.setProperty('pageWidth', value);
+      onChange?.(value, true);
     },
-    [doc]
+    [doc, onChange]
   );
   return (
     <PropertyValue className={container} hoverable={false}>
       <RadioGroup
-        width={194}
+        width={BUILD_CONFIG.isMobileEdition ? '100%' : 194}
         itemHeight={24}
         value={radioValue}
         onChange={handleChange}

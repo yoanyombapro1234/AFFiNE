@@ -8,21 +8,18 @@ import {
   DropEffect,
   ExplorerTreeRoot,
 } from '@affine/core/modules/explorer/views/tree';
-import type { FavoriteSupportType } from '@affine/core/modules/favorite';
+import type { FavoriteSupportTypeUnion } from '@affine/core/modules/favorite';
 import {
   FavoriteService,
   isFavoriteSupportType,
 } from '@affine/core/modules/favorite';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import type { AffineDNDData } from '@affine/core/types/dnd';
 import { isNewTabTrigger } from '@affine/core/utils';
 import { useI18n } from '@affine/i18n';
 import { track } from '@affine/track';
 import { PlusIcon } from '@blocksuite/icons/rc';
-import {
-  useLiveData,
-  useServices,
-  WorkspaceService,
-} from '@toeverything/infra';
+import { useLiveData, useServices } from '@toeverything/infra';
 import { type MouseEventHandler, useCallback } from 'react';
 
 import { ExplorerService } from '../../../services/explorer';
@@ -73,6 +70,9 @@ export const ExplorerFavorites = () => {
           type: data.source.data.entity.type,
           on: true,
         });
+        track.$.navigationPanel.favorites.drop({
+          type: data.source.data.entity.type,
+        });
         explorerSection.setCollapsed(false);
       }
     },
@@ -97,7 +97,7 @@ export const ExplorerFavorites = () => {
 
   const handleOnChildrenDrop = useCallback(
     (
-      favorite: { id: string; type: FavoriteSupportType },
+      favorite: { id: string; type: FavoriteSupportTypeUnion },
       data: DropTargetDropEvent<AffineDNDData>
     ) => {
       if (
@@ -141,6 +141,9 @@ export const ExplorerFavorites = () => {
             type: data.source.data.entity.type,
             on: true,
           });
+          track.$.navigationPanel.favorites.drop({
+            type: data.source.data.entity.type,
+          });
         } else {
           return; // not supported
         }
@@ -157,6 +160,7 @@ export const ExplorerFavorites = () => {
         },
         onDrop: handleDrop,
         canDrop: favoriteRootCanDrop,
+        allowExternal: true,
       }),
       [handleDrop]
     );
@@ -219,12 +223,12 @@ const ExplorerFavoriteNode = ({
 }: {
   favorite: {
     id: string;
-    type: FavoriteSupportType;
+    type: FavoriteSupportTypeUnion;
   };
   onDrop: (
     favorite: {
       id: string;
-      type: FavoriteSupportType;
+      type: FavoriteSupportTypeUnion;
     },
     data: DropTargetDropEvent<AffineDNDData>
   ) => void;

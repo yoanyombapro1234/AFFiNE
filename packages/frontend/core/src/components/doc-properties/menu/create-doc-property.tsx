@@ -1,12 +1,9 @@
 import { MenuItem, MenuSeparator } from '@affine/component';
+import type { DocCustomPropertyInfo } from '@affine/core/modules/db';
+import { DocsService } from '@affine/core/modules/doc';
 import { generateUniqueNameInSequence } from '@affine/core/utils/unique-name';
 import { useI18n } from '@affine/i18n';
-import {
-  type DocCustomPropertyInfo,
-  DocsService,
-  useLiveData,
-  useService,
-} from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import { useCallback } from 'react';
 
 import {

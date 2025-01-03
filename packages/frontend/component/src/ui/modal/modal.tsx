@@ -10,12 +10,19 @@ import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import { assignInlineVars } from '@vanilla-extract/dynamic';
 import clsx from 'clsx';
 import type { CSSProperties } from 'react';
-import { forwardRef, useCallback, useEffect, useState } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 
 import { startScopedViewTransition } from '../../utils';
 import type { IconButtonProps } from '../button';
 import { IconButton } from '../button';
 import { SafeArea } from '../safe-area';
+import { InsideModalContext, ModalConfigContext } from './context';
 import * as styles from './styles.css';
 
 export interface ModalProps extends DialogProps {
@@ -41,11 +48,12 @@ export interface ModalProps extends DialogProps {
   /**
    * @default 'fadeScaleTop'
    */
-  animation?: 'fadeScaleTop' | 'none' | 'slideBottom';
+  animation?: 'fadeScaleTop' | 'none' | 'slideBottom' | 'slideRight';
   /**
    * Whether to show the modal in full screen mode
    */
   fullScreen?: boolean;
+  disableAutoFocus?: boolean;
 }
 type PointerDownOutsideEvent = Parameters<
   Exclude<DialogContentProps['onPointerDownOutside'], undefined>
@@ -76,7 +84,7 @@ class ModalTransitionContainer extends HTMLElement {
       this.requestTransition();
       return child;
     } else {
-      // eslint-disable-next-line unicorn/prefer-dom-node-remove
+      // oxlint-disable-next-line unicorn/prefer-dom-node-remove
       return super.removeChild(child);
     }
   }
@@ -98,7 +106,7 @@ class ModalTransitionContainer extends HTMLElement {
       });
       startScopedViewTransition(styles.modalVTScope, () => {
         nodes.forEach(child => {
-          // eslint-disable-next-line unicorn/prefer-dom-node-remove
+          // oxlint-disable-next-line unicorn/prefer-dom-node-remove
           super.removeChild(child);
         });
       });
@@ -123,6 +131,7 @@ function createContainer() {
 
 export const ModalInner = forwardRef<HTMLDivElement, ModalProps>(
   (props, ref) => {
+    const { onOpen: modalConfigOnOpen } = useContext(ModalConfigContext);
     const {
       modal,
       portalOptions,
@@ -155,6 +164,7 @@ export const ModalInner = forwardRef<HTMLDivElement, ModalProps>(
       contentWrapperStyle,
       animation = BUILD_CONFIG.isMobileEdition ? 'slideBottom' : 'fadeScaleTop',
       fullScreen,
+      disableAutoFocus,
       ...otherProps
     } = props;
     const { className: closeButtonClassName, ...otherCloseButtonProps } =
@@ -163,6 +173,11 @@ export const ModalInner = forwardRef<HTMLDivElement, ModalProps>(
     const [container, setContainer] = useState<ModalTransitionContainer | null>(
       null
     );
+
+    useEffect(() => {
+      if (open) return modalConfigOnOpen?.();
+      return;
+    }, [modalConfigOnOpen, open]);
 
     useEffect(() => {
       if (open) {
@@ -193,6 +208,13 @@ export const ModalInner = forwardRef<HTMLDivElement, ModalProps>(
         persistent && e.preventDefault();
       },
       [onEscapeKeyDown, persistent]
+    );
+
+    const handleAutoFocus = useCallback(
+      (e: Event) => {
+        disableAutoFocus && e.preventDefault();
+      },
+      [disableAutoFocus]
     );
 
     if (!container) {
@@ -236,6 +258,7 @@ export const ModalInner = forwardRef<HTMLDivElement, ModalProps>(
                 onPointerDownOutside={handlePointerDownOutSide}
                 onEscapeKeyDown={handleEscapeKeyDown}
                 className={clsx(styles.modalContent, contentClassName)}
+                onOpenAutoFocus={handleAutoFocus}
                 style={{
                   ...assignInlineVars({
                     [styles.widthVar]: getVar(
@@ -304,10 +327,20 @@ export const ModalInner = forwardRef<HTMLDivElement, ModalProps>(
 ModalInner.displayName = 'ModalInner';
 
 export const Modal = forwardRef<HTMLDivElement, ModalProps>((props, ref) => {
+  const insideModal = useContext(InsideModalContext);
   if (!props.open) {
     return;
   }
-  return <ModalInner {...props} ref={ref} />;
+  return (
+    <InsideModalContext.Provider value={insideModal + 1}>
+      <ModalInner {...props} ref={ref} />
+    </InsideModalContext.Provider>
+  );
 });
 
 Modal.displayName = 'Modal';
+
+export const useIsInsideModal = () => {
+  const context = useContext(InsideModalContext);
+  return context > 0;
+};

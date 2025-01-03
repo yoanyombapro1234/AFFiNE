@@ -1,4 +1,4 @@
-import { notify, Scrollable } from '@affine/component';
+import { Scrollable } from '@affine/component';
 import { PageDetailSkeleton } from '@affine/component/page-detail-skeleton';
 import type { ChatPanel } from '@affine/core/blocksuite/presets/ai';
 import { AIProvider } from '@affine/core/blocksuite/presets/ai';
@@ -7,10 +7,13 @@ import { EditorOutlineViewer } from '@affine/core/components/blocksuite/outline-
 import { DocPropertySidebar } from '@affine/core/components/doc-properties/sidebar';
 import { useAppSettingHelper } from '@affine/core/components/hooks/affine/use-app-setting-helper';
 import { useDocMetaHelper } from '@affine/core/components/hooks/use-block-suite-page-meta';
+import { DocService } from '@affine/core/modules/doc';
 import { EditorService } from '@affine/core/modules/editor';
+import { FeatureFlagService } from '@affine/core/modules/feature-flag';
+import { GlobalContextService } from '@affine/core/modules/global-context';
 import { RecentDocsService } from '@affine/core/modules/quicksearch';
-import { ViewService } from '@affine/core/modules/workbench/services/view';
-import { useI18n } from '@affine/i18n';
+import { ViewService } from '@affine/core/modules/workbench';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import { RefNodeSlotsProvider } from '@blocksuite/affine/blocks';
 import { DisposableGroup } from '@blocksuite/affine/global/utils';
 import { type AffineEditorContainer } from '@blocksuite/affine/presets';
@@ -22,14 +25,10 @@ import {
   TodayIcon,
 } from '@blocksuite/icons/rc';
 import {
-  DocService,
-  FeatureFlagService,
   FrameworkScope,
-  GlobalContextService,
   useLiveData,
   useService,
   useServices,
-  WorkspaceService,
 } from '@toeverything/infra';
 import clsx from 'clsx';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
@@ -102,7 +101,6 @@ const DetailPageImpl = memo(function DetailPageImpl() {
   // TODO(@eyhn): remove jotai here
   const [_, setActiveBlockSuiteEditor] = useActiveBlocksuiteEditor();
 
-  const t = useI18n();
   const enableAI = featureFlagService.flags.enable_ai.value;
 
   useEffect(() => {
@@ -203,22 +201,6 @@ const DetailPageImpl = memo(function DetailPageImpl() {
         }
       }
 
-      disposable.add(
-        AIProvider.slots.requestRunInEdgeless.on(({ host }) => {
-          if (host === editorHost) {
-            notify.warning({
-              title: t['com.affine.ai.action.edgeless-only.dialog-title'](),
-              action: {
-                label: t['Switch'](),
-                onClick: () => {
-                  editor.setMode('edgeless');
-                },
-              },
-            });
-          }
-        })
-      );
-
       const unbind = editor.bindEditorContainer(
         editorContainer,
         (editorContainer as any).docTitle, // set from proxy
@@ -230,7 +212,7 @@ const DetailPageImpl = memo(function DetailPageImpl() {
         disposable.dispose();
       };
     },
-    [editor, openPage, docCollection.id, jumpToPageBlock, t]
+    [editor, openPage, docCollection.id, jumpToPageBlock]
   );
 
   const [hasScrollTop, setHasScrollTop] = useState(false);
@@ -249,10 +231,16 @@ const DetailPageImpl = memo(function DetailPageImpl() {
     setHasScrollTop(hasScrollTop);
   }, []);
 
+  const [dragging, setDragging] = useState(false);
+
   return (
     <FrameworkScope scope={editor.scope}>
       <ViewHeader>
-        <DetailPageHeader page={doc.blockSuiteDoc} workspace={workspace} />
+        <DetailPageHeader
+          page={doc.blockSuiteDoc}
+          workspace={workspace}
+          onDragging={setDragging}
+        />
       </ViewHeader>
       <ViewBody>
         <div
@@ -267,6 +255,7 @@ const DetailPageImpl = memo(function DetailPageImpl() {
               <Scrollable.Viewport
                 onScroll={handleScroll}
                 ref={scrollViewportRef}
+                data-dragging={dragging}
                 className={clsx(
                   'affine-page-viewport',
                   styles.affineDocViewport,
@@ -302,19 +291,39 @@ const DetailPageImpl = memo(function DetailPageImpl() {
       )}
 
       <ViewSidebarTab tabId="properties" icon={<PropertyIcon />}>
-        <DocPropertySidebar />
+        <Scrollable.Root className={styles.sidebarScrollArea}>
+          <Scrollable.Viewport>
+            <DocPropertySidebar />
+          </Scrollable.Viewport>
+          <Scrollable.Scrollbar />
+        </Scrollable.Root>
       </ViewSidebarTab>
 
       <ViewSidebarTab tabId="journal" icon={<TodayIcon />}>
-        <EditorJournalPanel />
+        <Scrollable.Root className={styles.sidebarScrollArea}>
+          <Scrollable.Viewport>
+            <EditorJournalPanel />
+          </Scrollable.Viewport>
+          <Scrollable.Scrollbar />
+        </Scrollable.Root>
       </ViewSidebarTab>
 
       <ViewSidebarTab tabId="outline" icon={<TocIcon />}>
-        <EditorOutlinePanel editor={editorContainer} />
+        <Scrollable.Root className={styles.sidebarScrollArea}>
+          <Scrollable.Viewport>
+            <EditorOutlinePanel editor={editorContainer} />
+          </Scrollable.Viewport>
+          <Scrollable.Scrollbar />
+        </Scrollable.Root>
       </ViewSidebarTab>
 
       <ViewSidebarTab tabId="frame" icon={<FrameIcon />}>
-        <EditorFramePanel editor={editorContainer} />
+        <Scrollable.Root className={styles.sidebarScrollArea}>
+          <Scrollable.Viewport>
+            <EditorFramePanel editor={editorContainer} />
+          </Scrollable.Viewport>
+          <Scrollable.Scrollbar />
+        </Scrollable.Root>
       </ViewSidebarTab>
 
       <GlobalPageHistoryModal />

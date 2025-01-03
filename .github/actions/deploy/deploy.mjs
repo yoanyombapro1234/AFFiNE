@@ -41,7 +41,7 @@ const isBeta = buildType === 'beta';
 const isInternal = buildType === 'internal';
 
 const replicaConfig = {
-  production: {
+  stable: {
     web: 3,
     graphql: Number(process.env.PRODUCTION_GRAPHQL_REPLICA) || 3,
     sync: Number(process.env.PRODUCTION_SYNC_REPLICA) || 3,

@@ -1,7 +1,7 @@
 import type { ClientOptions as OpenAIClientOptions } from 'openai';
 
-import { defineStartupConfig, ModuleConfig } from '../../fundamentals/config';
-import { StorageConfig } from '../../fundamentals/storage/config';
+import { defineStartupConfig, ModuleConfig } from '../../base/config';
+import { StorageConfig } from '../../base/storage/config';
 import type { FalConfig } from './providers/fal';
 
 export interface CopilotStartupConfigurations {

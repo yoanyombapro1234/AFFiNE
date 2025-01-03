@@ -27,18 +27,7 @@ const config: PlaywrightTestConfig = {
   reporter: process.env.CI ? 'github' : 'list',
   webServer: [
     {
-      command: 'yarn run serve:test-static',
-      port: 8081,
-      timeout: 120 * 1000,
-      reuseExistingServer: !process.env.CI,
-      env: {
-        COVERAGE: process.env.COVERAGE || 'false',
-        ENABLE_DEBUG_PAGE: '1',
-      },
-    },
-    // Intentionally not building the web, reminds you to run it by yourself.
-    {
-      command: 'yarn -T run start:web-static',
+      command: 'yarn run -T affine dev -p @affine/web',
       port: 8080,
       timeout: 120 * 1000,
       reuseExistingServer: !process.env.CI,
@@ -47,7 +36,7 @@ const config: PlaywrightTestConfig = {
       },
     },
     {
-      command: 'yarn workspace @affine/server start',
+      command: 'yarn run -T affine dev -p @affine/server',
       port: 3010,
       timeout: 120 * 1000,
       reuseExistingServer: !process.env.CI,
@@ -57,7 +46,7 @@ const config: PlaywrightTestConfig = {
         DATABASE_URL:
           process.env.DATABASE_URL ??
           'postgresql://affine:affine@localhost:5432/affine',
-        NODE_ENV: 'development',
+        NODE_ENV: 'test',
         AFFINE_ENV: process.env.AFFINE_ENV ?? 'dev',
         DEBUG: 'affine:*',
         FORCE_COLOR: 'true',

@@ -296,6 +296,22 @@ export class ChatPanelInput extends WithDisposable(LitElement) {
     `;
   }
 
+  override connectedCallback() {
+    super.connectedCallback();
+
+    this._disposables.add(
+      AIProvider.slots.requestSendWithChat.on(
+        async ({ input, context, host }) => {
+          if (this.host === host) {
+            context && this.updateContext(context);
+            await this.updateComplete;
+            await this.send(input);
+          }
+        }
+      )
+    );
+  }
+
   protected override render() {
     const { images, status } = this.chatContextValue;
     const hasImages = images.length > 0;
@@ -420,11 +436,11 @@ export class ChatPanelInput extends WithDisposable(LitElement) {
       </div>`;
   }
 
-  send = async () => {
+  send = async (input?: string) => {
     const { status, markdown } = this.chatContextValue;
     if (status === 'loading' || status === 'transmitting') return;
 
-    const text = this.textarea.value;
+    const text = input || this.textarea.value;
     const { images } = this.chatContextValue;
     if (!text && images.length === 0) {
       return;

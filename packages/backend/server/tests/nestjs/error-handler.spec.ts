@@ -16,12 +16,12 @@ import testFn, { TestFn } from 'ava';
 import Sinon from 'sinon';
 import request from 'supertest';
 
-import { Public } from '../../src/core/auth';
 import {
   AccessDenied,
   GatewayErrorWrapper,
   UserFriendlyError,
-} from '../../src/fundamentals';
+} from '../../src/base';
+import { Public } from '../../src/core/auth';
 import { createTestingApp } from '../utils';
 
 @Public()

@@ -1,7 +1,8 @@
-import type { WorkspaceFlavour } from '@affine/env/workspace';
 import { type DocMode, ZipTransformer } from '@blocksuite/affine/blocks';
-import type { WorkspaceMetadata, WorkspacesService } from '@toeverything/infra';
-import { DocsService, Service } from '@toeverything/infra';
+import { Service } from '@toeverything/infra';
+
+import { DocsService } from '../../doc';
+import type { WorkspaceMetadata, WorkspacesService } from '../../workspace';
 
 export class ImportTemplateService extends Service {
   constructor(private readonly workspacesService: WorkspacesService) {
@@ -36,7 +37,7 @@ export class ImportTemplateService extends Service {
   }
 
   async importToNewWorkspace(
-    flavour: WorkspaceFlavour,
+    flavour: string,
     workspaceName: string,
     docBinary: Uint8Array
     // todo: support doc mode on init

@@ -75,6 +75,7 @@ export const ErrorDetail: FC<ErrorDetailProps> = props => {
   }, [onButtonClick, resetError]);
 
   const desc = descriptions.map((item, i) => (
+    // eslint-disable-next-line react/no-array-index-key
     <p key={i} className={styles.text}>
       {item}
     </p>

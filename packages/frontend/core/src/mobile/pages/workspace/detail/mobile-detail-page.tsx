@@ -5,15 +5,21 @@ import { useRegisterBlocksuiteEditorCommands } from '@affine/core/components/hoo
 import { useActiveBlocksuiteEditor } from '@affine/core/components/hooks/use-block-suite-editor';
 import { useDocMetaHelper } from '@affine/core/components/hooks/use-block-suite-page-meta';
 import { usePageDocumentTitle } from '@affine/core/components/hooks/use-global-state';
-import { useJournalRouteHelper } from '@affine/core/components/hooks/use-journal';
 import { useNavigateHelper } from '@affine/core/components/hooks/use-navigate-helper';
-import { PageHeader } from '@affine/core/components/mobile';
 import { PageDetailEditor } from '@affine/core/components/page-detail-editor';
 import { DetailPageWrapper } from '@affine/core/desktop/pages/workspace/detail-page/detail-page-wrapper';
+import { PageHeader } from '@affine/core/mobile/components';
+import { useGlobalEvent } from '@affine/core/mobile/hooks/use-global-events';
+import { AIButtonService } from '@affine/core/modules/ai-button';
+import { DocService } from '@affine/core/modules/doc';
+import { DocDisplayMetaService } from '@affine/core/modules/doc-display-meta';
 import { EditorService } from '@affine/core/modules/editor';
+import { FeatureFlagService } from '@affine/core/modules/feature-flag';
+import { GlobalContextService } from '@affine/core/modules/global-context';
 import { JournalService } from '@affine/core/modules/journal';
 import { WorkbenchService } from '@affine/core/modules/workbench';
 import { ViewService } from '@affine/core/modules/workbench/services/view';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import { i18nTime } from '@affine/i18n';
 import {
   BookmarkBlockService,
@@ -27,23 +33,19 @@ import {
 import { DisposableGroup } from '@blocksuite/affine/global/utils';
 import { type AffineEditorContainer } from '@blocksuite/affine/presets';
 import {
-  DocService,
-  FeatureFlagService,
   FrameworkScope,
-  GlobalContextService,
   useLiveData,
   useService,
   useServices,
-  WorkspaceService,
 } from '@toeverything/infra';
-import { bodyEmphasized } from '@toeverything/theme/typography';
 import { cssVarV2 } from '@toeverything/theme/v2';
 import clsx from 'clsx';
 import dayjs from 'dayjs';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { AppTabs } from '../../../components';
+import { JournalConflictBlock } from './journal-conflict-block';
 import { JournalDatePicker } from './journal-date-picker';
 import * as styles from './mobile-detail-page.css';
 import { PageHeaderMenuButton } from './page-header-more-button';
@@ -56,6 +58,7 @@ const DetailPageImpl = () => {
     workspaceService,
     globalContextService,
     featureFlagService,
+    aIButtonService,
   } = useServices({
     WorkbenchService,
     ViewService,
@@ -64,6 +67,7 @@ const DetailPageImpl = () => {
     WorkspaceService,
     GlobalContextService,
     FeatureFlagService,
+    AIButtonService,
   });
   const editor = editorService.editor;
   const workspace = workspaceService.workspace;
@@ -81,6 +85,8 @@ const DetailPageImpl = () => {
 
   const enableKeyboardToolbar =
     featureFlagService.flags.enable_mobile_keyboard_toolbar.value;
+  const enableEdgelessEditing =
+    featureFlagService.flags.enable_mobile_edgeless_editing.value;
   const { setDocReadonly } = useDocMetaHelper();
 
   // TODO(@eyhn): remove jotai here
@@ -109,8 +115,25 @@ const DetailPageImpl = () => {
   }, [doc, globalContext, mode]);
 
   useEffect(() => {
-    if (!enableKeyboardToolbar) setDocReadonly(doc.id, true);
-  }, [enableKeyboardToolbar, doc.id, setDocReadonly]);
+    setDocReadonly(
+      doc.id,
+      !enableKeyboardToolbar || (mode === 'edgeless' && !enableEdgelessEditing)
+    );
+  }, [
+    enableKeyboardToolbar,
+    doc.id,
+    setDocReadonly,
+    mode,
+    enableEdgelessEditing,
+  ]);
+
+  useEffect(() => {
+    aIButtonService.presentAIButton(true);
+
+    return () => {
+      aIButtonService.presentAIButton(false);
+    };
+  }, [aIButtonService]);
 
   useEffect(() => {
     globalContext.isTrashDoc.set(!!isInTrash);
@@ -169,7 +192,7 @@ const DetailPageImpl = () => {
 
       editor.bindEditorContainer(
         editorContainer,
-        null,
+        (editorContainer as any).docTitle, // set from proxy
         scrollViewportRef.current
       );
 
@@ -193,7 +216,7 @@ const DetailPageImpl = () => {
           )}
         >
           {/* Add a key to force rerender when page changed, to avoid error boundary persisting. */}
-          <AffineErrorBoundary key={doc.id}>
+          <AffineErrorBoundary key={doc.id} className={styles.errorBoundary}>
             <PageDetailEditor onLoad={onLoad} />
           </AffineErrorBoundary>
         </div>
@@ -202,19 +225,24 @@ const DetailPageImpl = () => {
   );
 };
 
-const skeleton = (
+const getSkeleton = (back: boolean) => (
   <>
-    <PageHeader back className={styles.header} />
+    <PageHeader back={back} className={styles.header} />
     <PageDetailSkeleton />
   </>
 );
-
-const notFound = (
+const getNotFound = (back: boolean) => (
   <>
-    <PageHeader back className={styles.header} />
+    <PageHeader back={back} className={styles.header} />
     Page Not Found (TODO)
   </>
 );
+const skeleton = getSkeleton(false);
+const skeletonWithBack = getSkeleton(true);
+const notFound = getNotFound(false);
+const notFoundWithBack = getNotFound(true);
+
+const checkShowTitle = () => window.scrollY >= 158;
 
 const MobileDetailPage = ({
   pageId,
@@ -223,51 +251,71 @@ const MobileDetailPage = ({
   pageId: string;
   date?: string;
 }) => {
+  const docDisplayMetaService = useService(DocDisplayMetaService);
   const journalService = useService(JournalService);
-  const { openJournal } = useJournalRouteHelper();
+  const workbench = useService(WorkbenchService).workbench;
+  const [showTitle, setShowTitle] = useState(checkShowTitle);
+  const title = useLiveData(docDisplayMetaService.title$(pageId));
 
   const allJournalDates = useLiveData(journalService.allJournalDates$);
 
+  const location = useLiveData(workbench.location$);
+  const fromTab = location.search.includes('fromTab');
+
   const handleDateChange = useCallback(
     (date: string) => {
-      openJournal(date);
+      const docId = journalService.ensureJournalByDate(date).id;
+      workbench.openDoc(
+        { docId, fromTab: fromTab ? 'true' : undefined },
+        { replaceHistory: true }
+      );
     },
-    [openJournal]
+    [fromTab, journalService, workbench]
   );
+
+  useGlobalEvent(
+    'scroll',
+    useCallback(() => setShowTitle(checkShowTitle()), [])
+  );
+
   return (
     <div className={styles.root}>
       <DetailPageWrapper
-        skeleton={skeleton}
-        notFound={notFound}
+        skeleton={date ? skeleton : skeletonWithBack}
+        notFound={date ? notFound : notFoundWithBack}
         pageId={pageId}
       >
         <PageHeader
-          back
+          back={!fromTab}
           className={styles.header}
+          contentClassName={styles.headerContent}
           suffix={
             <>
               <PageHeaderShareButton />
               <PageHeaderMenuButton />
             </>
           }
+          bottom={
+            date ? (
+              <JournalDatePicker
+                date={date}
+                onChange={handleDateChange}
+                withDotDates={allJournalDates}
+                className={styles.journalDatePicker}
+              />
+            ) : null
+          }
+          bottomSpacer={94}
         >
-          {date ? (
-            <span className={bodyEmphasized}>
-              {i18nTime(dayjs(date), { absolute: { accuracy: 'month' } })}
-            </span>
-          ) : null}
+          <span data-show={!!date || showTitle} className={styles.headerTitle}>
+            {date
+              ? i18nTime(dayjs(date), { absolute: { accuracy: 'month' } })
+              : title}
+          </span>
         </PageHeader>
-        {date ? (
-          <JournalDatePicker
-            date={date}
-            onChange={handleDateChange}
-            withDotDates={allJournalDates}
-          />
-        ) : null}
+        <JournalConflictBlock date={date} />
         <DetailPageImpl />
-        {date ? (
-          <AppTabs background={cssVarV2('layer/background/primary')} />
-        ) : null}
+        <AppTabs background={cssVarV2('layer/background/primary')} />
       </DetailPageWrapper>
     </div>
   );

@@ -87,12 +87,12 @@ const DesktopTagEditMenu = ({
           <MenuSeparator />
           <Scrollable.Root>
             <Scrollable.Viewport className={styles.menuItemList}>
-              {colors.map(({ name, value: color }, i) => (
+              {colors.map(({ name, value: color }) => (
                 <MenuItem
-                  key={i}
+                  key={color}
                   checked={tag.color === color}
                   prefixIcon={
-                    <div key={i} className={styles.tagColorIconWrapper}>
+                    <div className={styles.tagColorIconWrapper}>
                       <div
                         className={styles.tagColorIcon}
                         style={{
@@ -173,14 +173,14 @@ const MobileTagEditMenu = ({
         />
 
         <ConfigModal.RowGroup title={t['Colors']()}>
-          {colors.map(({ name, value: color }, i) => (
+          {colors.map(({ name, value: color }) => (
             <ConfigModal.Row
-              key={i}
+              key={color}
               onClick={() => {
                 setLocalTag({ ...localTag, color });
               }}
             >
-              <div key={i} className={styles.tagColorIconWrapper}>
+              <div className={styles.tagColorIconWrapper}>
                 <div
                   className={styles.tagColorIcon}
                   style={{

@@ -3,11 +3,16 @@ import { style } from '@vanilla-extract/css';
 export const paddingX = 16;
 export const columnGap = 17;
 
-export const masonry = style({
+export const columns = style({
   padding: `16px ${paddingX}px`,
-  columnGap: columnGap,
+  display: 'flex',
+  gap: columnGap,
 });
-export const masonryItem = style({
-  breakInside: 'avoid',
-  marginBottom: 10,
+
+export const column = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 10,
+  width: 0,
+  flex: 1,
 });

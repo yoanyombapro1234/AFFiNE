@@ -1,17 +1,19 @@
 import { notify } from '@affine/component';
-import { getAffineCloudBaseUrl } from '@affine/core/modules/cloud/services/fetch';
+import { ServerService } from '@affine/core/modules/cloud';
 import { toURLSearchParams } from '@affine/core/modules/navigation';
+import { copyTextToClipboard } from '@affine/core/utils/clipboard';
 import { useI18n } from '@affine/i18n';
 import { track } from '@affine/track';
 import { type EditorHost } from '@blocksuite/affine/block-std';
 import { GfxBlockElementModel } from '@blocksuite/affine/block-std/gfx';
 import type { DocMode, EdgelessRootService } from '@blocksuite/affine/blocks';
+import { useService } from '@toeverything/infra';
 import { useCallback } from 'react';
 
 export type UseSharingUrl = {
   workspaceId: string;
   pageId: string;
-  shareMode?: DocMode;
+  mode?: DocMode;
   blockIds?: string[];
   elementIds?: string[];
   xywh?: string; // not needed currently
@@ -23,39 +25,37 @@ export type UseSharingUrl = {
  * https://app.affine.pro/workspace/workspaceId/docId?mode=DocMode&elementIds=seletedElementIds&blockIds=selectedBlockIds
  */
 export const generateUrl = ({
+  baseUrl,
   workspaceId,
   pageId,
   blockIds,
   elementIds,
-  shareMode: mode,
+  mode,
   xywh, // not needed currently
-}: UseSharingUrl) => {
-  // Base URL construction
-  const baseUrl = getAffineCloudBaseUrl();
-  if (!baseUrl) return null;
-
+}: UseSharingUrl & { baseUrl: string }) => {
   try {
     const url = new URL(`/workspace/${workspaceId}/${pageId}`, baseUrl);
     const search = toURLSearchParams({ mode, blockIds, elementIds, xywh });
     if (search?.size) url.search = search.toString();
     return url.toString();
-  } catch {
-    return null;
+  } catch (err) {
+    console.error(err);
+    return undefined;
   }
 };
 
 const getShareLinkType = ({
-  shareMode,
+  mode,
   blockIds,
   elementIds,
 }: {
-  shareMode?: DocMode;
+  mode?: DocMode;
   blockIds?: string[];
   elementIds?: string[];
 }) => {
-  if (shareMode === 'page') {
+  if (mode === 'page') {
     return 'doc';
-  } else if (shareMode === 'edgeless') {
+  } else if (mode === 'edgeless') {
     return 'whiteboard';
   } else if (blockIds && blockIds.length > 0) {
     return 'block';
@@ -129,42 +129,39 @@ export const getSelectedNodes = (
 
 export const useSharingUrl = ({ workspaceId, pageId }: UseSharingUrl) => {
   const t = useI18n();
+  const serverService = useService(ServerService);
 
   const onClickCopyLink = useCallback(
-    (shareMode?: DocMode, blockIds?: string[], elementIds?: string[]) => {
+    (mode?: DocMode, blockIds?: string[], elementIds?: string[]) => {
       const sharingUrl = generateUrl({
+        baseUrl: serverService.server.baseUrl,
         workspaceId,
         pageId,
         blockIds,
         elementIds,
-        shareMode, // if view is not provided, use the current view
+        mode, // if view is not provided, use the current view
       });
       const type = getShareLinkType({
-        shareMode,
+        mode,
         blockIds,
         elementIds,
       });
       if (sharingUrl) {
-        navigator.clipboard
-          .writeText(sharingUrl)
-          .then(() => {
-            notify.success({
-              title: t['Copied link to clipboard'](),
-            });
+        copyTextToClipboard(sharingUrl)
+          .then(success => {
+            if (success) {
+              notify.success({ title: t['Copied link to clipboard']() });
+            }
           })
           .catch(err => {
             console.error(err);
           });
-        track.$.sharePanel.$.copyShareLink({
-          type,
-        });
+        track.$.sharePanel.$.copyShareLink({ type });
       } else {
-        notify.error({
-          title: 'Network not available',
-        });
+        notify.error({ title: 'Network not available' });
       }
     },
-    [pageId, t, workspaceId]
+    [pageId, serverService, t, workspaceId]
   );
 
   return {

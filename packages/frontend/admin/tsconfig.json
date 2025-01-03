@@ -8,6 +8,10 @@
     "verbatimModuleSyntax": false,
     "jsx": "react-jsx"
   },
-  "references": [{ "path": "../core" }, { "path": "../graphql" }],
+  "references": [
+    { "path": "../core" },
+    { "path": "../graphql" },
+    { "path": "../../common/infra" }
+  ],
   "exclude": ["dist"]
 }

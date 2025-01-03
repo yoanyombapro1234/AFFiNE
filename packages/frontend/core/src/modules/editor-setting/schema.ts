@@ -1,7 +1,7 @@
-import { NodePropsSchema } from '@blocksuite/affine-shared/utils';
+import { GeneralSettingSchema } from '@blocksuite/affine-shared/services';
 import { z } from 'zod';
 
-export const BSEditorSettingSchema = NodePropsSchema;
+export const BSEditorSettingSchema = GeneralSettingSchema;
 
 export type FontFamily = 'Sans' | 'Serif' | 'Mono' | 'Custom';
 export type EdgelessDefaultTheme = 'auto' | 'dark' | 'light' | 'specified';
@@ -32,4 +32,5 @@ export const EditorSettingSchema = BSEditorSettingSchema.merge(
   AffineEditorSettingSchema
 );
 
+// oxlint-disable-next-line no-redeclare
 export type EditorSettingSchema = z.infer<typeof EditorSettingSchema>;

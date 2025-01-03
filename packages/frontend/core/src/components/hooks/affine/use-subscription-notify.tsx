@@ -19,7 +19,13 @@ type TypeFormInfo = {
 const getTypeFormLink = (id: string, info: TypeFormInfo) => {
   const plans = Array.isArray(info.plan) ? info.plan : [info.plan];
   const product_id = plans
-    .map(plan => (plan === SubscriptionPlan.AI ? 'ai' : 'cloud'))
+    .map(plan =>
+      plan === SubscriptionPlan.AI
+        ? 'ai'
+        : plan === SubscriptionPlan.Team
+          ? 'team'
+          : 'cloud'
+    )
     .join('-');
   const product_price =
     info.recurring === SubscriptionRecurring.Monthly
@@ -40,13 +46,18 @@ export const getDowngradeQuestionnaireLink = (info: TypeFormInfo) =>
 export const generateSubscriptionCallbackLink = (
   account: AuthAccountInfo | null,
   plan: SubscriptionPlan,
-  recurring: SubscriptionRecurring
+  recurring: SubscriptionRecurring,
+  workspaceId?: string
 ) => {
   if (account === null) {
     throw new Error('Account is required');
   }
   const baseUrl =
-    plan === SubscriptionPlan.AI ? '/ai-upgrade-success' : '/upgrade-success';
+    plan === SubscriptionPlan.AI
+      ? '/ai-upgrade-success'
+      : plan === SubscriptionPlan.Team
+        ? '/upgrade-success/team'
+        : '/upgrade-success';
 
   let name = account?.info?.name ?? '';
   if (name.includes(separator)) {
@@ -59,7 +70,22 @@ export const generateSubscriptionCallbackLink = (
     account.id,
     account.email,
     account.info?.name ?? '',
+    workspaceId ?? '',
   ].join(separator);
 
   return `${baseUrl}?info=${encodeURIComponent(query)}`;
+};
+
+export const getSubscriptionInfo = (searchParams: URLSearchParams) => {
+  const decodedInfo = decodeURIComponent(searchParams.get('info') || '');
+  const [plan, recurring, accountId, email, name, workspaceId] =
+    decodedInfo.split(separator);
+  return {
+    plan: plan as SubscriptionPlan,
+    recurring: recurring as SubscriptionRecurring,
+    accountId,
+    email,
+    name: name.replaceAll(recoverSeparator, separator),
+    workspaceId,
+  };
 };

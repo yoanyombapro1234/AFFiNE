@@ -8,7 +8,7 @@ import {
 } from '@nestjs/graphql';
 import { difference } from 'lodash-es';
 
-import { Config } from '../../fundamentals';
+import { Config } from '../../base';
 import { Admin } from '../common';
 import { UserType } from '../user/types';
 import { EarlyAccessType, FeatureManagementService } from './management';

@@ -105,6 +105,7 @@ export const replace = async (
   );
 
   if (textSelection) {
+    host.std.command.exec('deleteText', { textSelection });
     const { snapshot, job } = await markdownToSnapshot(content, host);
     await job.snapshotToSlice(
       snapshot,
@@ -142,12 +143,18 @@ export const copyTextAnswer = async (panel: AffineAIPanelWidget) => {
 };
 
 export const copyText = async (host: EditorHost, text: string) => {
-  const previewDoc = await markDownToDoc(host, text);
+  const previewDoc = await markDownToDoc(
+    host.std.provider,
+    host.std.doc.schema,
+    text
+  );
   const models = previewDoc
     .getBlocksByFlavour('affine:note')
     .map(b => b.model)
     .flatMap(model => model.children);
   const slice = Slice.fromModels(previewDoc, models);
   await host.std.clipboard.copySlice(slice);
+  previewDoc.dispose();
+  previewDoc.collection.dispose();
   return true;
 };

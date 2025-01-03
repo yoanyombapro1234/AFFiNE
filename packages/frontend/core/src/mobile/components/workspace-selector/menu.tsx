@@ -1,25 +1,25 @@
 import { IconButton } from '@affine/component';
-import { WorkspaceAvatar } from '@affine/component/workspace-avatar';
 import { useNavigateHelper } from '@affine/core/components/hooks/use-navigate-helper';
 import { useWorkspaceInfo } from '@affine/core/components/hooks/use-workspace-info';
-import { WorkspaceFlavour } from '@affine/env/workspace';
+import { WorkspaceAvatar } from '@affine/core/components/workspace-avatar';
+import {
+  type WorkspaceMetadata,
+  WorkspaceService,
+  WorkspacesService,
+} from '@affine/core/modules/workspace';
 import { CloseIcon, CollaborationIcon } from '@blocksuite/icons/rc';
 import {
   useLiveData,
   useService,
-  type WorkspaceMetadata,
-  WorkspaceService,
-  WorkspacesService,
+  useServiceOptional,
 } from '@toeverything/infra';
 import clsx from 'clsx';
 import { type HTMLAttributes, useCallback, useMemo } from 'react';
 
 import * as styles from './menu.css';
 
-const filterByFlavour = (
-  workspaces: WorkspaceMetadata[],
-  flavour: WorkspaceFlavour
-) => workspaces.filter(ws => flavour === ws.flavour);
+const filterByFlavour = (workspaces: WorkspaceMetadata[], flavour: string) =>
+  workspaces.filter(ws => flavour === ws.flavour);
 
 const WorkspaceItem = ({
   workspace,
@@ -58,17 +58,17 @@ const WorkspaceList = ({
   list: WorkspaceMetadata[];
   onClose?: () => void;
 }) => {
-  const currentWorkspace = useService(WorkspaceService).workspace;
+  const currentWorkspace = useServiceOptional(WorkspaceService)?.workspace;
 
   const { jumpToPage } = useNavigateHelper();
   const toggleWorkspace = useCallback(
     (id: string) => {
-      if (id !== currentWorkspace.id) {
-        jumpToPage(id, 'all');
+      if (id !== currentWorkspace?.id) {
+        jumpToPage(id, 'home');
       }
       onClose?.();
     },
-    [currentWorkspace.id, jumpToPage, onClose]
+    [currentWorkspace?.id, jumpToPage, onClose]
   );
 
   if (!list.length) return null;
@@ -93,13 +93,14 @@ export const SelectorMenu = ({ onClose }: { onClose?: () => void }) => {
   const workspacesService = useService(WorkspacesService);
   const workspaces = useLiveData(workspacesService.list.workspaces$);
 
+  // TODO: support selfhosted
   const cloudWorkspaces = useMemo(
-    () => filterByFlavour(workspaces, WorkspaceFlavour.AFFINE_CLOUD),
+    () => filterByFlavour(workspaces, 'affine-cloud'),
     [workspaces]
   );
 
   const localWorkspaces = useMemo(
-    () => filterByFlavour(workspaces, WorkspaceFlavour.LOCAL),
+    () => filterByFlavour(workspaces, 'local'),
     [workspaces]
   );
 

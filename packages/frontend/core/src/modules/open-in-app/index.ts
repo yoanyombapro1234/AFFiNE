@@ -1,9 +1,7 @@
-import {
-  type Framework,
-  GlobalState,
-  WorkspacesService,
-} from '@toeverything/infra';
+import { type Framework } from '@toeverything/infra';
 
+import { GlobalState } from '../storage';
+import { WorkspacesService } from '../workspace';
 import { OpenInAppService } from './services';
 
 export { OpenInAppService, OpenLinkMode } from './services';

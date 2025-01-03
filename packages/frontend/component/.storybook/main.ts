@@ -3,7 +3,7 @@ import { StorybookConfig } from '@storybook/react-vite';
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 import swc from 'unplugin-swc';
 import { mergeConfig } from 'vite';
-import { getBuildConfig } from '@affine/cli/src/webpack/runtime-config';
+import { getBuildConfig } from '@affine-tools/utils/build-config';
 
 export default {
   stories: ['../src/ui/**/*.@(mdx|stories.@(js|jsx|ts|tsx))'],
@@ -70,9 +70,9 @@ export default {
     });
   },
 
-  typescript: {
-    reactDocgen: 'react-docgen-typescript',
-  },
+  // typescript: {
+  //   reactDocgen: 'react-docgen-typescript',
+  // },
 } satisfies StorybookConfig;
 
 function getAbsolutePath(value: string): any {

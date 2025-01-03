@@ -8,8 +8,8 @@ import ava from 'ava';
 import request from 'supertest';
 
 import { buildAppModule } from '../../src/app.module';
+import { Config } from '../../src/base';
 import { ServerService } from '../../src/core/config';
-import { Config } from '../../src/fundamentals';
 import { createTestingApp, initTestingDB } from '../utils';
 
 const test = ava as TestFn<{

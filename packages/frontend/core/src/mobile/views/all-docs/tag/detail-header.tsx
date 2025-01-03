@@ -1,28 +1,14 @@
-import { IconButton, MobileMenu } from '@affine/component';
-import { PageHeader } from '@affine/core/components/mobile';
+import { PageHeader } from '@affine/core/mobile/components';
 import type { Tag } from '@affine/core/modules/tag';
-import { MoreHorizontalIcon } from '@blocksuite/icons/rc';
 import { useLiveData } from '@toeverything/infra';
 
-import { AllDocsMenu } from '../doc';
 import * as styles from './detail.css';
 
 export const TagDetailHeader = ({ tag }: { tag: Tag }) => {
   const name = useLiveData(tag.value$);
   const color = useLiveData(tag.color$);
   return (
-    <PageHeader
-      back
-      suffix={
-        <MobileMenu items={<AllDocsMenu />}>
-          <IconButton
-            size="24"
-            style={{ padding: 10 }}
-            icon={<MoreHorizontalIcon />}
-          />
-        </MobileMenu>
-      }
-    >
+    <PageHeader className={styles.header} back>
       <div className={styles.headerContent}>
         <div className={styles.headerIcon} style={{ color }} />
         {name}

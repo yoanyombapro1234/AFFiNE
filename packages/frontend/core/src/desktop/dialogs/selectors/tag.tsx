@@ -15,8 +15,9 @@ import type {
 } from '@affine/core/modules/dialogs';
 import { FavoriteService } from '@affine/core/modules/favorite';
 import { TagService } from '@affine/core/modules/tag';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import { useI18n } from '@affine/i18n';
-import { useLiveData, useService, WorkspaceService } from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import { cssVar } from '@toeverything/theme';
 import { useCallback, useMemo, useState } from 'react';
 

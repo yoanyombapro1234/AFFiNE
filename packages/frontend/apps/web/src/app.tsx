@@ -3,6 +3,7 @@ import { AppContainer } from '@affine/core/desktop/components/app-container';
 import { router } from '@affine/core/desktop/router';
 import { configureCommonModules } from '@affine/core/modules';
 import { I18nProvider } from '@affine/core/modules/i18n';
+import { LifecycleService } from '@affine/core/modules/lifecycle';
 import { OpenInAppGuard } from '@affine/core/modules/open-in-app';
 import { configureLocalStorageStateStorageImpls } from '@affine/core/modules/storage';
 import { PopupWindowProvider } from '@affine/core/modules/url';
@@ -14,12 +15,7 @@ import {
 } from '@affine/core/modules/workspace-engine';
 import createEmotionCache from '@affine/core/utils/create-emotion-cache';
 import { CacheProvider } from '@emotion/react';
-import {
-  Framework,
-  FrameworkRoot,
-  getCurrentStore,
-  LifecycleService,
-} from '@toeverything/infra';
+import { Framework, FrameworkRoot, getCurrentStore } from '@toeverything/infra';
 import { Suspense } from 'react';
 import { RouterProvider } from 'react-router-dom';
 

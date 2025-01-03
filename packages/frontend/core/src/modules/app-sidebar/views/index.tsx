@@ -8,13 +8,13 @@ import {
   useLiveData,
   useService,
   useServiceOptional,
-  WorkspaceService,
 } from '@toeverything/infra';
 import clsx from 'clsx';
 import { debounce } from 'lodash-es';
 import type { PropsWithChildren, ReactElement } from 'react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
+import { WorkspaceService } from '../../workspace';
 import { AppSidebarService } from '../services/app-sidebar';
 import * as styles from './fallback.css';
 import {
@@ -285,6 +285,7 @@ const RandomBars = ({ count, header }: { count: number; header?: boolean }) => {
         />
       ) : null}
       {Array.from({ length: count }).map((_, index) => (
+        // oxlint-disable-next-line eslint-plugin-react(no-array-index-key)
         <RandomBar key={index} />
       ))}
     </div>

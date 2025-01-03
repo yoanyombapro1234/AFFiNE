@@ -1,14 +1,13 @@
 import { Avatar } from '@affine/component';
-import { authAtom } from '@affine/core/components/atoms';
 import { useSignOut } from '@affine/core/components/hooks/affine/use-sign-out';
 import { AuthService } from '@affine/core/modules/cloud';
+import { GlobalDialogService } from '@affine/core/modules/dialogs';
 import { ArrowRightSmallIcon } from '@blocksuite/icons/rc';
 import {
   useEnsureLiveData,
   useLiveData,
   useService,
 } from '@toeverything/infra';
-import { useSetAtom } from 'jotai';
 import { type ReactNode } from 'react';
 
 import { UserPlanTag } from '../../../components';
@@ -79,11 +78,11 @@ const AuthorizedUserProfile = () => {
 };
 
 const UnauthorizedUserProfile = () => {
-  const setAuthModal = useSetAtom(authAtom);
+  const globalDialogService = useService(GlobalDialogService);
 
   return (
     <BaseLayout
-      onClick={() => setAuthModal({ openModal: true, state: 'signIn' })}
+      onClick={() => globalDialogService.open('sign-in', {})}
       avatar={<Avatar size={48} rounded={4} />}
       title="Sign up / Sign in"
       caption="Sync with AFFiNE Cloud"

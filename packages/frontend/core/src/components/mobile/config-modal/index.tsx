@@ -1,4 +1,5 @@
 import { Button, Modal } from '@affine/component';
+import { PageHeader } from '@affine/core/mobile/components/page-header';
 import { useI18n } from '@affine/i18n';
 import clsx from 'clsx';
 import {
@@ -8,7 +9,6 @@ import {
   type ReactNode,
 } from 'react';
 
-import { PageHeader } from '../page-header';
 import * as styles from './styles.css';
 
 interface ConfigModalProps {
@@ -44,9 +44,6 @@ export const ConfigModal = ({
       animation="slideBottom"
       withoutCloseButton
       contentOptions={{
-        onClick: e => {
-          e.stopPropagation();
-        },
         className:
           variant === 'page'
             ? styles.pageModalContent
@@ -86,13 +83,15 @@ export const ConfigModal = ({
         )}
         {children}
         {variant === 'popup' && onDone ? (
-          <Button
-            variant="primary"
-            className={styles.bottomDoneButton}
-            onClick={onDone}
-          >
-            {t['Done']()}
-          </Button>
+          <div className={styles.bottomDoneButtonContainer}>
+            <Button
+              variant="primary"
+              className={styles.bottomDoneButton}
+              onClick={onDone}
+            >
+              {t['Done']()}
+            </Button>
+          </div>
         ) : null}
       </div>
     </Modal>

@@ -13,7 +13,7 @@ class NavigatorVirtualKeyboard implements VirtualKeyboard {
 
   private readonly _overlaysContent = false;
 
-  private _listeners = new Map<
+  private readonly _listeners = new Map<
     string,
     Set<{
       cb: VirtualKeyboardCallback;
@@ -53,11 +53,17 @@ class NavigatorVirtualKeyboard implements VirtualKeyboard {
   };
 
   constructor() {
-    this._bindListener();
+    this._bindListener().catch(e => {
+      console.error(e);
+    });
   }
 
   destroy() {
-    this._capacitorListenerHandles.forEach(handle => handle.remove());
+    this._capacitorListenerHandles.forEach(handle => {
+      handle.remove().catch(e => {
+        console.error(e);
+      });
+    });
   }
 
   get boundingRect(): DOMRect {
@@ -75,11 +81,15 @@ class NavigatorVirtualKeyboard implements VirtualKeyboard {
   }
 
   hide() {
-    Keyboard.hide();
+    Keyboard.hide().catch(e => {
+      console.error(e);
+    });
   }
 
   show() {
-    Keyboard.show();
+    Keyboard.show().catch(e => {
+      console.error(e);
+    });
   }
 
   ongeometrychange: ((this: VirtualKeyboard, ev: Event) => any) | null = null;

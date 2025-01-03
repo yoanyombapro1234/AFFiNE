@@ -1,3 +1,4 @@
+import { WorkspaceImpl } from '@affine/core/modules/workspace/impl/workspace';
 import type {
   EditorHost,
   TextRangePoint,
@@ -12,16 +13,19 @@ import {
   PlainTextAdapter,
   titleMiddleware,
 } from '@blocksuite/affine/blocks';
-import { DocCollection, Job } from '@blocksuite/affine/store';
-import { assertExists } from '@blocksuite/global/utils';
+import type { ServiceProvider } from '@blocksuite/affine/global/di';
+import { assertExists } from '@blocksuite/affine/global/utils';
 import type {
   BlockModel,
   BlockSnapshot,
   Doc,
   DraftModel,
+  JobMiddleware,
+  Schema,
   Slice,
   SliceSnapshot,
-} from '@blocksuite/store';
+} from '@blocksuite/affine/store';
+import { Job } from '@blocksuite/affine/store';
 
 const updateSnapshotText = (
   point: TextRangePoint,
@@ -76,16 +80,27 @@ export async function getContentFromSlice(
   type: 'markdown' | 'plain-text' = 'markdown'
 ) {
   const job = new Job({
-    collection: host.std.doc.collection,
-    middlewares: [titleMiddleware, embedSyncedDocMiddleware('content')],
+    schema: host.std.doc.collection.schema,
+    blobCRUD: host.std.doc.collection.blobSync,
+    docCRUD: {
+      create: (id: string) => host.std.doc.collection.createDoc({ id }),
+      get: (id: string) => host.std.doc.collection.getDoc(id),
+      delete: (id: string) => host.std.doc.collection.removeDoc(id),
+    },
+    middlewares: [
+      titleMiddleware(host.std.doc.collection.meta.docMetas),
+      embedSyncedDocMiddleware('content'),
+    ],
   });
-  const snapshot = await job.sliceToSnapshot(slice);
+  const snapshot = job.sliceToSnapshot(slice);
   if (!snapshot) {
     return '';
   }
   processTextInSnapshot(snapshot, host);
   const adapter =
-    type === 'markdown' ? new MarkdownAdapter(job) : new PlainTextAdapter(job);
+    type === 'markdown'
+      ? new MarkdownAdapter(job, host.std.provider)
+      : new PlainTextAdapter(job, host.std.provider);
   const content = await adapter.fromSliceSnapshot({
     snapshot,
     assets: job.assetsManager,
@@ -95,15 +110,21 @@ export async function getContentFromSlice(
 
 export async function getPlainTextFromSlice(host: EditorHost, slice: Slice) {
   const job = new Job({
-    collection: host.std.doc.collection,
-    middlewares: [titleMiddleware],
+    schema: host.std.doc.collection.schema,
+    blobCRUD: host.std.doc.collection.blobSync,
+    docCRUD: {
+      create: (id: string) => host.std.doc.collection.createDoc({ id }),
+      get: (id: string) => host.std.doc.collection.getDoc(id),
+      delete: (id: string) => host.std.doc.collection.removeDoc(id),
+    },
+    middlewares: [titleMiddleware(host.std.doc.collection.meta.docMetas)],
   });
-  const snapshot = await job.sliceToSnapshot(slice);
+  const snapshot = job.sliceToSnapshot(slice);
   if (!snapshot) {
     return '';
   }
   processTextInSnapshot(snapshot, host);
-  const plainTextAdapter = new PlainTextAdapter(job);
+  const plainTextAdapter = new PlainTextAdapter(job, host.std.provider);
   const plainText = await plainTextAdapter.fromSliceSnapshot({
     snapshot,
     assets: job.assetsManager,
@@ -116,22 +137,19 @@ export const markdownToSnapshot = async (
   host: EditorHost
 ) => {
   const job = new Job({
-    collection: host.std.doc.collection,
+    schema: host.std.doc.collection.schema,
+    blobCRUD: host.std.doc.collection.blobSync,
+    docCRUD: {
+      create: (id: string) => host.std.doc.collection.createDoc({ id }),
+      get: (id: string) => host.std.doc.collection.getDoc(id),
+      delete: (id: string) => host.std.doc.collection.removeDoc(id),
+    },
     middlewares: [defaultImageProxyMiddleware, pasteMiddleware(host.std)],
   });
-  const markdownAdapter = new MixTextAdapter(job);
-  const { blockVersions, workspaceVersion, pageVersion } =
-    host.std.doc.collection.meta;
-  if (!blockVersions || !workspaceVersion || !pageVersion)
-    throw new Error(
-      'Need blockVersions, workspaceVersion, pageVersion meta information to get slice'
-    );
+  const markdownAdapter = new MixTextAdapter(job, host.std.provider);
   const payload = {
     file: markdown,
     assets: job.assetsManager,
-    blockVersions,
-    pageVersion,
-    workspaceVersion,
     workspaceId: host.std.doc.collection.id,
     pageId: host.std.doc.id,
   };
@@ -184,18 +202,32 @@ export async function replaceFromMarkdown(
   await job.snapshotToSlice(snapshot, host.doc, parent, index);
 }
 
-export async function markDownToDoc(host: EditorHost, answer: string) {
-  const schema = host.std.doc.collection.schema;
+export async function markDownToDoc(
+  provider: ServiceProvider,
+  schema: Schema,
+  answer: string,
+  additionalMiddlewares?: JobMiddleware[]
+) {
   // Should not create a new doc in the original collection
-  const collection = new DocCollection({
+  const collection = new WorkspaceImpl({
     schema,
   });
   collection.meta.initialize();
+  const middlewares = [defaultImageProxyMiddleware];
+  if (additionalMiddlewares) {
+    middlewares.push(...additionalMiddlewares);
+  }
   const job = new Job({
-    collection,
-    middlewares: [defaultImageProxyMiddleware],
+    schema: collection.schema,
+    blobCRUD: collection.blobSync,
+    docCRUD: {
+      create: (id: string) => collection.createDoc({ id }),
+      get: (id: string) => collection.getDoc(id),
+      delete: (id: string) => collection.removeDoc(id),
+    },
+    middlewares,
   });
-  const mdAdapter = new MarkdownAdapter(job);
+  const mdAdapter = new MarkdownAdapter(job, provider);
   const doc = await mdAdapter.toDoc({
     file: answer,
     assets: job.assetsManager,

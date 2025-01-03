@@ -9,10 +9,12 @@ import type { Response } from 'supertest';
 import supertest from 'supertest';
 
 import { AppModule, FunctionalityModules } from '../../src/app.module';
+import { GlobalExceptionFilter, Runtime } from '../../src/base';
+import { GqlModule } from '../../src/base/graphql';
 import { AuthGuard, AuthModule } from '../../src/core/auth';
 import { UserFeaturesInit1698652531198 } from '../../src/data/migrations/1698652531198-user-features-init';
-import { Config, GlobalExceptionFilter } from '../../src/fundamentals';
-import { GqlModule } from '../../src/fundamentals/graphql';
+
+export type PermissionEnum = 'Owner' | 'Admin' | 'Write' | 'Read';
 
 async function flushDB(client: PrismaClient) {
   const result: { tablename: string }[] =
@@ -109,9 +111,9 @@ export async function createTestingModule(
   if (init) {
     await m.init();
 
-    const config = m.get(Config);
+    const runtime = m.get(Runtime);
     // by pass password min length validation
-    await config.runtime.set('auth/password.min', 1);
+    await runtime.set('auth/password.min', 1);
   }
 
   return m;
@@ -143,9 +145,9 @@ export async function createTestingApp(moduleDef: TestingModuleMeatdata = {}) {
 
   await app.init();
 
-  const config = app.get(Config);
+  const runtime = app.get(Runtime);
   // by pass password min length validation
-  await config.runtime.set('auth/password.min', 1);
+  await runtime.set('auth/password.min', 1);
 
   return {
     module: m,

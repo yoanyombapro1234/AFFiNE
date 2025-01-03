@@ -1,7 +1,7 @@
-import type { Doc, DocCollection } from '@blocksuite/affine/store';
+import type { Doc, Workspace } from '@blocksuite/affine/store';
 import { useMemo } from 'react';
 
-export function useDocCollectionHelper(docCollection: DocCollection) {
+export function useDocCollectionHelper(docCollection: Workspace) {
   return useMemo(
     () => ({
       createDoc: (pageId?: string): Doc => {

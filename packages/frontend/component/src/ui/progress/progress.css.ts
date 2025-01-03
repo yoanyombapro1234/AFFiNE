@@ -33,13 +33,15 @@ export const sliderRoot = style({
 });
 
 export const thumb = style({
-  width: '4px',
-  height: `calc(${progressHeight} + 2px)`,
-  transform: 'translateY(-1px)',
-  borderRadius: '2px',
+  width: 28,
+  height: 28,
+  transform: 'translate(1px, -9px)',
+  borderRadius: '50%',
   display: 'block',
-  background: cssVarV2('layer/insideBorder/primaryBorder'),
+  background: cssVarV2('layer/background/primary'),
+  boxShadow: cssVar('overlayPanelShadow'),
   opacity: 0,
+  transition: 'opacity 0.1s ease-in-out',
   selectors: {
     [`${root}:hover &, &:is(:focus-visible, :focus-within)`]: {
       opacity: 1,
@@ -50,6 +52,7 @@ export const thumb = style({
 export const label = style({
   width: '40px',
   fontSize: cssVar('fontSm'),
+  textAlign: 'right',
 });
 
 export const indicator = style({

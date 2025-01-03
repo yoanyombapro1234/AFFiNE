@@ -1,12 +1,7 @@
 import { Skeleton } from '@affine/component';
+import { type Doc, DocsService } from '@affine/core/modules/doc';
 import { type AttachmentBlockModel } from '@blocksuite/affine/blocks';
-import {
-  type Doc,
-  DocsService,
-  FrameworkScope,
-  useLiveData,
-  useService,
-} from '@toeverything/infra';
+import { FrameworkScope, useLiveData, useService } from '@toeverything/infra';
 import { type ReactElement, useLayoutEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 

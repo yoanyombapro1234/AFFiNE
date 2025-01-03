@@ -19,10 +19,6 @@ import { AiPromptRole } from '@prisma/client';
 import { GraphQLJSON, SafeIntResolver } from 'graphql-scalars';
 import GraphQLUpload from 'graphql-upload/GraphQLUpload.mjs';
 
-import { CurrentUser } from '../../core/auth';
-import { Admin } from '../../core/common';
-import { PermissionService } from '../../core/permission';
-import { UserType } from '../../core/user';
 import {
   CallMetric,
   CopilotFailedToCreateMessage,
@@ -30,7 +26,11 @@ import {
   RequestMutex,
   Throttle,
   TooManyRequest,
-} from '../../fundamentals';
+} from '../../base';
+import { CurrentUser } from '../../core/auth';
+import { Admin } from '../../core/common';
+import { PermissionService } from '../../core/permission';
+import { UserType } from '../../core/user';
 import { PromptService } from './prompt';
 import { ChatSessionService } from './session';
 import { CopilotStorage } from './storage';
@@ -359,7 +359,7 @@ export class CopilotResolver {
       user.id
     );
     const lockFlag = `${COPILOT_LOCKER}:session:${user.id}:${options.workspaceId}`;
-    await using lock = await this.mutex.lock(lockFlag);
+    await using lock = await this.mutex.acquire(lockFlag);
     if (!lock) {
       return new TooManyRequest('Server is busy');
     }
@@ -387,7 +387,7 @@ export class CopilotResolver {
       user.id
     );
     const lockFlag = `${COPILOT_LOCKER}:session:${user.id}:${options.workspaceId}`;
-    await using lock = await this.mutex.lock(lockFlag);
+    await using lock = await this.mutex.acquire(lockFlag);
     if (!lock) {
       return new TooManyRequest('Server is busy');
     }
@@ -418,7 +418,7 @@ export class CopilotResolver {
       return new NotFoundException('Session not found');
     }
     const lockFlag = `${COPILOT_LOCKER}:session:${user.id}:${options.workspaceId}`;
-    await using lock = await this.mutex.lock(lockFlag);
+    await using lock = await this.mutex.acquire(lockFlag);
     if (!lock) {
       return new TooManyRequest('Server is busy');
     }
@@ -439,7 +439,7 @@ export class CopilotResolver {
     options: CreateChatMessageInput
   ) {
     const lockFlag = `${COPILOT_LOCKER}:message:${user?.id}:${options.sessionId}`;
-    await using lock = await this.mutex.lock(lockFlag);
+    await using lock = await this.mutex.acquire(lockFlag);
     if (!lock) {
       return new TooManyRequest('Server is busy');
     }

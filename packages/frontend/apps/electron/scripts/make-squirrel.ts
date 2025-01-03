@@ -79,4 +79,6 @@ async function make() {
   return artifacts;
 }
 
-make();
+make().catch(e => {
+  console.error(e);
+});

@@ -1,10 +1,10 @@
 /// <reference types="../src/global.d.ts" />
 
-import { INestApplication, Injectable } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { INestApplication } from '@nestjs/common';
 import type { TestFn } from 'ava';
 import ava from 'ava';
 
+import { Runtime } from '../src/base';
 import { AuthService } from '../src/core/auth/service';
 import {
   FeatureManagementService,
@@ -12,32 +12,9 @@ import {
   FeatureService,
   FeatureType,
 } from '../src/core/features';
-import { Permission } from '../src/core/permission';
-import { UserType } from '../src/core/user/types';
 import { WorkspaceResolver } from '../src/core/workspaces/resolvers';
-import { Config, ConfigModule } from '../src/fundamentals/config';
 import { createTestingApp } from './utils';
-
-@Injectable()
-class WorkspaceResolverMock {
-  constructor(private readonly prisma: PrismaClient) {}
-
-  async createWorkspace(user: UserType, _init: null) {
-    const workspace = await this.prisma.workspace.create({
-      data: {
-        public: false,
-        permissions: {
-          create: {
-            type: Permission.Owner,
-            userId: user.id,
-            accepted: true,
-          },
-        },
-      },
-    });
-    return workspace;
-  }
-}
+import { WorkspaceResolverMock } from './utils/feature';
 
 const test = ava as TestFn<{
   auth: AuthService;
@@ -49,15 +26,7 @@ const test = ava as TestFn<{
 
 test.beforeEach(async t => {
   const { app } = await createTestingApp({
-    imports: [
-      ConfigModule.forRoot({
-        server: {
-          host: 'example.org',
-          https: true,
-        },
-      }),
-      FeatureModule,
-    ],
+    imports: [FeatureModule],
     providers: [WorkspaceResolver],
     tapModule: module => {
       module
@@ -66,8 +35,8 @@ test.beforeEach(async t => {
     },
   });
 
-  const config = app.get(Config);
-  await config.runtime.set('flags/earlyAccessControl', true);
+  const runtime = app.get(Runtime);
+  await runtime.set('flags/earlyAccessControl', true);
   t.context.app = app;
   t.context.auth = app.get(AuthService);
   t.context.feature = app.get(FeatureService);
@@ -105,7 +74,7 @@ test('should be able to check early access', async t => {
   const f2 = await management.canEarlyAccess(u1.email);
   t.true(f2, 'should have early access');
 
-  const f3 = await feature.listFeatureUsers(FeatureType.EarlyAccess);
+  const f3 = await feature.listUsersByFeature(FeatureType.EarlyAccess);
   t.is(f3.length, 1, 'should have 1 user');
   t.is(f3[0].id, u1.id, 'should be the same user');
 });
@@ -179,7 +148,7 @@ test('should be able to check workspace feature', async t => {
   const f2 = await management.hasWorkspaceFeature(w1.id, FeatureType.Copilot);
   t.true(f2, 'should have copilot');
 
-  const f3 = await feature.listFeatureWorkspaces(FeatureType.Copilot);
+  const f3 = await feature.listWorkspacesByFeature(FeatureType.Copilot);
   t.is(f3.length, 1, 'should have 1 workspace');
   t.is(f3[0].id, w1.id, 'should be the same workspace');
 });

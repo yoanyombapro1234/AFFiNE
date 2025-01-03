@@ -36,11 +36,6 @@ export const imageProcessingTypes = [
   'Convert to sticker',
 ] as const;
 
-export type CtxRecord = {
-  get(): Record<string, unknown>;
-  set(data: Record<string, unknown>): void;
-};
-
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace BlockSuitePresets {
@@ -87,7 +82,6 @@ declare global {
     }
 
     interface AIImageActionOptions extends AITextActionOptions {
-      content?: string;
       seed?: string;
     }
 

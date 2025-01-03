@@ -5,6 +5,7 @@ import electronWindowState from 'electron-window-state';
 import { BehaviorSubject } from 'rxjs';
 
 import { isLinux, isMacOS, isWindows } from '../../shared/utils';
+import { beforeAppQuit } from '../cleanup';
 import { buildType } from '../config';
 import { mainWindowOrigin } from '../constants';
 import { ensureHelperProcess } from '../helper-process';
@@ -116,11 +117,17 @@ export class MainWindowManager {
       uiSubjects.onFullScreen$.next(mainWindow.isFullScreen());
     });
 
+    beforeAppQuit(() => {
+      this.cleanupWindows();
+    });
+
     mainWindow.on('close', e => {
       // TODO(@pengx17): gracefully close the app, for example, ask user to save unsaved changes
       e.preventDefault();
       if (!isMacOS()) {
         closeAllWindows();
+        this.mainWindowReady = undefined;
+        this.mainWindow$.next(undefined);
       } else {
         // hide window on macOS
         // application quit will be handled by closing the hidden window
@@ -146,6 +153,7 @@ export class MainWindowManager {
 
     const refreshBound = (timeout = 0) => {
       setTimeout(() => {
+        if (mainWindow.isDestroyed()) return;
         // FIXME: workaround for theme bug in full screen mode
         const size = mainWindow.getSize();
         mainWindow.setSize(size[0] + 1, size[1] + 1);

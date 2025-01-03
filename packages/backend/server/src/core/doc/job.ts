@@ -8,7 +8,7 @@ import {
   type EventPayload,
   metrics,
   OnEvent,
-} from '../../fundamentals';
+} from '../../base';
 import { PgWorkspaceDocStorageAdapter } from './adapters/workspace';
 
 @Injectable()

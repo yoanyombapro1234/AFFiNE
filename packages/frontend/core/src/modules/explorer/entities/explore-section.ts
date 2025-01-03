@@ -1,7 +1,7 @@
-import type { GlobalCache } from '@toeverything/infra';
 import { Entity, LiveData } from '@toeverything/infra';
 import { map } from 'rxjs';
 
+import type { GlobalCache } from '../../storage';
 import type { CollapsibleSectionName } from '../types';
 
 const DEFAULT_COLLAPSABLE_STATE: Record<CollapsibleSectionName, boolean> = {

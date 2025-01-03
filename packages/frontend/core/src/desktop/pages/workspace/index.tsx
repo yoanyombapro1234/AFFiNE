@@ -1,17 +1,34 @@
+import { DNDContext } from '@affine/component';
 import { AffineOtherPageLayout } from '@affine/component/affine-other-page-layout';
 import { workbenchRoutes } from '@affine/core/desktop/workbench-router';
+import {
+  DefaultServerService,
+  ServersService,
+} from '@affine/core/modules/cloud';
+import { GlobalDialogService } from '@affine/core/modules/dialogs';
+import { DndService } from '@affine/core/modules/dnd/services';
+import { GlobalContextService } from '@affine/core/modules/global-context';
+import {
+  type Workspace,
+  type WorkspaceMetadata,
+  WorkspacesService,
+} from '@affine/core/modules/workspace';
 import { ZipTransformer } from '@blocksuite/affine/blocks';
-import type { Workspace, WorkspaceMetadata } from '@toeverything/infra';
 import {
   FrameworkScope,
-  GlobalContextService,
   useLiveData,
+  useService,
   useServices,
-  WorkspacesService,
 } from '@toeverything/infra';
-import type { ReactElement } from 'react';
+import type { PropsWithChildren, ReactElement } from 'react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { matchPath, useLocation, useParams } from 'react-router-dom';
+import {
+  matchPath,
+  useLocation,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
+import * as _Y from 'yjs';
 
 import { AffineErrorBoundary } from '../../../components/affine/affine-error-boundary';
 import { WorkbenchRoot } from '../../../modules/workbench';
@@ -24,24 +41,39 @@ declare global {
   /**
    * @internal debug only
    */
-  // eslint-disable-next-line no-var
+  // oxlint-disable-next-line no-var
   var currentWorkspace: Workspace | undefined;
-  // eslint-disable-next-line no-var
+  // oxlint-disable-next-line no-var
   var exportWorkspaceSnapshot: (docs?: string[]) => Promise<void>;
-  // eslint-disable-next-line no-var
+  // oxlint-disable-next-line no-var
   var importWorkspaceSnapshot: () => Promise<void>;
+  // oxlint-disable-next-line no-var
+  var Y: typeof _Y;
   interface WindowEventMap {
     'affine:workspace:change': CustomEvent<{ id: string }>;
   }
 }
 
+globalThis.Y = _Y;
+
 export const Component = (): ReactElement => {
-  const { workspacesService } = useServices({
+  const {
+    workspacesService,
+    globalDialogService,
+    serversService,
+    defaultServerService,
+    globalContextService,
+  } = useServices({
     WorkspacesService,
+    GlobalDialogService,
+    ServersService,
+    DefaultServerService,
+    GlobalContextService,
   });
 
   const params = useParams();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   // check if we are in detail doc route, if so, maybe render share page
   const detailDocRoute = useMemo(() => {
@@ -102,26 +134,100 @@ export const Component = (): ReactElement => {
     return;
   }, [listLoading, meta, workspaceNotFound, workspacesService]);
 
+  // server search params
+  const serverFromSearchParams = useLiveData(
+    searchParams.has('server')
+      ? serversService.serverByBaseUrl$(searchParams.get('server') as string)
+      : undefined
+  );
+  // server from workspace
+  const serverFromWorkspace = useLiveData(
+    meta?.flavour && meta.flavour !== 'local'
+      ? serversService.server$(meta?.flavour)
+      : undefined
+  );
+  const server = serverFromWorkspace ?? serverFromSearchParams;
+
+  useEffect(() => {
+    if (server) {
+      globalContextService.globalContext.serverId.set(server.id);
+      return () => {
+        globalContextService.globalContext.serverId.set(
+          defaultServerService.server.id
+        );
+      };
+    }
+    return;
+  }, [
+    defaultServerService.server.id,
+    globalContextService.globalContext.serverId,
+    server,
+  ]);
+
+  // if server is not found, and we have server in search params, we should show add selfhosted dialog
+  const needAddSelfhosted = server === undefined && searchParams.has('server');
+  // use ref to avoid useEffect trigger twice
+  const addSelfhostedDialogOpened = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (addSelfhostedDialogOpened.current) {
+      return;
+    }
+    addSelfhostedDialogOpened.current = true;
+    if (BUILD_CONFIG.isElectron && needAddSelfhosted) {
+      globalDialogService.open('sign-in', {
+        server: searchParams.get('server') as string,
+      });
+    }
+    return;
+  }, [
+    globalDialogService,
+    needAddSelfhosted,
+    searchParams,
+    serverFromSearchParams,
+  ]);
+
   if (workspaceNotFound) {
     if (detailDocRoute) {
       return (
-        <SharePage
-          docId={detailDocRoute.docId}
-          workspaceId={detailDocRoute.workspaceId}
-        />
+        <FrameworkScope scope={server?.scope}>
+          <SharePage
+            docId={detailDocRoute.docId}
+            workspaceId={detailDocRoute.workspaceId}
+          />
+        </FrameworkScope>
       );
     }
     return (
-      <AffineOtherPageLayout>
-        <PageNotFound noPermission />
-      </AffineOtherPageLayout>
+      <FrameworkScope scope={server?.scope}>
+        <AffineOtherPageLayout>
+          <PageNotFound noPermission />
+        </AffineOtherPageLayout>
+      </FrameworkScope>
     );
   }
   if (!meta) {
     return <AppContainer fallback />;
   }
 
-  return <WorkspacePage meta={meta} />;
+  return (
+    <FrameworkScope scope={server?.scope}>
+      <WorkspacePage meta={meta} />
+    </FrameworkScope>
+  );
+};
+
+const DNDContextProvider = ({ children }: PropsWithChildren) => {
+  const dndService = useService(DndService);
+  const contextValue = useMemo(() => {
+    return {
+      fromExternalData: dndService.fromExternalData,
+      toExternalData: dndService.toExternalData,
+    };
+  }, [dndService.fromExternalData, dndService.toExternalData]);
+  return (
+    <DNDContext.Provider value={contextValue}>{children}</DNDContext.Provider>
+  );
 };
 
 const WorkspacePage = ({ meta }: { meta: WorkspaceMetadata }) => {
@@ -189,9 +295,13 @@ const WorkspacePage = ({ meta }: { meta: WorkspaceMetadata }) => {
       };
       localStorage.setItem('last_workspace_id', workspace.id);
       globalContextService.globalContext.workspaceId.set(workspace.id);
+      globalContextService.globalContext.workspaceFlavour.set(
+        workspace.flavour
+      );
       return () => {
         window.currentWorkspace = undefined;
         globalContextService.globalContext.workspaceId.set(null);
+        globalContextService.globalContext.workspaceFlavour.set(null);
       };
     }
     return;
@@ -204,18 +314,22 @@ const WorkspacePage = ({ meta }: { meta: WorkspaceMetadata }) => {
   if (!isRootDocReady) {
     return (
       <FrameworkScope scope={workspace.scope}>
-        <AppContainer fallback />
+        <DNDContextProvider>
+          <AppContainer fallback />
+        </DNDContextProvider>
       </FrameworkScope>
     );
   }
 
   return (
     <FrameworkScope scope={workspace.scope}>
-      <AffineErrorBoundary height="100vh">
-        <WorkspaceLayout>
-          <WorkbenchRoot />
-        </WorkspaceLayout>
-      </AffineErrorBoundary>
+      <DNDContextProvider>
+        <AffineErrorBoundary height="100vh">
+          <WorkspaceLayout>
+            <WorkbenchRoot />
+          </WorkspaceLayout>
+        </AffineErrorBoundary>
+      </DNDContextProvider>
     </FrameworkScope>
   );
 };

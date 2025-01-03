@@ -1,10 +1,17 @@
-import { SafeArea, useThemeColorV2 } from '@affine/component';
+import {
+  Button,
+  SafeArea,
+  startScopedViewTransition,
+  useThemeColorV2,
+} from '@affine/component';
 import { CollectionService } from '@affine/core/modules/collection';
 import {
   type QuickSearchItem,
   QuickSearchTagIcon,
 } from '@affine/core/modules/quicksearch';
 import { TagService } from '@affine/core/modules/tag';
+import { useI18n } from '@affine/i18n';
+import { sleep } from '@blocksuite/affine/global/utils';
 import { ViewLayersIcon } from '@blocksuite/icons/rc';
 import {
   LiveData,
@@ -12,9 +19,15 @@ import {
   useService,
   useServices,
 } from '@toeverything/infra';
+import { bodyEmphasized } from '@toeverything/theme/typography';
 import { useCallback, useMemo } from 'react';
 
-import { AppTabs, SearchInput, SearchResLabel } from '../../components';
+import {
+  NavigationBackButton,
+  SearchInput,
+  SearchResLabel,
+} from '../../components';
+import { searchVTScope } from '../../components/search-input/style.css';
 import { MobileSearchService } from '../../modules/search';
 import { SearchResults } from '../../views/search/search-results';
 import * as styles from '../../views/search/style.css';
@@ -113,7 +126,8 @@ const WithQueryList = () => {
 };
 
 export const Component = () => {
-  useThemeColorV2('layer/background/secondary');
+  const t = useI18n();
+  useThemeColorV2('layer/background/mobile/primary');
   const searchInput = useLiveData(searchInput$);
   const searchService = useService(MobileSearchService);
 
@@ -133,21 +147,37 @@ export const Component = () => {
     ]
   );
 
+  const transitionBack = useCallback(() => {
+    startScopedViewTransition(searchVTScope, async () => {
+      history.back();
+      await sleep(10);
+    });
+  }, []);
+
   return (
     <>
       <SafeArea top>
         <div className={styles.searchHeader} data-testid="search-header">
           <SearchInput
+            className={styles.searchInput}
             debounce={300}
             autoFocus={!searchInput}
             value={searchInput}
             onInput={onSearch}
             placeholder="Search Docs, Collections"
           />
+          <NavigationBackButton>
+            <Button
+              variant="plain"
+              className={styles.searchCancel}
+              onClick={transitionBack}
+            >
+              <span className={bodyEmphasized}>{t['Cancel']()}</span>
+            </Button>
+          </NavigationBackButton>
         </div>
       </SafeArea>
       {searchInput ? <WithQueryList /> : <RecentList />}
-      <AppTabs />
     </>
   );
 };

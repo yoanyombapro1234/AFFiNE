@@ -43,6 +43,7 @@ export const promptLink = style({
   fontWeight: 500,
   textDecoration: 'none',
   fontSize: cssVar('fontSm'),
+  cursor: 'pointer',
 });
 export const centerContent = style({
   display: 'flex',
@@ -53,6 +54,14 @@ export const centerContent = style({
 export const prompt = style({
   marginTop: 20,
   marginBottom: 12,
+});
+
+export const accidentHandling = style({
+  marginTop: 20,
+  display: 'flex',
+  flexDirection: 'column',
+  rowGap: 12,
+  alignItems: 'center',
 });
 export const editSettingsLink = style({
   fontWeight: 500,

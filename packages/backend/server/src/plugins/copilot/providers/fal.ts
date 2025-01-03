@@ -11,7 +11,7 @@ import {
   CopilotProviderSideError,
   metrics,
   UserFriendlyError,
-} from '../../../fundamentals';
+} from '../../../base';
 import {
   CopilotCapability,
   CopilotChatOptions,
@@ -253,7 +253,7 @@ export class FalProvider
       metrics.ai.counter('chat_text_stream_calls').add(1, { model });
       const result = await this.generateText(messages, model, options);
 
-      for await (const content of result) {
+      for (const content of result) {
         if (content) {
           yield content;
           if (options.signal?.aborted) {

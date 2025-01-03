@@ -4,6 +4,7 @@ export {
   ListPadding,
   ListWithSmallGap,
   LoadingSvg,
+  PDFPageCanvas,
   type PDFVirtuosoContext,
   type PDFVirtuosoProps,
   Scroller,

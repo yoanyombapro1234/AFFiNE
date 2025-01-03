@@ -150,6 +150,7 @@ export default {
       identity: 'Developer ID Application: TOEVERYTHING PTE. LTD.',
       'hardened-runtime': true,
     },
+    electronZipDir: process.env.ELECTRON_FORGE_ELECTRON_ZIP_DIR,
     osxNotarize: process.env.APPLE_ID
       ? {
           tool: 'notarytool',
@@ -205,13 +206,6 @@ export default {
 
       cp.spawnSync('yarn', ['generate-assets'], {
         stdio: 'inherit',
-        env: {
-          ...process.env,
-          NODE_OPTIONS: (process.env.NODE_OPTIONS ?? '').replace(
-            '--loader ts-node/esm',
-            ''
-          ),
-        },
         cwd: __dirname,
       });
     },

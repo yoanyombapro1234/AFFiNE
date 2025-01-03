@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./src/",
+    "outDir": "./dist/",
+    "noEmit": false,
+    "noUncheckedIndexedAccess": true
+  },
+  "include": ["./src"],
+  "references": [
+    {
+      "path": "../components"
+    },
+    {
+      "path": "../shared"
+    },
+    {
+      "path": "../../framework"
+    }
+  ]
+}

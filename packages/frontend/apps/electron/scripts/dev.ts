@@ -34,6 +34,12 @@ function spawnOrReloadElectron() {
   const ext = process.platform === 'win32' ? '.cmd' : '';
   const exe = resolve(rootDir, 'node_modules', '.bin', `electron${ext}`);
 
+  // remove import loader option
+  const NODE_OPTIONS = process.env.NODE_OPTIONS;
+  if (NODE_OPTIONS) {
+    process.env.NODE_OPTIONS = NODE_OPTIONS.replace(/--import=[^\s]*/, '');
+  }
+
   spawnProcess = spawn(exe, ['.'], {
     cwd: electronDir,
     env: process.env,
@@ -80,7 +86,9 @@ async function watchLayers() {
                 console.log(`[layers] has changed, [re]launching electron...`);
                 spawnOrReloadElectron();
               } else {
-                buildContextPromise.then(resolve);
+                buildContextPromise.then(resolve).catch(e => {
+                  console.error(e);
+                });
                 initialBuild = true;
               }
             });
@@ -88,9 +96,13 @@ async function watchLayers() {
         },
       ],
     });
-    buildContextPromise.then(async buildContext => {
-      await buildContext.watch();
-    });
+    buildContextPromise
+      .then(buildContext => {
+        return buildContext.watch();
+      })
+      .catch(e => {
+        console.error(e);
+      });
   });
 }
 

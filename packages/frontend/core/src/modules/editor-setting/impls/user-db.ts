@@ -1,22 +1,30 @@
-import type { GlobalState } from '@toeverything/infra';
 import { Service } from '@toeverything/infra';
 import { map, type Observable, switchMap } from 'rxjs';
 
-import type { UserDBService } from '../../userspace';
+import type { ServersService } from '../../cloud';
+import type { GlobalState } from '../../storage';
+import { UserDBService } from '../../userspace';
 import type { EditorSettingProvider } from '../provider/editor-setting-provider';
 
 export class CurrentUserDBEditorSettingProvider
   extends Service
   implements EditorSettingProvider
 {
-  currentUserDB$ = this.userDBService.currentUserDB.db$;
+  private readonly currentUserDB$;
   fallback = new GlobalStateEditorSettingProvider(this.globalState);
 
   constructor(
-    public readonly userDBService: UserDBService,
+    public readonly serversService: ServersService,
     public readonly globalState: GlobalState
   ) {
     super();
+
+    const affineCloudServer = this.serversService.server$('affine-cloud').value; // TODO: support multiple servers
+    if (!affineCloudServer) {
+      throw new Error('affine-cloud server not found');
+    }
+    const userDBService = affineCloudServer.scope.get(UserDBService);
+    this.currentUserDB$ = userDBService.currentUserDB.db$;
   }
 
   set(key: string, value: string): void {

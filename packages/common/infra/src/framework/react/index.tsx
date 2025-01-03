@@ -18,6 +18,7 @@ export function useFramework(): FrameworkProvider {
 export function useService<T extends Service>(
   identifier: GeneralIdentifier<T>
 ): T {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const stack = useContext(FrameworkStackContext);
 
   let service: T | undefined = undefined;
@@ -85,6 +86,7 @@ export function useServices<
 export function useServiceOptional<T extends Service>(
   identifier: Type<T>
 ): T | undefined {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const stack = useContext(FrameworkStackContext);
 
   let service: T | undefined = undefined;

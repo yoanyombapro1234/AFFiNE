@@ -1,6 +1,7 @@
-import type { DocsService } from '@toeverything/infra';
 import { LiveData, Store } from '@toeverything/infra';
 import type { Observable } from 'rxjs';
+
+import type { DocsService } from '../../doc';
 
 function isJournalString(j?: string | false) {
   return j ? !!j?.match(/^\d{4}-\d{2}-\d{2}$/) : false;

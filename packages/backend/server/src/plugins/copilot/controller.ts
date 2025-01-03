@@ -27,7 +27,6 @@ import {
   toArray,
 } from 'rxjs';
 
-import { CurrentUser, Public } from '../../core/auth';
 import {
   BlobNotFound,
   CallMetric,
@@ -38,7 +37,8 @@ import {
   metrics,
   NoCopilotProviderAvailable,
   UnsplashIsNotConfigured,
-} from '../../fundamentals';
+} from '../../base';
+import { CurrentUser, Public } from '../../core/auth';
 import { CopilotProviderService } from './providers';
 import { ChatSession, ChatSessionService } from './session';
 import { CopilotStorage } from './storage';
@@ -466,8 +466,8 @@ export class CopilotController {
     }
   }
 
-  @CallMetric('ai', 'unsplash')
   @Get('/unsplash/photos')
+  @CallMetric('ai', 'unsplash')
   async unsplashPhotos(
     @Req() req: Request,
     @Res() res: Response,

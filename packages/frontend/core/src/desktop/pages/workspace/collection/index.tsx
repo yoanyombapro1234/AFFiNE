@@ -3,16 +3,12 @@ import { EmptyCollectionDetail } from '@affine/core/components/affine/empty/coll
 import { VirtualizedPageList } from '@affine/core/components/page-list';
 import { CollectionService } from '@affine/core/modules/collection';
 import { WorkspaceDialogService } from '@affine/core/modules/dialogs';
+import { GlobalContextService } from '@affine/core/modules/global-context';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import type { Collection } from '@affine/env/filter';
 import { useI18n } from '@affine/i18n';
 import { ViewLayersIcon } from '@blocksuite/icons/rc';
-import {
-  GlobalContextService,
-  useLiveData,
-  useService,
-  useServices,
-  WorkspaceService,
-} from '@toeverything/infra';
+import { useLiveData, useService, useServices } from '@toeverything/infra';
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 

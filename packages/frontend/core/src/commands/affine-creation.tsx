@@ -62,7 +62,7 @@ export function registerAffineCreationCommands({
       run() {
         track.$.cmdk.workspace.createWorkspace();
 
-        globalDialogService.open('create-workspace', undefined);
+        globalDialogService.open('create-workspace', {});
       },
     })
   );

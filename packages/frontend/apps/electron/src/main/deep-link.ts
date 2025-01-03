@@ -84,6 +84,7 @@ async function handleAffineUrl(url: string) {
   if (urlObj.hostname === 'authentication') {
     const method = urlObj.searchParams.get('method');
     const payload = JSON.parse(urlObj.searchParams.get('payload') ?? 'false');
+    const server = urlObj.searchParams.get('server') || undefined;
 
     if (
       !method ||
@@ -97,6 +98,7 @@ async function handleAffineUrl(url: string) {
     uiSubjects.authenticationRequest$.next({
       method,
       payload,
+      server,
     });
   } else if (
     urlObj.searchParams.get('new-tab') &&

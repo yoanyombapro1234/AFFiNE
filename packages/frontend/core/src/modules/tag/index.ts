@@ -6,13 +6,10 @@ export {
 export { TagService } from './service/tag';
 export { useDeleteTagConfirmModal } from './view/delete-tag-modal';
 
-import {
-  DocsService,
-  type Framework,
-  WorkspaceScope,
-  WorkspaceService,
-} from '@toeverything/infra';
+import { type Framework } from '@toeverything/infra';
 
+import { DocsService } from '../doc';
+import { WorkspaceScope, WorkspaceService } from '../workspace';
 import { Tag } from './entities/tag';
 import { TagList } from './entities/tag-list';
 import { TagService } from './service/tag';

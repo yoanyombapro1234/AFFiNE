@@ -1,7 +1,7 @@
 import { Button, ErrorMessage, Skeleton } from '@affine/component';
 import { SettingRow } from '@affine/component/setting-components';
 import {
-  ServerConfigService,
+  ServerService,
   SubscriptionService,
   UserCopilotQuotaService,
 } from '@affine/core/modules/cloud';
@@ -22,15 +22,16 @@ export const AIUsagePanel = ({
   onChangeSettingState?: (settingState: SettingState) => void;
 }) => {
   const t = useI18n();
-  const serverConfigService = useService(ServerConfigService);
+  const serverService = useService(ServerService);
   const hasPaymentFeature = useLiveData(
-    serverConfigService.serverConfig.features$.map(f => f?.payment)
+    serverService.server.features$.map(f => f?.payment)
   );
   const subscriptionService = useService(SubscriptionService);
   const aiSubscription = useLiveData(subscriptionService.subscription.ai$);
   useEffect(() => {
     // revalidate latest subscription status
     subscriptionService.subscription.revalidate();
+    subscriptionService.prices.revalidate();
   }, [subscriptionService]);
   const copilotQuotaService = useService(UserCopilotQuotaService);
   useEffect(() => {

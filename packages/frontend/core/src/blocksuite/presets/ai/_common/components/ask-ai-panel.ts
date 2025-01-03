@@ -45,6 +45,9 @@ export class AskAIPanel extends WithDisposable(LitElement) {
   accessor abortController: AbortController | null = null;
 
   @property({ attribute: false })
+  accessor onItemClick: (() => void) | undefined = undefined;
+
+  @property({ attribute: false })
   accessor minWidth = 330;
 
   get _edgeless() {
@@ -81,6 +84,7 @@ export class AskAIPanel extends WithDisposable(LitElement) {
       <ai-item-list
         .host=${this.host}
         .groups=${this._actionGroups}
+        .onClick=${this.onItemClick}
       ></ai-item-list>
     </div>`;
   }

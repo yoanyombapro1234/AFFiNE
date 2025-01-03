@@ -13,8 +13,9 @@ import { CollectionService } from '@affine/core/modules/collection';
 import type { DialogComponentProps } from '@affine/core/modules/dialogs';
 import type { WORKSPACE_DIALOG_SCHEMA } from '@affine/core/modules/dialogs/constant';
 import { CompatibleFavoriteItemsAdapter } from '@affine/core/modules/favorite';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import { useI18n } from '@affine/i18n';
-import { useLiveData, useService, WorkspaceService } from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import { cssVar } from '@toeverything/theme';
 import { useCallback, useMemo, useState } from 'react';
 

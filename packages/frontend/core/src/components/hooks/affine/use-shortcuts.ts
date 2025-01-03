@@ -16,6 +16,7 @@ type KeyboardShortcutsI18NKeys =
   | 'zoomOut'
   | 'zoomTo100'
   | 'zoomToFit'
+  | 'zoomToSelection'
   | 'select'
   | 'text'
   | 'shape'
@@ -114,8 +115,9 @@ export const useMacEdgelessKeyboardShortcuts = (): ShortcutMap => {
       [t('redo')]: ['⌘', '⇧', 'Z'],
       [t('zoomIn')]: ['⌘', '+'],
       [t('zoomOut')]: ['⌘', '-'],
-      [t('zoomTo100')]: ['⌘', '0'],
-      [t('zoomToFit')]: ['⌘', '1'],
+      [t('zoomTo100')]: ['Alt', '0'],
+      [t('zoomToFit')]: ['Alt', '1'],
+      [t('zoomToSelection')]: ['Alt', '2'],
       [t('select')]: ['V'],
       [t('text')]: ['T'],
       [t('shape')]: ['S'],
@@ -140,8 +142,9 @@ export const useWinEdgelessKeyboardShortcuts = (): ShortcutMap => {
       [t('redo')]: ['Ctrl', 'Y/Ctrl', 'Shift', 'Z'],
       [t('zoomIn')]: ['Ctrl', '+'],
       [t('zoomOut')]: ['Ctrl', '-'],
-      [t('zoomTo100')]: ['Ctrl', '0'],
-      [t('zoomToFit')]: ['Ctrl', '1'],
+      [t('zoomTo100')]: ['Alt', '0'],
+      [t('zoomToFit')]: ['Alt', '1'],
+      [t('zoomToSelection')]: ['Alt', '2'],
       [t('select')]: ['V'],
       [t('text')]: ['T'],
       [t('shape')]: ['S'],

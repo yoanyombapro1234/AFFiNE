@@ -129,3 +129,62 @@ export const DowngradeModal = ({
     </Modal>
   );
 };
+
+export const DowngradeTeamModal = ({
+  open,
+  loading,
+  onOpenChange,
+  onCancel,
+}: {
+  loading?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onCancel?: () => void;
+}) => {
+  const t = useI18n();
+  const canceled = useRef(false);
+
+  useEffect(() => {
+    if (!loading && open && canceled.current) {
+      onOpenChange?.(false);
+      canceled.current = false;
+    }
+  }, [loading, open, onOpenChange]);
+
+  return (
+    <Modal
+      title={t['com.affine.payment.modal.downgrade.title']()}
+      open={open}
+      contentOptions={{}}
+      width={480}
+      onOpenChange={onOpenChange}
+    >
+      <div className={styles.downgradeContentWrapper}>
+        <p className={styles.downgradeContent}>
+          {t['com.affine.payment.modal.downgrade.content']()}
+        </p>
+      </div>
+
+      <footer className={styles.downgradeFooter}>
+        <Button
+          onClick={() => {
+            canceled.current = true;
+            onCancel?.();
+          }}
+          loading={loading}
+        >
+          {t['com.affine.payment.modal.downgrade.cancel']()}
+        </Button>
+        <DialogTrigger asChild>
+          <Button
+            disabled={loading}
+            onClick={() => onOpenChange?.(false)}
+            variant="primary"
+          >
+            {t['com.affine.payment.modal.downgrade.team-confirm']()}
+          </Button>
+        </DialogTrigger>
+      </footer>
+    </Modal>
+  );
+};

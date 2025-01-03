@@ -5,9 +5,9 @@ import type { TestFn } from 'ava';
 import ava from 'ava';
 import Sinon from 'sinon';
 
+import { ConfigModule } from '../src/base/config';
 import { AuthService } from '../src/core/auth';
 import { QuotaModule } from '../src/core/quota';
-import { ConfigModule } from '../src/fundamentals/config';
 import { CopilotModule } from '../src/plugins/copilot';
 import { prompts, PromptService } from '../src/plugins/copilot/prompt';
 import {

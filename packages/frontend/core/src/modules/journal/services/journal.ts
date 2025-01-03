@@ -1,10 +1,25 @@
+import { Text } from '@blocksuite/affine/store';
 import { LiveData, Service } from '@toeverything/infra';
 import dayjs from 'dayjs';
 
+import {
+  type DocProps,
+  initDocFromProps,
+} from '../../../blocksuite/initialization';
+import type { DocsService } from '../../doc';
+import type { EditorSettingService } from '../../editor-setting';
 import type { JournalStore } from '../store/journal';
 
+export type MaybeDate = Date | string | number;
+
+export const JOURNAL_DATE_FORMAT = 'YYYY-MM-DD';
+
 export class JournalService extends Service {
-  constructor(private readonly store: JournalStore) {
+  constructor(
+    private readonly store: JournalStore,
+    private readonly docsService: DocsService,
+    private readonly editorSettingService: EditorSettingService
+  ) {
     super();
   }
 
@@ -29,10 +44,40 @@ export class JournalService extends Service {
     this.store.removeDocJournalDate(docId);
   }
 
-  getJournalsByDate(date: string) {
-    return this.store.getDocsByJournalDate(date);
-  }
   journalsByDate$(date: string) {
     return this.store.docsByJournalDate$(date);
+  }
+
+  private createJournal(maybeDate: MaybeDate) {
+    const day = dayjs(maybeDate);
+    const title = day.format(JOURNAL_DATE_FORMAT);
+    const docRecord = this.docsService.createDoc();
+    const { doc, release } = this.docsService.open(docRecord.id);
+    this.docsService.list.setPrimaryMode(docRecord.id, 'page');
+    // set created date to match the journal date
+    docRecord.setMeta({
+      createDate: dayjs()
+        .set('year', day.year())
+        .set('month', day.month())
+        .set('date', day.date())
+        .toDate()
+        .getTime(),
+    });
+    const docProps: DocProps = {
+      page: { title: new Text(title) },
+      note: this.editorSettingService.editorSetting.get('affine:note'),
+    };
+    initDocFromProps(doc.blockSuiteDoc, docProps);
+    release();
+    this.setJournalDate(docRecord.id, title);
+    return docRecord;
+  }
+
+  ensureJournalByDate(maybeDate: MaybeDate) {
+    const day = dayjs(maybeDate);
+    const title = day.format(JOURNAL_DATE_FORMAT);
+    const docs = this.journalsByDate$(title).value;
+    if (docs.length) return docs[0];
+    return this.createJournal(maybeDate);
   }
 }

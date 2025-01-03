@@ -1,14 +1,15 @@
+import { GraphQLService } from '@affine/core/modules/cloud';
 import type {
   GraphQLQuery,
   QueryOptions,
   QueryResponse,
 } from '@affine/graphql';
-import { fetcher } from '@affine/graphql';
+import { useService } from '@toeverything/infra';
 import type { GraphQLError } from 'graphql';
 import { useCallback, useMemo } from 'react';
 import type { SWRConfiguration, SWRResponse } from 'swr';
 import useSWR from 'swr';
-import useSWRImutable from 'swr/immutable';
+import useSWRImmutable from 'swr/immutable';
 import useSWRInfinite from 'swr/infinite';
 
 /**
@@ -32,7 +33,11 @@ import useSWRInfinite from 'swr/infinite';
 type useQueryFn = <Query extends GraphQLQuery>(
   options?: QueryOptions<Query>,
   config?: Omit<
-    SWRConfiguration<QueryResponse<Query>, GraphQLError, typeof fetcher<Query>>,
+    SWRConfiguration<
+      QueryResponse<Query>,
+      GraphQLError,
+      (options: QueryOptions<Query>) => Promise<QueryResponse<Query>>
+    >,
     'fetcher'
   >
 ) => SWRResponse<
@@ -53,11 +58,12 @@ const createUseQuery =
       }),
       [config]
     );
+    const graphqlService = useService(GraphQLService);
 
-    const useSWRFn = immutable ? useSWRImutable : useSWR;
+    const useSWRFn = immutable ? useSWRImmutable : useSWR;
     return useSWRFn(
       options ? () => ['cloud', options.query.id, options.variables] : null,
-      options ? () => fetcher(options) : null,
+      options ? () => graphqlService.gql(options) : null,
       configWithSuspense
     );
   };
@@ -76,7 +82,7 @@ export function useQueryInfinite<Query extends GraphQLQuery>(
     SWRConfiguration<
       QueryResponse<Query>,
       GraphQLError | GraphQLError[],
-      typeof fetcher<Query>
+      (options: QueryOptions<Query>) => Promise<QueryResponse<Query>>
     >,
     'fetcher'
   >
@@ -88,6 +94,7 @@ export function useQueryInfinite<Query extends GraphQLQuery>(
     }),
     [config]
   );
+  const graphqlService = useService(GraphQLService);
 
   const { data, setSize, size, error } = useSWRInfinite<
     QueryResponse<Query>,
@@ -100,7 +107,7 @@ export function useQueryInfinite<Query extends GraphQLQuery>(
     ],
     async ([_, __, variables]) => {
       const params = { ...options, variables } as QueryOptions<Query>;
-      return fetcher(params);
+      return graphqlService.gql(params);
     },
     configWithSuspense
   );

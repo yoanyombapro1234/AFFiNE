@@ -16,7 +16,7 @@ import {
   SettingWrapper,
 } from '@affine/component/setting-components';
 import { useAsyncCallback } from '@affine/core/components/hooks/affine-async-hooks';
-import { ServerConfigService } from '@affine/core/modules/cloud';
+import { ServerService } from '@affine/core/modules/cloud';
 import { DesktopApiService } from '@affine/core/modules/desktop-api';
 import {
   EditorSettingService,
@@ -24,6 +24,7 @@ import {
   fontStyleOptions,
 } from '@affine/core/modules/editor-setting';
 import { SpellCheckSettingService } from '@affine/core/modules/editor-setting/services/spell-check-setting';
+import { FeatureFlagService } from '@affine/core/modules/feature-flag';
 import {
   type FontData,
   SystemFontFamilyService,
@@ -31,12 +32,7 @@ import {
 import { Trans, useI18n } from '@affine/i18n';
 import type { DocMode } from '@blocksuite/affine/blocks';
 import { DoneIcon, SearchIcon } from '@blocksuite/icons/rc';
-import {
-  FeatureFlagService,
-  useLiveData,
-  useService,
-  useServices,
-} from '@toeverything/infra';
+import { useLiveData, useService, useServices } from '@toeverything/infra';
 import clsx from 'clsx';
 import {
   forwardRef,
@@ -358,13 +354,11 @@ const NewDocDefaultModeSettings = () => {
 const AISettings = () => {
   const t = useI18n();
   const { openConfirmModal } = useConfirmModal();
-  const { featureFlagService, serverConfigService } = useServices({
+  const { featureFlagService, serverService } = useServices({
     FeatureFlagService,
-    ServerConfigService,
+    ServerService,
   });
-  const serverFeatures = useLiveData(
-    serverConfigService.serverConfig.features$
-  );
+  const serverFeatures = useLiveData(serverService.server.features$);
   const enableAI = useLiveData(featureFlagService.flags.enable_ai.$);
 
   const onAIChange = useCallback(

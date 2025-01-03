@@ -14,8 +14,8 @@ import {
   Config,
   getRequestResponseFromContext,
   parseCookies,
-} from '../../fundamentals';
-import { WEBSOCKET_OPTIONS } from '../../fundamentals/websocket';
+} from '../../base';
+import { WEBSOCKET_OPTIONS } from '../../base/websocket';
 import { AuthService } from './service';
 import { Session } from './session';
 

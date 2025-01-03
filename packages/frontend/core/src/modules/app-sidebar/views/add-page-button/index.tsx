@@ -1,10 +1,11 @@
 import { IconButton } from '@affine/component';
 import { usePageHelper } from '@affine/core/components/blocksuite/block-suite-page-list/utils';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import { isNewTabTrigger } from '@affine/core/utils';
 import { useI18n } from '@affine/i18n';
 import track from '@affine/track';
 import { PlusIcon } from '@blocksuite/icons/rc';
-import { useService, WorkspaceService } from '@toeverything/infra';
+import { useService } from '@toeverything/infra';
 import clsx from 'clsx';
 import type React from 'react';
 import { type MouseEvent, useCallback } from 'react';

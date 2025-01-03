@@ -1,6 +1,7 @@
 import { DatePicker, Menu, PropertyValue, Tooltip } from '@affine/component';
+import { DocService } from '@affine/core/modules/doc';
 import { i18nTime, useI18n } from '@affine/i18n';
-import { DocService, useLiveData, useServices } from '@toeverything/infra';
+import { useLiveData, useServices } from '@toeverything/infra';
 
 import * as styles from './date.css';
 import type { PropertyValueProps } from './types';
@@ -26,7 +27,12 @@ export const DateValue = ({ value, onChange }: PropertyValueProps) => {
   const { parsedValue, displayValue } = useParsedDate(value);
 
   return (
-    <Menu items={<DatePicker value={parsedValue} onChange={onChange} />}>
+    <Menu
+      contentOptions={{
+        style: BUILD_CONFIG.isMobileEdition ? { padding: '15px 20px' } : {},
+      }}
+      items={<DatePicker value={parsedValue} onChange={onChange} />}
+    >
       <PropertyValue
         className={parsedValue ? '' : styles.empty}
         isEmpty={!parsedValue}

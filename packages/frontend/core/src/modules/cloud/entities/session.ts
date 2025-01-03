@@ -2,13 +2,14 @@ import {
   backoffRetry,
   effect,
   Entity,
+  exhaustMapWithTrailing,
   fromPromise,
   LiveData,
   onComplete,
   onStart,
 } from '@toeverything/infra';
 import { isEqual } from 'lodash-es';
-import { EMPTY, exhaustMap, mergeMap } from 'rxjs';
+import { EMPTY, mergeMap } from 'rxjs';
 
 import { validateAndReduceImage } from '../../../utils/reduce-image';
 import type { AccountProfile, AuthStore } from '../stores/auth';
@@ -33,6 +34,11 @@ export interface AuthSessionAuthenticated {
   status: 'authenticated';
   session: AuthSessionInfo;
 }
+
+export type AuthSessionStatus = (
+  | AuthSessionUnauthenticated
+  | AuthSessionAuthenticated
+)['status'];
 
 export class AuthSession extends Entity {
   session$: LiveData<AuthSessionUnauthenticated | AuthSessionAuthenticated> =
@@ -66,8 +72,8 @@ export class AuthSession extends Entity {
   }
 
   revalidate = effect(
-    exhaustMap(() =>
-      fromPromise(this.getSession()).pipe(
+    exhaustMapWithTrailing(() =>
+      fromPromise(() => this.getSession()).pipe(
         backoffRetry({
           count: Infinity,
         }),

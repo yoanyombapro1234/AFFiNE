@@ -153,19 +153,17 @@ const ImagePreviewModalImpl = ({
     },
     [blocksuiteDoc, blocks, onBlockIdChange, resetZoom, onClose]
   );
-
   const downloadHandler = useAsyncCallback(async () => {
-    const url = imageRef.current?.src;
-    if (url) {
-      await downloadResourceWithUrl(url, caption || blockModel?.id || 'image');
-    }
+    const image = imageRef.current;
+    if (!image?.src) return;
+    const filename = caption || blockModel?.id || 'image';
+    await downloadResourceWithUrl(image.src, filename);
   }, [caption, blockModel?.id]);
 
   const copyHandler = useAsyncCallback(async () => {
-    const url = imageRef.current?.src;
-    if (url) {
-      await copyImageToClipboard(url);
-    }
+    const image = imageRef.current;
+    if (!image?.src) return;
+    await copyImageToClipboard(image.src);
   }, []);
 
   useEffect(() => {

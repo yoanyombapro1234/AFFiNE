@@ -4,10 +4,7 @@ import {
   waitForAllPagesLoad,
   waitForEditorLoad,
 } from '@affine-test/kit/utils/page-logic';
-import {
-  clickSideBarCurrentWorkspaceBanner,
-  clickSideBarSettingButton,
-} from '@affine-test/kit/utils/sidebar';
+import { clickSideBarSettingButton } from '@affine-test/kit/utils/sidebar';
 import { faker } from '@faker-js/faker';
 import { hash } from '@node-rs/argon2';
 import type { BrowserContext, Cookie, Page } from '@playwright/test';
@@ -56,16 +53,22 @@ const cloudUserSchema = z.object({
 export const runPrisma = async <T>(
   cb: (
     prisma: InstanceType<
-      // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+      // oxlint-disable-next-line @typescript-eslint/consistent-type-imports
       typeof import('../../../packages/backend/server/node_modules/@prisma/client').PrismaClient
     >
   ) => Promise<T>
 ): Promise<T> => {
   const {
     PrismaClient,
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-  } = require('../../../packages/backend/server/node_modules/@prisma/client');
-  const client = new PrismaClient();
+    // oxlint-disable-next-line @typescript-eslint/consistent-type-imports
+  } = await import(
+    '../../../packages/backend/server/node_modules/@prisma/client'
+  );
+  const client = new PrismaClient({
+    datasourceUrl:
+      process.env.DATABASE_URL ||
+      'postgresql://affine:affine@localhost:5432/affine',
+  });
   await client.$connect();
   try {
     return await cb(client);
@@ -93,6 +96,7 @@ export async function addUserToWorkspace(
         workspaceId: workspace.id,
         userId,
         accepted: true,
+        status: 'Accepted',
         type: permission,
       },
     });
@@ -107,7 +111,7 @@ export async function createRandomUser(): Promise<{
 }> {
   const startTime = Date.now();
   const user = {
-    name: faker.internet.userName(),
+    name: faker.internet.username(),
     email: faker.internet.email().toLowerCase(),
     password: '123456',
   };
@@ -157,7 +161,7 @@ export async function createRandomAIUser(): Promise<{
   id: string;
 }> {
   const user = {
-    name: faker.internet.userName(),
+    name: faker.internet.username(),
     email: faker.internet.email().toLowerCase(),
     password: '123456',
   };
@@ -239,8 +243,7 @@ export async function loginUser(
     await waitForEditorLoad(page);
   }
 
-  await clickSideBarCurrentWorkspaceBanner(page);
-  await page.getByTestId('cloud-signin-button').click({
+  await page.getByTestId('sidebar-user-avatar').click({
     delay: 200,
   });
   await loginUserDirectly(page, user, config);

@@ -4,14 +4,12 @@ import {
   VirtualizedTrashList,
 } from '@affine/core/components/page-list';
 import { Header } from '@affine/core/components/pure/header';
+import { GlobalContextService } from '@affine/core/modules/global-context';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import { useI18n } from '@affine/i18n';
 import { assertExists } from '@blocksuite/affine/global/utils';
 import { DeleteIcon } from '@blocksuite/icons/rc';
-import {
-  GlobalContextService,
-  useService,
-  WorkspaceService,
-} from '@toeverything/infra';
+import { useService } from '@toeverything/infra';
 import { useEffect } from 'react';
 
 import {

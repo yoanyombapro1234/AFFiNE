@@ -1,10 +1,11 @@
 import { Checkbox, DatePicker, Menu, PropertyValue } from '@affine/component';
+import { MobileJournalConflictList } from '@affine/core/mobile/pages/workspace/detail/menu/journal-conflicts';
+import { DocService } from '@affine/core/modules/doc';
 import { JournalService } from '@affine/core/modules/journal';
 import { WorkbenchService } from '@affine/core/modules/workbench';
 import { ViewService } from '@affine/core/modules/workbench/services/view';
 import { i18nTime, useI18n } from '@affine/i18n';
 import {
-  DocService,
   useLiveData,
   useService,
   useServiceOptional,
@@ -13,8 +14,10 @@ import dayjs from 'dayjs';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import * as styles from './journal.css';
+import type { PropertyValueProps } from './types';
 
-export const JournalValue = () => {
+const stopPropagation = (e: React.MouseEvent) => e.stopPropagation();
+export const JournalValue = ({ onChange }: PropertyValueProps) => {
   const t = useI18n();
 
   const journalService = useService(JournalService);
@@ -50,8 +53,9 @@ export const JournalValue = () => {
       const date = dayjs(day).format('YYYY-MM-DD');
       setSelectedDate(date);
       journalService.setJournalDate(doc.id, date);
+      onChange?.(date, true);
     },
-    [journalService, doc.id]
+    [journalService, doc.id, onChange]
   );
 
   const handleCheck = useCallback(
@@ -59,11 +63,12 @@ export const JournalValue = () => {
       if (!v) {
         journalService.removeJournalDate(doc.id);
         setShowDatePicker(false);
+        onChange?.(null, true);
       } else {
         handleDateSelect(selectedDate);
       }
     },
-    [handleDateSelect, journalService, doc.id, selectedDate]
+    [onChange, journalService, doc.id, handleDateSelect, selectedDate]
   );
 
   const workbench = useService(WorkbenchService).workbench;
@@ -72,10 +77,6 @@ export const JournalValue = () => {
 
   const handleOpenDuplicate = useCallback(
     (e: React.MouseEvent) => {
-      // todo: open duplicate dialog for mobile
-      if (BUILD_CONFIG.isMobileEdition) {
-        return;
-      }
       e.stopPropagation();
       workbench.openSidebar();
       view.activeSidebarTab('journal');
@@ -101,18 +102,14 @@ export const JournalValue = () => {
       onClick={toggle}
     >
       <div className={styles.root}>
-        <Checkbox
-          className={styles.checkbox}
-          checked={checked}
-          onChange={handleCheck}
-        />
+        <Checkbox className={styles.checkbox} checked={checked} />
         {checked ? (
           <Menu
             contentOptions={{
               onClick: e => e.stopPropagation(),
               sideOffset: 10,
               alignOffset: -30,
-              style: { padding: 20 },
+              style: { padding: '15px 20px' },
             }}
             rootOptions={{
               modal: true,
@@ -142,13 +139,25 @@ export const JournalValue = () => {
         ) : null}
 
         {checked && conflict ? (
-          <div
-            data-testid="conflict-tag"
-            className={styles.duplicateTag}
-            onClick={handleOpenDuplicate}
-          >
-            {t['com.affine.page-properties.property.journal-duplicated']()}
-          </div>
+          BUILD_CONFIG.isMobileEdition ? (
+            <Menu items={<MobileJournalConflictList date={selectedDate} />}>
+              <div
+                data-testid="conflict-tag"
+                className={styles.duplicateTag}
+                onClick={stopPropagation}
+              >
+                {t['com.affine.page-properties.property.journal-duplicated']()}
+              </div>
+            </Menu>
+          ) : (
+            <div
+              data-testid="conflict-tag"
+              className={styles.duplicateTag}
+              onClick={handleOpenDuplicate}
+            >
+              {t['com.affine.page-properties.property.journal-duplicated']()}
+            </div>
+          )
         ) : null}
       </div>
     </PropertyValue>

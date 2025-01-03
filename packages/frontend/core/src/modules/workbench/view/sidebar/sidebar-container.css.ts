@@ -24,10 +24,9 @@ export const sidebarContainerInner = style({
 export const sidebarBodyTarget = style({
   display: 'flex',
   flexDirection: 'column',
+  height: 0,
   flex: 1,
   width: '100%',
-  height: '100%',
-  overflow: 'hidden',
   alignItems: 'center',
 });
 

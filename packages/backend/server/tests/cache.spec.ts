@@ -1,7 +1,7 @@
 import { TestingModule } from '@nestjs/testing';
 import test from 'ava';
 
-import { Cache } from '../src/fundamentals/cache';
+import { Cache } from '../src/base/cache';
 import { createTestingModule } from './utils';
 
 let cache: Cache;

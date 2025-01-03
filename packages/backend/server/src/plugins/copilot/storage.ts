@@ -2,7 +2,6 @@ import { createHash } from 'node:crypto';
 
 import { Injectable } from '@nestjs/common';
 
-import { QuotaManagementService } from '../../core/quota';
 import {
   type BlobInputType,
   BlobQuotaExceeded,
@@ -12,7 +11,8 @@ import {
   type StorageProvider,
   StorageProviderFactory,
   URLHelper,
-} from '../../fundamentals';
+} from '../../base';
+import { QuotaManagementService } from '../../core/quota';
 
 @Injectable()
 export class CopilotStorage {
@@ -38,7 +38,7 @@ export class CopilotStorage {
   ) {
     const name = `${userId}/${workspaceId}/${key}`;
     await this.provider.put(name, blob);
-    if (this.config.node.dev) {
+    if (this.config.node.dev || this.config.node.test) {
       // return image base64url for dev environment
       return `data:image/png;base64,${blob.toString('base64')}`;
     }

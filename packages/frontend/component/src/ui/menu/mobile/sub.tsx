@@ -1,10 +1,10 @@
 import { ArrowRightSmallPlusIcon } from '@blocksuite/icons/rc';
 import { Slot } from '@radix-ui/react-slot';
-import { type MouseEvent, useCallback, useContext } from 'react';
+import { type MouseEvent, useCallback, useEffect, useId, useMemo } from 'react';
 
 import type { MenuSubProps } from '../menu.types';
 import { useMenuItem } from '../use-menu-item';
-import { MobileMenuContext } from './context';
+import { useMobileSubMenuHelper } from './context';
 
 export const MobileMenuSub = ({
   title,
@@ -42,20 +42,36 @@ export const MobileMenuSubRaw = ({
   onClick,
   children,
   items,
+  subOptions,
   subContentOptions: contentOptions = {},
 }: MenuSubProps & {
   onClick?: (e: MouseEvent<HTMLDivElement>) => void;
   title?: string;
 }) => {
-  const { setSubMenus } = useContext(MobileMenuContext);
+  const id = useId();
+  const { addSubMenu } = useMobileSubMenuHelper();
+
+  const subMenuContent = useMemo(
+    () => ({ items, contentOptions, options: subOptions, title, id }),
+    [items, contentOptions, subOptions, title, id]
+  );
+
+  const doAddSubMenu = useCallback(() => {
+    addSubMenu(subMenuContent);
+  }, [addSubMenu, subMenuContent]);
 
   const onItemClick = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
       onClick?.(e);
-      setSubMenus(prev => [...prev, { items, contentOptions, title }]);
+      doAddSubMenu();
     },
-    [contentOptions, items, onClick, setSubMenus, title]
+    [doAddSubMenu, onClick]
   );
+  useEffect(() => {
+    if (subOptions?.open) {
+      doAddSubMenu();
+    }
+  }, [doAddSubMenu, subOptions]);
 
   return <Slot onClick={onItemClick}>{children}</Slot>;
 };

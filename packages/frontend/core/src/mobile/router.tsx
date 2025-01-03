@@ -1,18 +1,15 @@
-import { NotificationCenter } from '@affine/component';
 import { NavigateContext } from '@affine/core/components/hooks/use-navigate-helper';
 import { wrapCreateBrowserRouter } from '@sentry/react';
 import { useEffect, useState } from 'react';
 import type { RouteObject } from 'react-router-dom';
 import {
   createBrowserRouter as reactRouterCreateBrowserRouter,
-  Outlet,
   redirect,
-  // eslint-disable-next-line @typescript-eslint/no-restricted-imports
+  // oxlint-disable-next-line @typescript-eslint/no-restricted-imports
   useNavigate,
 } from 'react-router-dom';
 
-import { GlobalDialogs } from './dialogs';
-import { MobileSignInModal } from './views/sign-in/modal';
+import { RootWrapper } from './pages/root';
 
 function RootRouter() {
   const navigate = useNavigate();
@@ -25,10 +22,7 @@ function RootRouter() {
   return (
     ready && (
       <NavigateContext.Provider value={navigate}>
-        <GlobalDialogs />
-        <NotificationCenter />
-        <MobileSignInModal />
-        <Outlet />
+        <RootWrapper />
       </NavigateContext.Provider>
     )
   );

@@ -5,11 +5,11 @@ import {
 } from '@affine/component/setting-components';
 import { Avatar } from '@affine/component/ui/avatar';
 import { Button } from '@affine/component/ui/button';
-import { authAtom } from '@affine/core/components/atoms';
 import { useSignOut } from '@affine/core/components/hooks/affine/use-sign-out';
 import { useAsyncCallback } from '@affine/core/components/hooks/affine-async-hooks';
 import { useCatchEventCallback } from '@affine/core/components/hooks/use-catch-event-hook';
 import { Upload } from '@affine/core/components/pure/file-upload';
+import { GlobalDialogService } from '@affine/core/modules/dialogs';
 import { SubscriptionPlan } from '@affine/graphql';
 import { useI18n } from '@affine/i18n';
 import { track } from '@affine/track';
@@ -20,10 +20,9 @@ import {
   useService,
   useServices,
 } from '@toeverything/infra';
-import { useSetAtom } from 'jotai';
 import { useCallback, useEffect, useState } from 'react';
 
-import { AuthService, ServerConfigService } from '../../../../modules/cloud';
+import { AuthService, ServerService } from '../../../../modules/cloud';
 import type { SettingState } from '../types';
 import { AIUsagePanel } from './ai-usage-panel';
 import { StorageProgress } from './storage-progress';
@@ -178,41 +177,32 @@ export const AccountSetting = ({
 }: {
   onChangeSettingState?: (settingState: SettingState) => void;
 }) => {
-  const { authService, serverConfigService } = useServices({
+  const { authService, serverService, globalDialogService } = useServices({
     AuthService,
-    ServerConfigService,
+    ServerService,
+    GlobalDialogService,
   });
-  const serverFeatures = useLiveData(
-    serverConfigService.serverConfig.features$
-  );
+  const serverFeatures = useLiveData(serverService.server.features$);
   const t = useI18n();
   const session = authService.session;
   useEffect(() => {
     session.revalidate();
   }, [session]);
   const account = useEnsureLiveData(session.account$);
-  const setAuthModal = useSetAtom(authAtom);
   const openSignOutModal = useSignOut();
 
   const onChangeEmail = useCallback(() => {
-    setAuthModal({
-      openModal: true,
-      state: 'sendEmail',
-      // @ts-expect-error accont email is always defined
-      email: account.email,
-      emailType: account.info?.emailVerified ? 'changeEmail' : 'verifyEmail',
+    globalDialogService.open('verify-email', {
+      server: serverService.server.baseUrl,
+      changeEmail: !!account.info?.emailVerified,
     });
-  }, [account.email, account.info?.emailVerified, setAuthModal]);
+  }, [account, globalDialogService, serverService.server.baseUrl]);
 
   const onPasswordButtonClick = useCallback(() => {
-    setAuthModal({
-      openModal: true,
-      state: 'sendEmail',
-      // @ts-expect-error accont email is always defined
-      email: account.email,
-      emailType: account.info?.hasPassword ? 'changePassword' : 'setPassword',
+    globalDialogService.open('change-password', {
+      server: serverService.server.baseUrl,
     });
-  }, [account.email, account.info?.hasPassword, setAuthModal]);
+  }, [globalDialogService, serverService.server.baseUrl]);
 
   return (
     <>

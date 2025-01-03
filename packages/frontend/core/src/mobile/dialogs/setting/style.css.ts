@@ -8,6 +8,7 @@ export const root = style({
   display: 'flex',
   flexDirection: 'column',
   gap: 16,
+  padding: '24px 16px',
 });
 
 export const baseSettingItem = style({
@@ -35,6 +36,8 @@ export const baseSettingItemAction = style([
     textOverflow: 'ellipsis',
     overflow: 'hidden',
     flexShrink: 1,
+    display: 'flex',
+    alignItems: 'center',
   },
 ]);
 

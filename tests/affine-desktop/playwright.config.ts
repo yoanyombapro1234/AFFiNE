@@ -41,7 +41,7 @@ if (process.env.DEV_SERVER_URL) {
   );
   config.webServer = [
     {
-      command: 'yarn run start:web-static',
+      command: 'yarn run -T affine bundle -p @affine/electron --dev',
       port: 8080,
       timeout: 120 * 1000,
       reuseExistingServer: !process.env.CI,

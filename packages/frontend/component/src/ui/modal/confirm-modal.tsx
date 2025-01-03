@@ -12,7 +12,9 @@ import { Modal } from './modal';
 const styles = BUILD_CONFIG.isMobileEdition ? mobileStyles : desktopStyles;
 
 export interface ConfirmModalProps extends ModalProps {
+  customConfirmButton?: () => React.ReactNode;
   confirmButtonOptions?: Omit<ButtonProps, 'children'>;
+  childrenContentClassName?: string;
   onConfirm?: (() => void) | (() => Promise<void>);
   onCancel?: () => void;
   confirmText?: React.ReactNode;
@@ -29,6 +31,7 @@ export interface ConfirmModalProps extends ModalProps {
 export const ConfirmModal = ({
   children,
   confirmButtonOptions,
+  customConfirmButton: CustomConfirmButton,
   // FIXME: we need i18n
   confirmText,
   cancelText = 'Cancel',
@@ -40,6 +43,7 @@ export const ConfirmModal = ({
   autoFocusConfirm = true,
   headerClassName,
   descriptionClassName,
+  childrenContentClassName,
   contentOptions,
   ...props
 }: ConfirmModalProps) => {
@@ -66,7 +70,11 @@ export const ConfirmModal = ({
       descriptionClassName={clsx(styles.description, descriptionClassName)}
       {...props}
     >
-      {children ? <div className={styles.content}>{children}</div> : null}
+      {children ? (
+        <div className={clsx(styles.content, childrenContentClassName)}>
+          {children}
+        </div>
+      ) : null}
       <div
         className={clsx(styles.footer, {
           modalFooterWithChildren: !!children,
@@ -79,19 +87,28 @@ export const ConfirmModal = ({
             onClick={onCancel}
             data-testid="confirm-modal-cancel"
             {...cancelButtonOptions}
+            variant={
+              cancelButtonOptions?.variant
+                ? cancelButtonOptions.variant
+                : 'secondary'
+            }
           >
             {cancelText}
           </Button>
         </DialogTrigger>
-        <Button
-          className={styles.action}
-          onClick={onConfirmClick}
-          data-testid="confirm-modal-confirm"
-          autoFocus={autoFocusConfirm}
-          {...confirmButtonOptions}
-        >
-          {confirmText}
-        </Button>
+        {CustomConfirmButton ? (
+          <CustomConfirmButton data-testid="confirm-modal-confirm" />
+        ) : (
+          <Button
+            className={styles.action}
+            onClick={onConfirmClick}
+            data-testid="confirm-modal-confirm"
+            autoFocus={autoFocusConfirm}
+            {...confirmButtonOptions}
+          >
+            {confirmText}
+          </Button>
+        )}
       </div>
     </Modal>
   );

@@ -1,6 +1,7 @@
 import { defineSchema } from '@toeverything/infra';
 
 export const docIndexSchema = defineSchema({
+  docId: 'String',
   title: 'FullText',
   // summary of the doc, used for preview
   summary: { type: 'String', index: false },
@@ -26,8 +27,9 @@ export const blockIndexSchema = defineSchema({
   // parent block id
   parentBlockId: 'String',
   // additional info
-  // { "databaseName": "xxx" }
+  // { "databaseName": "xxx", "displayMode": "page/edgeless", "noteBlockId": "xxx" }
   additional: { type: 'String', index: false },
+  markdownPreview: { type: 'String', index: false },
 });
 
 export type BlockIndexSchema = typeof blockIndexSchema;

@@ -1,11 +1,8 @@
-import type { Workspace } from '@toeverything/infra';
-import {
-  DocsService,
-  OnEvent,
-  Service,
-  WorkspaceInitialized,
-} from '@toeverything/infra';
+import { OnEvent, Service } from '@toeverything/infra';
 
+import { DocsService } from '../../doc';
+import type { Workspace } from '../../workspace';
+import { WorkspaceInitialized } from '../../workspace';
 import {
   EditorSetting,
   type EditorSettingExt,

@@ -1,5 +1,8 @@
 import { useAsyncCallback } from '@affine/core/components/hooks/affine-async-hooks';
-import { SubscriptionService } from '@affine/core/modules/cloud';
+import {
+  SubscriptionService,
+  UserQuotaService,
+} from '@affine/core/modules/cloud';
 import { UrlService } from '@affine/core/modules/url';
 import type { CreateCheckoutSessionInput } from '@affine/graphql';
 import { useService } from '@toeverything/infra';
@@ -7,6 +10,7 @@ import { nanoid } from 'nanoid';
 import {
   type PropsWithChildren,
   type ReactNode,
+  useCallback,
   useEffect,
   useState,
 } from 'react';
@@ -35,26 +39,23 @@ export const CheckoutSlot = ({
   const urlService = useService(UrlService);
 
   const subscriptionService = useService(SubscriptionService);
+  const userQuotaService = useService(UserQuotaService);
 
-  useEffect(() => {
-    subscriptionService.prices.revalidate();
-  }, [subscriptionService]);
+  const revalidate = useCallback(() => {
+    subscriptionService.subscription.revalidate();
+    userQuotaService.quota.revalidate();
+  }, [subscriptionService, userQuotaService]);
+
   useEffect(() => {
     if (isOpenedExternalWindow) {
       // when the external window is opened, revalidate the subscription when window get focus
-      window.addEventListener(
-        'focus',
-        subscriptionService.subscription.revalidate
-      );
+      window.addEventListener('focus', revalidate);
       return () => {
-        window.removeEventListener(
-          'focus',
-          subscriptionService.subscription.revalidate
-        );
+        window.removeEventListener('focus', revalidate);
       };
     }
     return;
-  }, [isOpenedExternalWindow, subscriptionService]);
+  }, [isOpenedExternalWindow, revalidate, subscriptionService]);
 
   const subscribe = useAsyncCallback(async () => {
     setMutating(true);

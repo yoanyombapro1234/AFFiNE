@@ -1,4 +1,3 @@
-import { AuthModal } from '@affine/core/components/affine/auth';
 import { BlocksuiteHeaderTitle } from '@affine/core/components/blocksuite/block-suite-header/title';
 import { EditorModeSwitch } from '@affine/core/components/blocksuite/block-suite-mode-switch';
 import ShareHeaderRightItem from '@affine/core/components/cloud/share-header-right-item';
@@ -30,7 +29,6 @@ export function ShareHeader({
         snapshotUrl={snapshotUrl}
         templateName={templateName}
       />
-      <AuthModal />
     </div>
   );
 }

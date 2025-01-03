@@ -1,4 +1,3 @@
-import type { DocRecord, DocsService } from '@toeverything/infra';
 import {
   effect,
   Entity,
@@ -9,6 +8,7 @@ import {
 import { truncate } from 'lodash-es';
 import { EMPTY, map, mergeMap, of, switchMap } from 'rxjs';
 
+import type { DocRecord, DocsService } from '../../doc';
 import type { DocDisplayMetaService } from '../../doc-display-meta';
 import type { DocsSearchService } from '../../docs-search';
 import type { QuickSearchSession } from '../providers/quick-search-provider';

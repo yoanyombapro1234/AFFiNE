@@ -1,6 +1,6 @@
-import type { DocService } from '@toeverything/infra';
 import { Entity, LiveData } from '@toeverything/infra';
 
+import type { DocService } from '../../doc';
 import type { DocsSearchService } from '../../docs-search';
 
 export interface Link {

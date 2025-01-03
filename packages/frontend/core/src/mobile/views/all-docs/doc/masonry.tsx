@@ -1,17 +1,12 @@
-import { useGlobalEvent } from '@affine/core/mobile/hooks/use-global-events';
+import { Masonry } from '@affine/component';
 import type { DocMeta } from '@blocksuite/affine/store';
-import { useCallback, useState } from 'react';
+import { useMemo } from 'react';
 
-import { DocCard } from '../../../components';
-import * as styles from './masonry.css';
+import { calcRowsById, DocCard } from '../../../components';
 
-const calcColumnCount = () => {
-  const maxCardWidth = 220;
-  const windowWidth = window.innerWidth;
-  const newColumnCount = Math.floor(
-    (windowWidth - styles.paddingX * 2 - styles.columnGap) / maxCardWidth
-  );
-  return Math.max(newColumnCount, 2);
+const fullStyle = {
+  width: '100%',
+  height: '100%',
 };
 
 export const MasonryDocs = ({
@@ -21,24 +16,29 @@ export const MasonryDocs = ({
   items: DocMeta[];
   showTags?: boolean;
 }) => {
-  const [columnCount, setColumnCount] = useState(calcColumnCount);
-
-  const updateColumnCount = useCallback(() => {
-    setColumnCount(calcColumnCount());
-  }, []);
-  useGlobalEvent('resize', updateColumnCount);
-
+  const masonryItems = useMemo(
+    () =>
+      items.map(item => {
+        return {
+          id: item.id,
+          height: calcRowsById(item.id) * 18 + 95,
+          children: (
+            <DocCard style={fullStyle} meta={item} showTags={showTags} />
+          ),
+        };
+      }),
+    [items, showTags]
+  );
   return (
-    <div className={styles.masonry} style={{ columnCount }}>
-      {items.map(item => (
-        <DocCard
-          key={item.id}
-          className={styles.masonryItem}
-          showTags={showTags}
-          meta={item}
-          autoHeightById
-        />
-      ))}
-    </div>
+    <Masonry
+      style={fullStyle}
+      itemWidthMin={160}
+      gapX={17}
+      gapY={10}
+      paddingX={16}
+      paddingY={16}
+      virtualScroll
+      items={masonryItems}
+    />
   );
 };

@@ -6,12 +6,11 @@ import {
   useSharingUrl,
 } from '@affine/core/components/hooks/affine/use-share-url';
 import { useAsyncCallback } from '@affine/core/components/hooks/affine-async-hooks';
-import { ServerConfigService } from '@affine/core/modules/cloud';
+import { ServerService } from '@affine/core/modules/cloud';
 import { GlobalDialogService } from '@affine/core/modules/dialogs';
 import { EditorService } from '@affine/core/modules/editor';
 import { WorkspacePermissionService } from '@affine/core/modules/permissions';
 import { ShareInfoService } from '@affine/core/modules/share-doc';
-import { WorkspaceFlavour } from '@affine/env/workspace';
 import { PublicPageMode } from '@affine/graphql';
 import { useI18n } from '@affine/i18n';
 import { track } from '@affine/track';
@@ -70,13 +69,13 @@ export const AFFiNESharePage = (props: ShareMenuProps) => {
   const currentMode = useLiveData(editor.mode$);
   const editorContainer = useLiveData(editor.editorContainer$);
   const shareInfoService = useService(ShareInfoService);
-  const serverConfig = useService(ServerConfigService).serverConfig;
+  const serverService = useService(ServerService);
   useEffect(() => {
     shareInfoService.shareInfo.revalidate();
   }, [shareInfoService]);
   const isSharedPage = useLiveData(shareInfoService.shareInfo.isShared$);
   const sharedMode = useLiveData(shareInfoService.shareInfo.sharedMode$);
-  const baseUrl = useLiveData(serverConfig.config$.map(c => c?.baseUrl));
+  const baseUrl = serverService.server.baseUrl;
   const isLoading =
     isSharedPage === null || sharedMode === null || baseUrl === null;
 
@@ -316,11 +315,9 @@ export const AFFiNESharePage = (props: ShareMenuProps) => {
 };
 
 export const SharePage = (props: ShareMenuProps) => {
-  if (props.workspaceMetadata.flavour === WorkspaceFlavour.LOCAL) {
+  if (props.workspaceMetadata.flavour === 'local') {
     return <LocalSharePage {...props} />;
-  } else if (
-    props.workspaceMetadata.flavour === WorkspaceFlavour.AFFINE_CLOUD
-  ) {
+  } else {
     return (
       // TODO(@eyhn): refactor this part
       <ErrorBoundary fallback={null}>
@@ -330,5 +327,4 @@ export const SharePage = (props: ShareMenuProps) => {
       </ErrorBoundary>
     );
   }
-  throw new Error('Unreachable');
 };

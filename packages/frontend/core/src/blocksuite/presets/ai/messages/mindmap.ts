@@ -3,31 +3,23 @@ import type {
   AffineAIPanelWidgetConfig,
   MindmapStyle,
 } from '@blocksuite/affine/blocks';
-import {
-  markdownToMindmap,
-  MiniMindmapPreview,
-} from '@blocksuite/affine/blocks';
-import { noop } from '@blocksuite/affine/global/utils';
 import { html, nothing } from 'lit';
 
-import { getAIPanel } from '../ai-panel';
-
-noop(MiniMindmapPreview);
+import { markdownToMindmap } from '../mini-mindmap';
+import { getAIPanelWidget } from '../utils/ai-widgets';
+import type { AIContext } from '../utils/context';
 
 export const createMindmapRenderer: (
   host: EditorHost,
   /**
    * Used to store data for later use during rendering.
    */
-  ctx: {
-    get: () => Record<string, unknown>;
-    set: (data: Record<string, unknown>) => void;
-  },
+  ctx: AIContext,
   style?: MindmapStyle
 ) => AffineAIPanelWidgetConfig['answerRenderer'] = (host, ctx, style) => {
   return (answer, state) => {
     if (state === 'generating') {
-      const panel = getAIPanel(host);
+      const panel = getAIPanelWidget(host);
       panel.generatingElement?.updateLoadingProgress(2);
     }
 
@@ -55,27 +47,21 @@ export const createMindmapExecuteRenderer: (
   /**
    * Used to store data for later use during rendering.
    */
-  ctx: {
-    get: () => Record<string, unknown>;
-    set: (data: Record<string, unknown>) => void;
-  },
-  handler: (ctx: {
-    get: () => Record<string, unknown>;
-    set: (data: Record<string, unknown>) => void;
-  }) => void
+  ctx: AIContext,
+  handler: (host: EditorHost, ctx: AIContext) => void
 ) => AffineAIPanelWidgetConfig['answerRenderer'] = (host, ctx, handler) => {
   return (answer, state) => {
     if (state !== 'finished') {
-      const panel = getAIPanel(host);
+      const panel = getAIPanelWidget(host);
       panel.generatingElement?.updateLoadingProgress(2);
       return nothing;
     }
 
     ctx.set({
-      node: markdownToMindmap(answer, host.doc),
+      node: markdownToMindmap(answer, host.doc, host.std.provider),
     });
 
-    handler(ctx);
+    handler(host, ctx);
 
     return nothing;
   };

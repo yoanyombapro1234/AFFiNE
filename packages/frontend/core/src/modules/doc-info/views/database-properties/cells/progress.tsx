@@ -6,6 +6,7 @@ import { useLiveData } from '@toeverything/infra';
 import { useEffect, useState } from 'react';
 
 import type { DatabaseCellRendererProps } from '../../../types';
+import * as styles from './progress.css';
 
 const DesktopProgressCell = ({
   cell,
@@ -14,15 +15,14 @@ const DesktopProgressCell = ({
   onChange,
 }: DatabaseCellRendererProps) => {
   const value = useLiveData(cell.value$ as LiveData<number>);
-  const isEmpty = value === undefined;
-  const [localValue, setLocalValue] = useState(value);
+  const [localValue, setLocalValue] = useState(value || 0);
 
   useEffect(() => {
-    setLocalValue(value);
+    setLocalValue(value || 0);
   }, [value]);
 
   return (
-    <PropertyValue isEmpty={isEmpty} hoverable={false}>
+    <PropertyValue hoverable={false}>
       <Progress
         value={localValue}
         onChange={v => {
@@ -44,11 +44,10 @@ const MobileProgressCell = ({
   onChange,
 }: DatabaseCellRendererProps) => {
   const value = useLiveData(cell.value$ as LiveData<number>);
-  const isEmpty = value === undefined;
-  const [localValue, setLocalValue] = useState(value);
+  const [localValue, setLocalValue] = useState(value || 0);
 
   useEffect(() => {
-    setLocalValue(value);
+    setLocalValue(value || 0);
   }, [value]);
 
   const [open, setOpen] = useState(false);
@@ -62,12 +61,8 @@ const MobileProgressCell = ({
 
   return (
     <>
-      <PropertyValue
-        isEmpty={isEmpty}
-        hoverable={false}
-        onClick={() => setOpen(true)}
-      >
-        <Progress value={value} />
+      <PropertyValue hoverable={false} onClick={() => setOpen(true)}>
+        <Progress value={value || 0} />
       </PropertyValue>
 
       <ConfigModal
@@ -77,7 +72,7 @@ const MobileProgressCell = ({
         onDone={commitChange}
         title={
           <>
-            <ProgressIcon />
+            <ProgressIcon className={styles.progressIcon} />
             {name}
           </>
         }

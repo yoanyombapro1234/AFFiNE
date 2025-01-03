@@ -1,13 +1,15 @@
 import { useDocMetaHelper } from '@affine/core/components/hooks/use-block-suite-page-meta';
 import { useDocCollectionPage } from '@affine/core/components/hooks/use-block-suite-workspace-page';
 import { FetchService, GraphQLService } from '@affine/core/modules/cloud';
+import { getAFFiNEWorkspaceSchema } from '@affine/core/modules/workspace';
+import { WorkspaceImpl } from '@affine/core/modules/workspace/impl/workspace';
 import { DebugLogger } from '@affine/debug';
 import type { ListHistoryQuery } from '@affine/graphql';
 import { listHistoryQuery, recoverDocMutation } from '@affine/graphql';
 import { i18nTime } from '@affine/i18n';
 import { assertEquals } from '@blocksuite/affine/global/utils';
-import { DocCollection } from '@blocksuite/affine/store';
-import { getAFFiNEWorkspaceSchema, useService } from '@toeverything/infra';
+import type { Workspace } from '@blocksuite/affine/store';
+import { useService } from '@toeverything/infra';
 import { useEffect, useMemo } from 'react';
 import useSWRImmutable from 'swr/immutable';
 import {
@@ -69,7 +71,8 @@ export const useDocSnapshotList = (workspaceId: string, pageDocId: string) => {
 };
 
 const snapshotFetcher = async (
-  [workspaceId, pageDocId, ts]: [
+  [fetchService, workspaceId, pageDocId, ts]: [
+    FetchService,
     workspaceId: string,
     pageDocId: string,
     ts: string,
@@ -78,7 +81,7 @@ const snapshotFetcher = async (
   if (!ts) {
     return null;
   }
-  const res = await fetch(
+  const res = await fetchService.fetch(
     `/api/workspaces/${workspaceId}/docs/${pageDocId}/histories/${ts}`
   );
 
@@ -97,7 +100,7 @@ const snapshotFetcher = async (
 // so that we do not need to worry about providers etc
 // TODO(@Peng): fix references to the page (the referenced page will shown as deleted)
 // if we simply clone the current workspace, it maybe time consuming right?
-const docCollectionMap = new Map<string, DocCollection>();
+const docCollectionMap = new Map<string, Workspace>();
 
 // assume the workspace is a cloud workspace since the history feature is only enabled for cloud workspace
 const getOrCreateShellWorkspace = (
@@ -112,11 +115,9 @@ const getOrCreateShellWorkspace = (
       fetchService,
       graphQLService
     );
-    docCollection = new DocCollection({
+    docCollection = new WorkspaceImpl({
       id: workspaceId,
-      blobSources: {
-        main: blobStorage,
-      },
+      blobSource: blobStorage,
       schema: getAFFiNEWorkspaceSchema(),
     });
     docCollectionMap.set(workspaceId, docCollection);
@@ -131,9 +132,10 @@ export const usePageHistory = (
   pageDocId: string,
   ts?: string
 ) => {
+  const fetchService = useService(FetchService);
   // snapshot should be immutable. so we use swr immutable to disable revalidation
   const { data } = useSWRImmutable<ArrayBuffer | null>(
-    [workspaceId, pageDocId, ts],
+    [fetchService, workspaceId, pageDocId, ts],
     {
       fetcher: snapshotFetcher,
       suspense: false,
@@ -144,7 +146,7 @@ export const usePageHistory = (
 
 // workspace id + page id + timestamp + snapshot -> Page (to be used for rendering in blocksuite editor)
 export const useSnapshotPage = (
-  docCollection: DocCollection,
+  docCollection: Workspace,
   pageDocId: string,
   ts?: string
 ) => {
@@ -166,11 +168,10 @@ export const useSnapshotPage = (
       page = historyShellWorkspace.createDoc({
         id: pageId,
       });
-      page.awarenessStore.setReadonly(page.blockCollection, true);
+      page.readonly = true;
       const spaceDoc = page.spaceDoc;
       page.load(() => {
         applyUpdate(spaceDoc, new Uint8Array(snapshot));
-        historyShellWorkspace.schema.upgradeDoc(0, {}, spaceDoc);
       }); // must load before applyUpdate
     }
     return page ?? undefined;
@@ -228,6 +229,7 @@ export function revertUpdate(
     snapshotStateVector
   );
   const undoManager = new UndoManager(
+    // oxlint-disable array-callback-return
     [...snapshotDoc.share.keys()].map(key => {
       const type = getMetadata(key);
       if (type === 'Text') {
@@ -237,6 +239,7 @@ export function revertUpdate(
       } else if (type === 'Array') {
         return snapshotDoc.getArray(key);
       }
+
       throw new Error('Unknown type');
     })
   );
@@ -249,10 +252,7 @@ export function revertUpdate(
   applyUpdate(doc, revertChangesSinceSnapshotUpdate);
 }
 
-export const useRestorePage = (
-  docCollection: DocCollection,
-  pageId: string
-) => {
+export const useRestorePage = (docCollection: Workspace, pageId: string) => {
   const page = useDocCollectionPage(docCollection, pageId);
   const mutateQueryResource = useMutateQueryResource();
   const { trigger: recover, isMutating } = useMutation({

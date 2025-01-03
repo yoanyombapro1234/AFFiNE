@@ -49,6 +49,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     const authParams = new URLSearchParams();
     authParams.set('method', 'oauth');
     authParams.set('payload', JSON.stringify(payload));
+    authParams.set('server', location.origin);
 
     return redirect(
       `/open-app/url?url=${encodeURIComponent(`${client}://authentication?${authParams.toString()}`)}`

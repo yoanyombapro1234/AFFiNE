@@ -4,14 +4,11 @@ import {
   useDropTarget,
 } from '@affine/component';
 import { MenuLinkItem } from '@affine/core/modules/app-sidebar/views';
+import { DocsService } from '@affine/core/modules/doc';
+import { GlobalContextService } from '@affine/core/modules/global-context';
 import type { AffineDNDData } from '@affine/core/types/dnd';
 import { useI18n } from '@affine/i18n';
-import {
-  DocsService,
-  GlobalContextService,
-  useLiveData,
-  useService,
-} from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 
 export const TrashButton = () => {
   const t = useI18n();

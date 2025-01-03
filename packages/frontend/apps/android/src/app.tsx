@@ -1,9 +1,10 @@
 import { AffineContext } from '@affine/core/components/context';
-import { AppFallback } from '@affine/core/mobile/components';
+import { AppFallback } from '@affine/core/mobile/components/app-fallback';
 import { configureMobileModules } from '@affine/core/mobile/modules';
 import { router } from '@affine/core/mobile/router';
 import { configureCommonModules } from '@affine/core/modules';
 import { I18nProvider } from '@affine/core/modules/i18n';
+import { LifecycleService } from '@affine/core/modules/lifecycle';
 import { configureLocalStorageStateStorageImpls } from '@affine/core/modules/storage';
 import { configureIndexedDBUserspaceStorageProvider } from '@affine/core/modules/userspace';
 import { configureBrowserWorkbenchModule } from '@affine/core/modules/workbench';
@@ -11,12 +12,7 @@ import {
   configureBrowserWorkspaceFlavours,
   configureIndexedDBWorkspaceEngineStorageProvider,
 } from '@affine/core/modules/workspace-engine';
-import {
-  Framework,
-  FrameworkRoot,
-  getCurrentStore,
-  LifecycleService,
-} from '@toeverything/infra';
+import { Framework, FrameworkRoot, getCurrentStore } from '@toeverything/infra';
 import { Suspense } from 'react';
 import { RouterProvider } from 'react-router-dom';
 

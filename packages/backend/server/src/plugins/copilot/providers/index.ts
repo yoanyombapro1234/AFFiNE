@@ -2,7 +2,7 @@ import assert from 'node:assert';
 
 import { Injectable, Logger } from '@nestjs/common';
 
-import { AFFiNEConfig, Config } from '../../../fundamentals';
+import { AFFiNEConfig, Config } from '../../../base';
 import { CopilotStartupConfigurations } from '../config';
 import {
   CapabilityToCopilotProvider,
@@ -94,10 +94,8 @@ export function unregisterCopilotProvider(type: CopilotProviderType) {
 
 /// Asserts that the config is valid for any registered providers
 export function assertProvidersConfigs(config: AFFiNEConfig) {
-  return (
-    Array.from(ASSERT_CONFIG.values()).findIndex(assertConfig =>
-      assertConfig(config)
-    ) !== -1
+  return Array.from(ASSERT_CONFIG.values()).some(assertConfig =>
+    assertConfig(config)
   );
 }
 

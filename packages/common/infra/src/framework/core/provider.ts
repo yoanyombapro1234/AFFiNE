@@ -130,6 +130,7 @@ export class ComponentCachePool {
         }
       }
     }
+    this.cache.clear();
   }
 
   [Symbol.dispose]() {
@@ -318,5 +319,6 @@ export class BasicFrameworkProvider extends FrameworkProvider {
     }
     this.disposed = true;
     this.cache.dispose();
+    this.eventBus.dispose();
   }
 }

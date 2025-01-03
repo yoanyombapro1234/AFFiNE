@@ -3,7 +3,7 @@ import type { AffineAIPanelWidgetConfig } from '@blocksuite/affine/blocks';
 import { css, html, LitElement, nothing } from 'lit';
 import { property } from 'lit/decorators.js';
 
-import { getAIPanel } from '../ai-panel';
+import { getAIPanelWidget } from '../utils/ai-widgets';
 import { preprocessHtml } from '../utils/html';
 
 type AIAnswerWrapperOptions = {
@@ -62,7 +62,7 @@ export const createIframeRenderer: (
 ) => AffineAIPanelWidgetConfig['answerRenderer'] = (host, options) => {
   return (answer, state) => {
     if (state === 'generating') {
-      const panel = getAIPanel(host);
+      const panel = getAIPanelWidget(host);
       panel.generatingElement?.updateLoadingProgress(2);
       return nothing;
     }
@@ -91,7 +91,7 @@ export const createImageRenderer: (
 ) => AffineAIPanelWidgetConfig['answerRenderer'] = (host, options) => {
   return (answer, state) => {
     if (state === 'generating') {
-      const panel = getAIPanel(host);
+      const panel = getAIPanelWidget(host);
       panel.generatingElement?.updateLoadingProgress(2);
       return nothing;
     }

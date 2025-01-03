@@ -1,29 +1,28 @@
 {
   "name": "@affine/mobile",
-  "version": "0.17.0",
+  "version": "0.19.0",
   "description": "AFFiNE Desktop Web application",
   "private": true,
   "browser": "src/index.tsx",
   "scripts": {
-    "build": "cross-env DISTRIBUTION=mobile yarn workspace @affine/cli bundle",
-    "dev": "yarn workspace @affine/cli dev",
-    "static-server": "cross-env DISTRIBUTION=mobile yarn workspace @affine/cli dev --static"
+    "build": "affine bundle",
+    "dev": "affine bundle --dev"
   },
   "dependencies": {
     "@affine/component": "workspace:*",
     "@affine/core": "workspace:*",
     "@affine/i18n": "workspace:*",
-    "@blocksuite/affine": "0.17.30",
-    "@blocksuite/icons": "^2.1.69",
-    "@sentry/react": "^8.0.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^6.26.1"
+    "@blocksuite/affine": "workspace:*",
+    "@blocksuite/icons": "2.1.75",
+    "@sentry/react": "^8.44.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^6.28.0"
   },
   "devDependencies": {
-    "@types/react": "^18.2.75",
-    "@types/react-dom": "^18.2.24",
+    "@types/react": "^19.0.1",
+    "@types/react-dom": "^19.0.2",
     "cross-env": "^7.0.3",
-    "typescript": "^5.6.3"
+    "typescript": "^5.7.2"
   }
 }

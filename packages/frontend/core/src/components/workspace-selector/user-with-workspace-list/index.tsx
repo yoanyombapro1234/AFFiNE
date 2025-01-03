@@ -1,38 +1,28 @@
-import { Divider } from '@affine/component/ui/divider';
 import { MenuItem } from '@affine/component/ui/menu';
-import { authAtom } from '@affine/core/components/atoms';
 import { AuthService } from '@affine/core/modules/cloud';
 import { GlobalDialogService } from '@affine/core/modules/dialogs';
+import { FeatureFlagService } from '@affine/core/modules/feature-flag';
+import { type WorkspaceMetadata } from '@affine/core/modules/workspace';
 import { useI18n } from '@affine/i18n';
 import { track } from '@affine/track';
 import { Logo1Icon } from '@blocksuite/icons/rc';
-import {
-  FeatureFlagService,
-  useLiveData,
-  useService,
-  type WorkspaceMetadata,
-  WorkspacesService,
-} from '@toeverything/infra';
-import { useSetAtom } from 'jotai';
+import { useLiveData, useService } from '@toeverything/infra';
 import { useCallback } from 'react';
 
+import { AddServer } from './add-server';
 import { AddWorkspace } from './add-workspace';
 import * as styles from './index.css';
-import { UserAccountItem } from './user-account';
 import { AFFiNEWorkspaceList } from './workspace-list';
 
 export const SignInItem = () => {
-  const setOpen = useSetAtom(authAtom);
+  const globalDialogService = useService(GlobalDialogService);
 
   const t = useI18n();
 
   const onClickSignIn = useCallback(() => {
-    track.$.navigationPanel.workspaceList.signIn();
-    setOpen(state => ({
-      ...state,
-      openModal: true,
-    }));
-  }, [setOpen]);
+    track.$.navigationPanel.workspaceList.requestSignIn();
+    globalDialogService.open('sign-in', {});
+  }, [globalDialogService]);
 
   return (
     <MenuItem
@@ -82,14 +72,9 @@ const UserWithWorkspaceListInner = ({
 
   const isAuthenticated = session.status === 'authenticated';
 
-  const setOpenSignIn = useSetAtom(authAtom);
-
   const openSignInModal = useCallback(() => {
-    setOpenSignIn(state => ({
-      ...state,
-      openModal: true,
-    }));
-  }, [setOpenSignIn]);
+    globalDialogService.open('sign-in', {});
+  }, [globalDialogService]);
 
   const onNewWorkspace = useCallback(() => {
     if (
@@ -99,7 +84,7 @@ const UserWithWorkspaceListInner = ({
       return openSignInModal();
     }
     track.$.navigationPanel.workspaceList.createWorkspace();
-    globalDialogService.open('create-workspace', undefined, payload => {
+    globalDialogService.open('create-workspace', {}, payload => {
       if (payload) {
         onCreatedWorkspace?.(payload);
       }
@@ -126,31 +111,23 @@ const UserWithWorkspaceListInner = ({
     onEventEnd?.();
   }, [globalDialogService, onCreatedWorkspace, onEventEnd]);
 
-  const workspaceManager = useService(WorkspacesService);
-  const workspaces = useLiveData(workspaceManager.list.workspaces$);
+  const onAddServer = useCallback(() => {
+    globalDialogService.open('sign-in', { step: 'addSelfhosted' });
+  }, [globalDialogService]);
 
   return (
     <div className={styles.workspaceListWrapper}>
-      {isAuthenticated ? (
-        <UserAccountItem
-          email={session.session.account.email ?? 'Unknown User'}
-          onEventEnd={onEventEnd}
-        />
-      ) : (
-        <SignInItem />
-      )}
-      <Divider size="thinner" />
       <AFFiNEWorkspaceList
         onEventEnd={onEventEnd}
         onClickWorkspace={onClickWorkspace}
         showEnableCloudButton={showEnableCloudButton}
         showSettingsButton={showSettingsButton}
       />
-      {workspaces.length > 0 ? <Divider size="thinner" /> : null}
       <AddWorkspace
         onAddWorkspace={onAddWorkspace}
         onNewWorkspace={onNewWorkspace}
       />
+      <AddServer onAddServer={onAddServer} />
     </div>
   );
 };

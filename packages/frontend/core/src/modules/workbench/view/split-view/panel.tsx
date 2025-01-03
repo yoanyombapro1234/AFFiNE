@@ -9,12 +9,12 @@ import {
 import { useSortable } from '@dnd-kit/sortable';
 import { useLiveData, useService } from '@toeverything/infra';
 import { assignInlineVars } from '@vanilla-extract/dynamic';
-import type { SetStateAction } from 'jotai';
 import type {
   Dispatch,
   HTMLAttributes,
   PropsWithChildren,
   RefObject,
+  SetStateAction,
 } from 'react';
 import {
   memo,

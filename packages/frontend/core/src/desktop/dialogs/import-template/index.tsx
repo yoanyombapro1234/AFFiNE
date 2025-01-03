@@ -12,16 +12,14 @@ import {
   ImportTemplateService,
   TemplateDownloaderService,
 } from '@affine/core/modules/import-template';
-import { WorkspaceFlavour } from '@affine/env/workspace';
+import {
+  type WorkspaceMetadata,
+  WorkspacesService,
+} from '@affine/core/modules/workspace';
 import { useI18n } from '@affine/i18n';
 import type { DocMode } from '@blocksuite/affine/blocks';
 import { AllDocsIcon } from '@blocksuite/icons/rc';
-import {
-  useLiveData,
-  useService,
-  type WorkspaceMetadata,
-  WorkspacesService,
-} from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import { cssVar } from '@toeverything/theme';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -56,7 +54,7 @@ const Dialog = ({
     useState<WorkspaceMetadata | null>(null);
   const selectedWorkspace =
     rawSelectedWorkspace ??
-    workspaces.find(w => w.flavour === WorkspaceFlavour.AFFINE_CLOUD) ??
+    workspaces.find(w => w.flavour !== 'local') ??
     workspaces.at(0);
   const selectedWorkspaceName = useWorkspaceName(selectedWorkspace);
   const { openPage, jumpToSignIn } = useNavigateHelper();
@@ -146,7 +144,8 @@ const Dialog = ({
     try {
       const { workspaceId, docId } =
         await importTemplateService.importToNewWorkspace(
-          WorkspaceFlavour.AFFINE_CLOUD,
+          // TODO: support selfhosted
+          'affine-cloud',
           'Workspace',
           templateDownloader.data$.value
         );
@@ -207,6 +206,7 @@ const Dialog = ({
           loading={disabled}
           disabled={disabled}
           onClick={handleImportToSelectedWorkspace}
+          data-testid="import-template-to-workspace-btn"
         >
           {selectedWorkspaceName &&
             t['com.affine.import-template.dialog.createDocToWorkspace']({

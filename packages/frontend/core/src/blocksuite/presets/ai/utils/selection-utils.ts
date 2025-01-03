@@ -1,11 +1,12 @@
 import type { EditorHost } from '@blocksuite/affine/block-std';
 import {
+  BlocksUtils,
   type CopilotTool,
+  EdgelessRootService,
   type FrameBlockModel,
   ImageBlockModel,
   type SurfaceBlockComponent,
 } from '@blocksuite/affine/blocks';
-import { BlocksUtils, EdgelessRootService } from '@blocksuite/affine/blocks';
 import { assertExists } from '@blocksuite/affine/global/utils';
 import {
   type BlockModel,
@@ -279,8 +280,8 @@ export function getCopilotSelectedElems(
   const copilotWidget = getEdgelessCopilotWidget(host);
 
   if (copilotWidget.visible) {
-    return (service.gfx.tool.currentTool$.peek() as CopilotTool)
-      .selectedElements;
+    const currentTool = service.gfx.tool.currentTool$.peek() as CopilotTool;
+    return currentTool?.selectedElements ?? [];
   }
 
   return service.selection.selectedElements;

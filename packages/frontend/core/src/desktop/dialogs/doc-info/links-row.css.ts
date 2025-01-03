@@ -5,7 +5,7 @@ import { globalStyle, style } from '@vanilla-extract/css';
 export const wrapper = style({
   width: '100%',
   borderRadius: 4,
-  color: cssVar('textPrimaryColor'),
+  color: cssVarV2('text/primary'),
   display: 'flex',
   flexDirection: 'row',
   alignItems: 'center',
@@ -16,10 +16,15 @@ export const wrapper = style({
 });
 
 globalStyle(`${wrapper} svg`, {
-  color: cssVar('iconSecondary'),
+  color: cssVarV2('icon/secondary'),
   fontSize: 16,
   transform: 'none',
 });
+
+globalStyle(`${wrapper}:hover svg`, {
+  color: cssVarV2('icon/primary'),
+});
+
 globalStyle(`${wrapper} span`, {
   fontSize: cssVar('fontSm'),
   whiteSpace: 'nowrap',

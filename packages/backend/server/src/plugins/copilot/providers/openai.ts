@@ -6,7 +6,7 @@ import {
   CopilotProviderSideError,
   metrics,
   UserFriendlyError,
-} from '../../../fundamentals';
+} from '../../../base';
 import {
   ChatMessageRole,
   CopilotCapability,

@@ -67,7 +67,7 @@ export const AIOnboardingLocal = () => {
   const t = useI18n();
   const authService = useService(AuthService);
   const notifyId = useLiveData(localNotifyId$);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loginStatus = useLiveData(authService.session.status$);
   const notSignedIn = loginStatus !== 'authenticated';
@@ -75,7 +75,9 @@ export const AIOnboardingLocal = () => {
   useEffect(() => {
     if (!notSignedIn) return;
     if (notifyId) return;
-    clearTimeout(timeoutRef.current);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
     timeoutRef.current = setTimeout(() => {
       // try to close edgeless onboarding
       notify.dismiss(edgelessNotifyId$.value);

@@ -1,9 +1,7 @@
-import {
-  type Framework,
-  GlobalCache,
-  WorkspaceScope,
-} from '@toeverything/infra';
+import { type Framework } from '@toeverything/infra';
 
+import { GlobalCache } from '../storage';
+import { WorkspaceScope } from '../workspace';
 import { ExplorerSection } from './entities/explore-section';
 import { ExplorerService } from './services/explorer';
 export { ExplorerService } from './services/explorer';

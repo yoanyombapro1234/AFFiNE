@@ -31,6 +31,7 @@ import {
 
 import { AppSidebarService } from '../../app-sidebar';
 import { DesktopApiService } from '../../desktop-api';
+import { resolveLinkToDoc } from '../../navigation';
 import { iconNameToIcon } from '../../workbench/constants';
 import { DesktopStateSynchronizer } from '../../workbench/services/desktop-state-synchronizer';
 import {
@@ -39,7 +40,7 @@ import {
 } from '../services/app-tabs-header-service';
 import * as styles from './styles.css';
 
-const TabSupportType = ['collection', 'tag', 'doc'];
+const TabSupportType = new Set(['collection', 'tag', 'doc']);
 
 const tabCanDrop =
   (tab?: TabStatus): NonNullable<DropTargetOptions<AffineDNDData>['canDrop']> =>
@@ -53,7 +54,7 @@ const tabCanDrop =
 
     if (
       ctx.source.data.entity?.type &&
-      TabSupportType.includes(ctx.source.data.entity?.type)
+      TabSupportType.has(ctx.source.data.entity?.type)
     ) {
       return true;
     }
@@ -176,23 +177,55 @@ const WorkbenchTab = ({
       dropEffect: 'move',
       canDrop: tabCanDrop(workbench),
       isSticky: true,
+      allowExternal: true,
     }),
     [onDrop, workbench]
   );
 
-  const { dragRef } = useDraggable<AffineDNDData>(
-    () => ({
+  const { dragRef } = useDraggable<AffineDNDData>(() => {
+    const urls = workbench.views.map(view => {
+      const url = new URL(
+        workbench.basename + (view.path?.pathname ?? ''),
+        location.origin
+      );
+      url.search = view.path?.search ?? '';
+      return url.toString();
+    });
+
+    let entity: AffineDNDData['draggable']['entity'];
+
+    for (const url of urls) {
+      const maybeDocLink = resolveLinkToDoc(url);
+      if (maybeDocLink && maybeDocLink.docId) {
+        entity = {
+          type: 'doc',
+          id: maybeDocLink.docId,
+        };
+      }
+    }
+
+    return {
       canDrag: dnd,
       data: {
         from: {
           at: 'app-header:tabs',
           tabId: workbench.id,
         },
+        entity,
       },
       dragPreviewPosition: 'pointer-outside',
-    }),
-    [dnd, workbench.id]
-  );
+      toExternalData: () => {
+        return {
+          'text/uri-list': urls.join('\n'),
+        };
+      },
+      onDragStart: () => {
+        track.$.appTabsHeader.$.dragStart({
+          type: 'tab',
+        });
+      },
+    };
+  }, [dnd, workbench.basename, workbench.id, workbench.views]);
 
   return (
     <div

@@ -6,19 +6,14 @@ import {
 } from '@affine/core/components/affine/quota-reached-modal';
 import { SWRConfigProvider } from '@affine/core/components/providers/swr-config-provider';
 import { WorkspaceSideEffects } from '@affine/core/components/providers/workspace-side-effects';
-import { WorkspaceUpgrade } from '@affine/core/components/workspace-upgrade';
 import { AIIsland } from '@affine/core/desktop/components/ai-island';
 import { AppContainer } from '@affine/core/desktop/components/app-container';
 import { WorkspaceDialogs } from '@affine/core/desktop/dialogs';
 import { PeekViewManagerModal } from '@affine/core/modules/peek-view';
+import { QuotaCheck } from '@affine/core/modules/quota';
 import { WorkbenchService } from '@affine/core/modules/workbench';
-import { WorkspaceFlavour } from '@affine/env/workspace';
-import {
-  LiveData,
-  useLiveData,
-  useService,
-  WorkspaceService,
-} from '@toeverything/infra';
+import { WorkspaceService } from '@affine/core/modules/workspace';
+import { LiveData, useLiveData, useService } from '@toeverything/infra';
 import type { PropsWithChildren } from 'react';
 
 export const WorkspaceLayout = function WorkspaceLayout({
@@ -30,11 +25,13 @@ export const WorkspaceLayout = function WorkspaceLayout({
       <WorkspaceDialogs />
 
       {/* ---- some side-effect components ---- */}
-      {currentWorkspace?.flavour === WorkspaceFlavour.LOCAL && (
+      {currentWorkspace?.flavour === 'local' ? (
         <LocalQuotaModal />
-      )}
-      {currentWorkspace?.flavour === WorkspaceFlavour.AFFINE_CLOUD && (
-        <CloudQuotaModal />
+      ) : (
+        <>
+          <CloudQuotaModal />
+          <QuotaCheck workspaceMeta={currentWorkspace.meta} />
+        </>
       )}
       <AiLoginRequiredModal />
       <WorkspaceSideEffects />
@@ -64,14 +61,5 @@ const WorkspaceLayoutUIContainer = ({ children }: PropsWithChildren) => {
   );
 };
 const WorkspaceLayoutInner = ({ children }: PropsWithChildren) => {
-  const workspace = useService(WorkspaceService).workspace;
-
-  const upgrading = useLiveData(workspace.upgrade.upgrading$);
-  const needUpgrade = useLiveData(workspace.upgrade.needUpgrade$);
-
-  return (
-    <WorkspaceLayoutUIContainer>
-      {needUpgrade || upgrading ? <WorkspaceUpgrade /> : children}
-    </WorkspaceLayoutUIContainer>
-  );
+  return <WorkspaceLayoutUIContainer>{children}</WorkspaceLayoutUIContainer>;
 };

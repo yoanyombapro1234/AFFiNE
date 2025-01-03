@@ -1,5 +1,5 @@
+import type { DocCustomPropertyInfo } from '@affine/core/modules/db';
 import * as icons from '@blocksuite/icons/rc';
-import type { DocCustomPropertyInfo } from '@toeverything/infra';
 import type { SVGProps } from 'react';
 
 import {

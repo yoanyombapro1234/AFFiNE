@@ -1,4 +1,3 @@
-import { assertExists } from '@blocksuite/affine/global/utils';
 import { AsyncCall } from 'async-call-rpc';
 
 import type { HelperToMain, MainToHelper } from '../shared/type';
@@ -6,7 +5,9 @@ import { exposed } from './provide';
 
 const helperToMainServer: HelperToMain = {
   getMeta: () => {
-    assertExists(exposed);
+    if (!exposed) {
+      throw new Error('Helper is not initialized correctly');
+    }
     return exposed;
   },
 };

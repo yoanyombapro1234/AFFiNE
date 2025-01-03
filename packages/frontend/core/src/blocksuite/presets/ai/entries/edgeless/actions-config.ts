@@ -45,8 +45,8 @@ import {
   textTones,
   translateLangs,
 } from '../../actions/types';
-import { getAIPanel } from '../../ai-panel';
 import { AIProvider } from '../../provider';
+import { getAIPanelWidget } from '../../utils/ai-widgets';
 import { mindMapToMarkdown } from '../../utils/edgeless';
 import { canvasToBlob, randomSeed } from '../../utils/image';
 import {
@@ -105,11 +105,12 @@ const othersGroup: AIItemGroupConfig = {
       icon: CommentIcon,
       showWhen: () => true,
       handler: host => {
-        const panel = getAIPanel(host);
+        const panel = getAIPanelWidget(host);
         AIProvider.slots.requestOpenWithChat.emit({
           host,
           mode: 'edgeless',
           autoSelect: true,
+          appendCard: true,
         });
         panel.hide();
       },
@@ -119,8 +120,12 @@ const othersGroup: AIItemGroupConfig = {
       icon: ChatWithAIIcon,
       showWhen: () => true,
       handler: host => {
-        const panel = getAIPanel(host);
-        AIProvider.slots.requestOpenWithChat.emit({ host, mode: 'edgeless' });
+        const panel = getAIPanelWidget(host);
+        AIProvider.slots.requestOpenWithChat.emit({
+          host,
+          mode: 'edgeless',
+          appendCard: true,
+        });
         panel.hide();
       },
     },
@@ -281,18 +286,18 @@ const generateGroup: AIItemGroupConfig = {
           const selectedElements = getCopilotSelectedElems(host);
           const len = selectedElements.length;
 
-          const aiPanel = getAIPanel(host);
+          const aiPanel = getAIPanelWidget(host);
           // text to image
           // from user input
           if (len === 0) {
             const content = aiPanel.inputText?.trim();
             if (!content) return;
             return {
-              content,
+              input: content,
             };
           }
 
-          let content = (ctx.get()['content'] as string) || '';
+          let content = ctx.get().content || '';
 
           // from user input
           if (content.length === 0) {
@@ -317,7 +322,7 @@ const generateGroup: AIItemGroupConfig = {
           // text to image
           if (content.length && images.length + pureShapes.length === 0) {
             return {
-              content,
+              input: content,
             };
           }
 
@@ -337,7 +342,7 @@ const generateGroup: AIItemGroupConfig = {
           const png = await canvasToBlob(canvas);
           if (!png) return;
           return {
-            content,
+            input: content,
             attachments: [png],
             seed: String(randomSeed()),
           };
@@ -414,11 +419,11 @@ const generateGroup: AIItemGroupConfig = {
 
           // from user input
           if (selectedElements.length === 0) {
-            const aiPanel = getAIPanel(host);
+            const aiPanel = getAIPanelWidget(host);
             const content = aiPanel.inputText?.trim();
             if (!content) return;
             return {
-              content,
+              input: content,
             };
           }
 
@@ -433,7 +438,7 @@ const generateGroup: AIItemGroupConfig = {
           if (f + i + n + s + e === 0) {
             return;
           }
-          let content = (ctx.get()['content'] as string) || '';
+          let content = ctx.get().content || '';
 
           // single note, text
           if (
@@ -444,13 +449,13 @@ const generateGroup: AIItemGroupConfig = {
               (s === 1 && shapes[0] instanceof TextElementModel))
           ) {
             return {
-              content,
+              input: content,
             };
           }
 
           // from user input
           if (content.length === 0) {
-            const aiPanel = getAIPanel(host);
+            const aiPanel = getAIPanelWidget(host);
             content = aiPanel.inputText?.trim() || '';
           }
 
@@ -472,7 +477,7 @@ const generateGroup: AIItemGroupConfig = {
           });
 
           return {
-            content,
+            input: content,
             attachments: [png],
           };
         }
@@ -516,7 +521,7 @@ const generateGroup: AIItemGroupConfig = {
   ],
 };
 
-export const edgelessActionGroups = [
+export const edgelessAIGroups: AIItemGroupConfig[] = [
   reviewGroup,
   editGroup,
   generateGroup,

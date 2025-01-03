@@ -1,9 +1,10 @@
 import { toast, useConfirmModal } from '@affine/component';
 import { useBlockSuiteMetaHelper } from '@affine/core/components/hooks/affine/use-block-suite-meta-helper';
 import { useBlockSuiteDocMeta } from '@affine/core/components/hooks/use-block-suite-page-meta';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import { Trans, useI18n } from '@affine/i18n';
 import type { DocMeta } from '@blocksuite/affine/store';
-import { useService, WorkspaceService } from '@toeverything/infra';
+import { useService } from '@toeverything/infra';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { ListFloatingToolbar } from './components/list-floating-toolbar';
@@ -33,8 +34,8 @@ export const VirtualizedTrashList = () => {
   const pageHeaderColsDef = usePageHeaderColsDef();
 
   const filteredSelectedPageIds = useMemo(() => {
-    const ids = filteredPageMetas.map(page => page.id);
-    return selectedPageIds.filter(id => ids.includes(id));
+    const ids = new Set(filteredPageMetas.map(page => page.id));
+    return selectedPageIds.filter(id => ids.has(id));
   }, [filteredPageMetas, selectedPageIds]);
 
   const hideFloatingToolbar = useCallback(() => {

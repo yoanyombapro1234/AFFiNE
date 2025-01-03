@@ -10,7 +10,7 @@ import {
   DocHistoryNotFound,
   DocNotFound,
   InvalidHistoryTimestamp,
-} from '../../fundamentals';
+} from '../../base';
 import { CurrentUser, Public } from '../auth';
 import { PgWorkspaceDocStorageAdapter } from '../doc';
 import { Permission, PermissionService, PublicPageMode } from '../permission';

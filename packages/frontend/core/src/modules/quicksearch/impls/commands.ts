@@ -5,10 +5,10 @@ import {
   PreconditionStrategy,
 } from '@affine/core/commands';
 import type { DocMode } from '@blocksuite/affine/blocks';
-import type { GlobalContextService } from '@toeverything/infra';
 import { Entity, LiveData } from '@toeverything/infra';
 import Fuse from 'fuse.js';
 
+import type { GlobalContextService } from '../../global-context';
 import type { QuickSearchSession } from '../providers/quick-search-provider';
 import type { QuickSearchGroup } from '../types/group';
 import type { QuickSearchItem } from '../types/item';

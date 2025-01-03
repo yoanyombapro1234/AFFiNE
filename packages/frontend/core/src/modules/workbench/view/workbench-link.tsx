@@ -1,13 +1,10 @@
 import { useAsyncCallback } from '@affine/core/components/hooks/affine-async-hooks';
 import { isNewTabTrigger } from '@affine/core/utils';
-import {
-  FeatureFlagService,
-  useLiveData,
-  useServices,
-} from '@toeverything/infra';
+import { useLiveData, useServices } from '@toeverything/infra';
 import { type To } from 'history';
 import { forwardRef, type MouseEvent } from 'react';
 
+import { FeatureFlagService } from '../../feature-flag';
 import { WorkbenchService } from '../services/workbench';
 
 export type WorkbenchLinkProps = React.PropsWithChildren<

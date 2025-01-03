@@ -8,7 +8,6 @@ import {
   type MenuProps,
   Skeleton,
 } from '@affine/component';
-import { authAtom } from '@affine/core/components/atoms';
 import { GlobalDialogService } from '@affine/core/modules/dialogs';
 import { useI18n } from '@affine/i18n';
 import { track } from '@affine/track';
@@ -17,19 +16,19 @@ import { useLiveData, useService } from '@toeverything/infra';
 import { cssVar } from '@toeverything/theme';
 import { assignInlineVars } from '@vanilla-extract/dynamic';
 import clsx from 'clsx';
-import { useSetAtom } from 'jotai';
 import { useCallback, useEffect } from 'react';
 
 import {
   type AuthAccountInfo,
   AuthService,
-  ServerConfigService,
+  ServerService,
   SubscriptionService,
   UserCopilotQuotaService,
   UserQuotaService,
 } from '../../modules/cloud';
 import { UserPlanButton } from '../affine/auth/user-plan-button';
 import { useSignOut } from '../hooks/affine/use-sign-out';
+import { useCatchEventCallback } from '../hooks/use-catch-event-hook';
 import * as styles from './index.css';
 import { UnknownUserIcon } from './unknow-user';
 
@@ -57,11 +56,11 @@ const AuthorizedUserInfo = ({ account }: { account: AuthAccountInfo }) => {
 };
 
 const UnauthorizedUserInfo = () => {
-  const setOpen = useSetAtom(authAtom);
+  const globalDialogService = useService(GlobalDialogService);
 
   const openSignInModal = useCallback(() => {
-    setOpen(state => ({ ...state, openModal: true }));
-  }, [setOpen]);
+    globalDialogService.open('sign-in', {});
+  }, [globalDialogService]);
 
   return (
     <IconButton
@@ -113,6 +112,14 @@ const CloudUsage = () => {
   const quota = useService(UserQuotaService).quota;
   const quotaError = useLiveData(quota.error$);
 
+  const globalDialogService = useService(GlobalDialogService);
+  const handleClick = useCatchEventCallback(() => {
+    globalDialogService.open('setting', {
+      activeTab: 'plans',
+      scrollAnchor: 'cloudPricingPlan',
+    });
+  }, [globalDialogService]);
+
   useEffect(() => {
     // revalidate quota to get the latest status
     quota.revalidate();
@@ -150,7 +157,7 @@ const CloudUsage = () => {
           <span>&nbsp;/&nbsp;</span>
           <span>{maxFormatted}</span>
         </div>
-        <UserPlanButton />
+        <UserPlanButton onClick={handleClick} />
       </div>
 
       <div className={styles.cloudUsageBar}>
@@ -267,10 +274,8 @@ const AIUsage = () => {
 };
 
 const OperationMenu = () => {
-  const serverConfigService = useService(ServerConfigService);
-  const serverFeatures = useLiveData(
-    serverConfigService.serverConfig.features$
-  );
+  const serverService = useService(ServerService);
+  const serverFeatures = useLiveData(serverService.server.features$);
 
   return (
     <>

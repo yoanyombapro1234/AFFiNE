@@ -102,6 +102,8 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         <input
           ref={inputRef}
           {...attrs}
+          type="search"
+          inputMode="search"
           value={inputValue}
           onInput={handleInput}
           className={styles.input}

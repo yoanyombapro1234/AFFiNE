@@ -2,22 +2,20 @@ import { Loading, Scrollable } from '@affine/component';
 import { EditorLoading } from '@affine/component/page-detail-skeleton';
 import { Button, IconButton } from '@affine/component/ui/button';
 import { Modal, useConfirmModal } from '@affine/component/ui/modal';
-import { useDocCollectionPageTitle } from '@affine/core/components/hooks/use-block-suite-workspace-page-title';
 import { GlobalDialogService } from '@affine/core/modules/dialogs';
+import { DocDisplayMetaService } from '@affine/core/modules/doc-display-meta';
 import { EditorService } from '@affine/core/modules/editor';
 import { WorkspacePermissionService } from '@affine/core/modules/permissions';
 import { WorkspaceQuotaService } from '@affine/core/modules/quota';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import { i18nTime, Trans, useI18n } from '@affine/i18n';
 import { track } from '@affine/track';
 import type { DocMode } from '@blocksuite/affine/blocks';
-import type {
-  Doc as BlockSuiteDoc,
-  DocCollection,
-} from '@blocksuite/affine/store';
+import type { Doc as BlockSuiteDoc, Workspace } from '@blocksuite/affine/store';
 import { CloseIcon, ToggleCollapseIcon } from '@blocksuite/icons/rc';
 import * as Collapsible from '@radix-ui/react-collapsible';
 import type { DialogContentProps } from '@radix-ui/react-dialog';
-import { useLiveData, useService, WorkspaceService } from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import { atom, useAtom } from 'jotai';
 import type { PropsWithChildren } from 'react';
 import {
@@ -47,7 +45,7 @@ import * as styles from './styles.css';
 export interface PageHistoryModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  docCollection: DocCollection;
+  docCollection: Workspace;
   pageId: string;
 }
 
@@ -399,7 +397,7 @@ const PageHistoryManager = ({
   pageId,
   onClose,
 }: {
-  docCollection: DocCollection;
+  docCollection: Workspace;
   pageId: string;
   onClose: () => void;
 }) => {
@@ -433,7 +431,10 @@ const PageHistoryManager = ({
   const editor = useService(EditorService).editor;
   const [mode, setMode] = useState<DocMode>(editor.mode$.value);
 
-  const title = useDocCollectionPageTitle(docCollection, pageId);
+  const docDisplayMetaService = useService(DocDisplayMetaService);
+  const i18n = useI18n();
+
+  const title = useLiveData(docDisplayMetaService.title$(pageId));
 
   const onConfirmRestore = useCallback(() => {
     openConfirmModal({
@@ -467,7 +468,7 @@ const PageHistoryManager = ({
           snapshotPage={snapshotPage}
           mode={mode}
           onModeChange={setMode}
-          title={title}
+          title={i18n.t(title)}
         />
 
         <PageHistoryList

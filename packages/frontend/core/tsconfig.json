@@ -27,10 +27,7 @@
       "path": "../../common/env"
     },
     {
-      "path": "./tsconfig.node.json"
-    },
-    {
-      "path": "./tsconfig.server.json"
+      "path": "../../../blocksuite/affine/all"
     }
   ]
 }

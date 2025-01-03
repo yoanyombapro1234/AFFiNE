@@ -1,5 +1,6 @@
-import { type Framework, GlobalState } from '@toeverything/infra';
+import { type Framework } from '@toeverything/infra';
 
+import { GlobalState } from '../storage';
 import { AppSidebar } from './entities/app-sidebar';
 import { AppSidebarStateImpl } from './impls/storage';
 import { AppSidebarState } from './providers/storage';

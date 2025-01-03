@@ -1,11 +1,10 @@
 import { join } from 'node:path';
 
 import { net, protocol, session } from 'electron';
+import cookieParser from 'set-cookie-parser';
 
-import { CLOUD_BASE_URL } from './config';
 import { logger } from './logger';
 import { isOfflineModeEnabled } from './utils';
-import { getCookies } from './windows-manager';
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -46,32 +45,24 @@ async function handleFileRequest(request: Request) {
     bypassCustomProtocolHandlers: true,
   });
   const urlObject = new URL(request.url);
-  if (isNetworkResource(urlObject.pathname)) {
-    // just pass through (proxy)
-    return net.fetch(
-      CLOUD_BASE_URL + urlObject.pathname + urlObject.search,
-      clonedRequest
-    );
-  } else {
-    // this will be file types (in the web-static folder)
-    let filepath = '';
-    // if is a file type, load the file in resources
-    if (urlObject.pathname.split('/').at(-1)?.includes('.')) {
-      // Sanitize pathname to prevent path traversal attacks
-      const decodedPath = decodeURIComponent(urlObject.pathname);
-      const normalizedPath = join(webStaticDir, decodedPath).normalize();
-      if (!normalizedPath.startsWith(webStaticDir)) {
-        // Attempted path traversal - reject by using empty path
-        filepath = join(webStaticDir, '');
-      } else {
-        filepath = normalizedPath;
-      }
+  // this will be file types (in the web-static folder)
+  let filepath = '';
+  // if is a file type, load the file in resources
+  if (urlObject.pathname.split('/').at(-1)?.includes('.')) {
+    // Sanitize pathname to prevent path traversal attacks
+    const decodedPath = decodeURIComponent(urlObject.pathname);
+    const normalizedPath = join(webStaticDir, decodedPath).normalize();
+    if (!normalizedPath.startsWith(webStaticDir)) {
+      // Attempted path traversal - reject by using empty path
+      filepath = join(webStaticDir, '');
     } else {
-      // else, fallback to load the index.html instead
-      filepath = join(webStaticDir, 'index.html');
+      filepath = normalizedPath;
     }
-    return net.fetch('file://' + filepath, clonedRequest);
+  } else {
+    // else, fallback to load the index.html instead
+    filepath = join(webStaticDir, 'index.html');
   }
+  return net.fetch('file://' + filepath, clonedRequest);
 }
 
 export function registerProtocol() {
@@ -83,31 +74,58 @@ export function registerProtocol() {
     return handleFileRequest(request);
   });
 
-  // todo(@pengx17): remove this
   session.defaultSession.webRequest.onHeadersReceived(
     (responseDetails, callback) => {
       const { responseHeaders } = responseDetails;
-      if (responseHeaders) {
-        // replace SameSite=Lax with SameSite=None
-        const originalCookie =
-          responseHeaders['set-cookie'] || responseHeaders['Set-Cookie'];
+      (async () => {
+        if (responseHeaders) {
+          const originalCookie =
+            responseHeaders['set-cookie'] || responseHeaders['Set-Cookie'];
 
-        if (originalCookie) {
-          delete responseHeaders['set-cookie'];
-          delete responseHeaders['Set-Cookie'];
-          responseHeaders['Set-Cookie'] = originalCookie.map(cookie => {
-            let newCookie = cookie.replace(/SameSite=Lax/gi, 'SameSite=None');
-
-            // if the cookie is not secure, set it to secure
-            if (!newCookie.includes('Secure')) {
-              newCookie = newCookie + '; Secure';
+          if (originalCookie) {
+            // save the cookies, to support third party cookies
+            for (const cookies of originalCookie) {
+              const parsedCookies = cookieParser.parse(cookies);
+              for (const parsedCookie of parsedCookies) {
+                if (!parsedCookie.value) {
+                  await session.defaultSession.cookies.remove(
+                    responseDetails.url,
+                    parsedCookie.name
+                  );
+                } else {
+                  await session.defaultSession.cookies.set({
+                    url: responseDetails.url,
+                    domain: parsedCookie.domain,
+                    expirationDate: parsedCookie.expires?.getTime(),
+                    httpOnly: parsedCookie.httpOnly,
+                    secure: parsedCookie.secure,
+                    value: parsedCookie.value,
+                    name: parsedCookie.name,
+                    path: parsedCookie.path,
+                    sameSite: parsedCookie.sameSite?.toLowerCase() as
+                      | 'unspecified'
+                      | 'no_restriction'
+                      | 'lax'
+                      | 'strict'
+                      | undefined,
+                  });
+                }
+              }
             }
-            return newCookie;
-          });
-        }
-      }
+          }
 
-      callback({ responseHeaders });
+          delete responseHeaders['access-control-allow-origin'];
+          delete responseHeaders['access-control-allow-headers'];
+          responseHeaders['Access-Control-Allow-Origin'] = ['*'];
+          responseHeaders['Access-Control-Allow-Headers'] = ['*'];
+        }
+      })()
+        .catch(err => {
+          logger.error('error handling headers received', err);
+        })
+        .finally(() => {
+          callback({ responseHeaders });
+        });
     }
   );
 
@@ -116,9 +134,6 @@ export function registerProtocol() {
     const pathname = url.pathname;
     const protocol = url.protocol;
     const origin = url.origin;
-
-    const sameSite =
-      url.host === new URL(CLOUD_BASE_URL).host || protocol === 'file:';
 
     // offline whitelist
     // 1. do not block non-api request for http://localhost || file:// (local dev assets)
@@ -148,22 +163,34 @@ export function registerProtocol() {
       return;
     }
 
-    // session cookies are set to file:// on production
-    // if sending request to the cloud, attach the session cookie (to affine cloud server)
-    if (isNetworkResource(pathname) && sameSite) {
-      const cookie = getCookies();
-      if (cookie) {
-        const cookieString = cookie.map(c => `${c.name}=${c.value}`).join('; ');
-        details.requestHeaders['cookie'] = cookieString;
-      }
+    (async () => {
+      // session cookies are set to file:// on production
+      // if sending request to the cloud, attach the session cookie (to affine cloud server)
+      if (
+        url.protocol === 'http:' ||
+        url.protocol === 'https:' ||
+        url.protocol === 'ws:' ||
+        url.protocol === 'wss:'
+      ) {
+        const cookies = await session.defaultSession.cookies.get({
+          url: details.url,
+        });
 
-      // add the referer and origin headers
-      details.requestHeaders['referer'] ??= CLOUD_BASE_URL;
-      details.requestHeaders['origin'] ??= CLOUD_BASE_URL;
-    }
-    callback({
-      cancel: false,
-      requestHeaders: details.requestHeaders,
-    });
+        const cookieString = cookies
+          .map(c => `${c.name}=${c.value}`)
+          .join('; ');
+        delete details.requestHeaders['cookie'];
+        details.requestHeaders['Cookie'] = cookieString;
+      }
+    })()
+      .catch(err => {
+        logger.error('error handling before send headers', err);
+      })
+      .finally(() => {
+        callback({
+          cancel: false,
+          requestHeaders: details.requestHeaders,
+        });
+      });
   });
 }

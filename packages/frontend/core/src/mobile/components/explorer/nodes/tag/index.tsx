@@ -1,12 +1,9 @@
 import type { NodeOperation } from '@affine/core/modules/explorer';
+import { GlobalContextService } from '@affine/core/modules/global-context';
 import type { Tag } from '@affine/core/modules/tag';
 import { TagService } from '@affine/core/modules/tag';
 import { useI18n } from '@affine/i18n';
-import {
-  GlobalContextService,
-  useLiveData,
-  useServices,
-} from '@toeverything/infra';
+import { useLiveData, useServices } from '@toeverything/infra';
 import clsx from 'clsx';
 import { useCallback, useMemo, useState } from 'react';
 

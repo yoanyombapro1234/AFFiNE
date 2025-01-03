@@ -1,13 +1,12 @@
 import { BrowserWarning, LocalDemoTips } from '@affine/component/affine-banner';
-import { WorkspaceFlavour } from '@affine/env/workspace';
 import { Trans, useI18n } from '@affine/i18n';
-import { useLiveData, useService, type Workspace } from '@toeverything/infra';
-import { useSetAtom } from 'jotai';
+import { useLiveData, useService } from '@toeverything/infra';
 import { useCallback, useState } from 'react';
 
 import { useEnableCloud } from '../components/hooks/affine/use-enable-cloud';
 import { AuthService } from '../modules/cloud';
-import { authAtom } from './atoms';
+import { GlobalDialogService } from '../modules/dialogs';
+import type { Workspace } from '../modules/workspace';
 
 const minimumChromeVersion = 106;
 
@@ -69,15 +68,15 @@ export const TopTip = ({
   const [showLocalDemoTips, setShowLocalDemoTips] = useState(true);
   const confirmEnableCloud = useEnableCloud();
 
-  const setAuthModal = useSetAtom(authAtom);
+  const globalDialogService = useService(GlobalDialogService);
   const onLogin = useCallback(() => {
-    setAuthModal({ openModal: true, state: 'signIn' });
-  }, [setAuthModal]);
+    globalDialogService.open('sign-in', {});
+  }, [globalDialogService]);
 
   if (
     !BUILD_CONFIG.isElectron &&
     showLocalDemoTips &&
-    workspace.flavour === WorkspaceFlavour.LOCAL
+    workspace.flavour === 'local'
   ) {
     return (
       <LocalDemoTips

@@ -1,8 +1,9 @@
 import { TagService } from '@affine/core/modules/tag';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import { isNewTabTrigger } from '@affine/core/utils';
 import { useI18n } from '@affine/i18n';
 import { AllDocsIcon } from '@blocksuite/icons/rc';
-import { useLiveData, useService, WorkspaceService } from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import { type MouseEvent, useCallback } from 'react';
 
 import { usePageHelper } from '../../blocksuite/block-suite-page-list/utils';

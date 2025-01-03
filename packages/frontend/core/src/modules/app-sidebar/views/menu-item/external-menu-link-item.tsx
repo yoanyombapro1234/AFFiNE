@@ -1,6 +1,6 @@
 import { DualLinkIcon } from '@blocksuite/icons/rc';
 import { cssVarV2 } from '@toeverything/theme/v2';
-import type { ReactElement } from 'react';
+import type { ReactElement, SVGAttributes } from 'react';
 import type { To } from 'react-router-dom';
 
 import { MenuLinkItem } from './index';
@@ -28,7 +28,7 @@ export const ExternalMenuLinkItem = ({
   label,
 }: {
   href: string;
-  icon: ReactElement;
+  icon: ReactElement<SVGAttributes<SVGElement>>;
   label: string;
 }) => {
   return (

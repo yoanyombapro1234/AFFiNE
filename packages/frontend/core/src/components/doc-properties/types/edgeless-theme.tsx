@@ -1,9 +1,11 @@
 import { PropertyValue, RadioGroup, type RadioItem } from '@affine/component';
+import { DocService } from '@affine/core/modules/doc';
 import { useI18n } from '@affine/i18n';
-import { DocService, useLiveData, useService } from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import { useCallback, useMemo } from 'react';
 
 import * as styles from './edgeless-theme.css';
+import type { PropertyValueProps } from './types';
 
 const getThemeOptions = (t: ReturnType<typeof useI18n>) =>
   [
@@ -21,7 +23,7 @@ const getThemeOptions = (t: ReturnType<typeof useI18n>) =>
     },
   ] satisfies RadioItem[];
 
-export const EdgelessThemeValue = () => {
+export const EdgelessThemeValue = ({ onChange }: PropertyValueProps) => {
   const t = useI18n();
   const doc = useService(DocService).doc;
   const edgelessTheme = useLiveData(doc.properties$).edgelessColorTheme;
@@ -29,15 +31,16 @@ export const EdgelessThemeValue = () => {
   const handleChange = useCallback(
     (theme: string) => {
       doc.record.setProperty('edgelessColorTheme', theme);
+      onChange?.(theme, true);
     },
-    [doc]
+    [doc, onChange]
   );
   const themeItems = useMemo<RadioItem[]>(() => getThemeOptions(t), [t]);
 
   return (
     <PropertyValue className={styles.container} hoverable={false}>
       <RadioGroup
-        width={194}
+        width={BUILD_CONFIG.isMobileEdition ? '100%' : 194}
         itemHeight={24}
         value={edgelessTheme || 'system'}
         onChange={handleChange}

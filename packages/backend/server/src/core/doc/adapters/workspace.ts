@@ -11,8 +11,8 @@ import {
   FailedToUpsertSnapshot,
   metrics,
   Mutex,
-} from '../../../fundamentals';
-import { retryable } from '../../../fundamentals/utils/promise';
+} from '../../../base';
+import { retryable } from '../../../base/utils/promise';
 import { DocStorageOptions } from '../options';
 import {
   DocRecord,
@@ -488,7 +488,7 @@ export class PgWorkspaceDocStorageAdapter extends DocStorageAdapter {
     workspaceId: string,
     docId: string
   ) {
-    const lock = await this.mutex.lock(`doc:update:${workspaceId}:${docId}`);
+    const lock = await this.mutex.acquire(`doc:update:${workspaceId}:${docId}`);
 
     if (!lock) {
       throw new Error('Too many concurrent writings');

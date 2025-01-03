@@ -1,9 +1,10 @@
 import { usePromptModal } from '@affine/component';
 import { useNavigateHelper } from '@affine/core/components/hooks/use-navigate-helper';
 import { CollectionService } from '@affine/core/modules/collection';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import { useI18n } from '@affine/i18n';
 import { ViewLayersIcon } from '@blocksuite/icons/rc';
-import { useService, WorkspaceService } from '@toeverything/infra';
+import { useService } from '@toeverything/infra';
 import { nanoid } from 'nanoid';
 import { useCallback } from 'react';
 

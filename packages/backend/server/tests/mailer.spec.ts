@@ -4,8 +4,8 @@ import ava from 'ava';
 import Sinon from 'sinon';
 
 import { AppModule } from '../src/app.module';
+import { MailService } from '../src/base/mailer';
 import { FeatureManagementService } from '../src/core/features';
-import { MailService } from '../src/fundamentals/mailer';
 import { createTestingApp, createWorkspace, inviteUser, signUp } from './utils';
 const test = ava as TestFn<{
   app: INestApplication;
@@ -44,14 +44,7 @@ test('should send invite email', async t => {
 
     const stub = Sinon.stub(mail, 'sendMail');
 
-    await inviteUser(
-      app,
-      u1.token.token,
-      workspace.id,
-      u2.email,
-      'Admin',
-      true
-    );
+    await inviteUser(app, u1.token.token, workspace.id, u2.email, true);
 
     t.true(stub.calledOnce);
 

@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
+import { type HTMLAttributes, useCallback, useEffect, useState } from 'react';
 
 import { JournalDatePickerContext } from './context';
 import { ResizeViewport } from './viewport';
 
-export interface JournalDatePickerProps {
+export interface JournalDatePickerProps
+  extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
   date: string;
   onChange: (date: string) => void;
   withDotDates: Set<string | null | undefined>;
@@ -12,6 +13,7 @@ export const JournalDatePicker = ({
   date: selected,
   onChange,
   withDotDates,
+  ...attrs
 }: JournalDatePickerProps) => {
   const [cursor, setCursor] = useState(selected);
 
@@ -39,7 +41,7 @@ export const JournalDatePicker = ({
         withDotDates,
       }}
     >
-      <ResizeViewport></ResizeViewport>
+      <ResizeViewport {...attrs} />
     </JournalDatePickerContext.Provider>
   );
 };

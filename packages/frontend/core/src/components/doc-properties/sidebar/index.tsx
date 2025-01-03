@@ -1,4 +1,6 @@
 import { Divider, IconButton, Tooltip } from '@affine/component';
+import type { DocCustomPropertyInfo } from '@affine/core/modules/db';
+import { DocsService } from '@affine/core/modules/doc';
 import { generateUniqueNameInSequence } from '@affine/core/utils/unique-name';
 import { useI18n } from '@affine/i18n';
 import track from '@affine/track';
@@ -7,7 +9,7 @@ import {
   Content as CollapsibleContent,
   Root as CollapsibleRoot,
 } from '@radix-ui/react-collapsible';
-import { DocsService, useLiveData, useService } from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import { useCallback, useState } from 'react';
 
 import { DocPropertyManager } from '../manager';
@@ -58,6 +60,16 @@ export const DocPropertySidebar = () => {
     [propertyList, properties]
   );
 
+  const onPropertyInfoChange = useCallback(
+    (property: DocCustomPropertyInfo, field: string) => {
+      track.doc.sidepanel.property.editPropertyMeta({
+        type: property.type,
+        field,
+      });
+    },
+    []
+  );
+
   return (
     <div className={styles.container}>
       <CollapsibleRoot defaultOpen>
@@ -66,6 +78,7 @@ export const DocPropertySidebar = () => {
           <DocPropertyManager
             className={styles.manager}
             defaultOpenEditMenuPropertyId={newPropertyId}
+            onPropertyInfoChange={onPropertyInfoChange}
           />
         </CollapsibleContent>
       </CollapsibleRoot>

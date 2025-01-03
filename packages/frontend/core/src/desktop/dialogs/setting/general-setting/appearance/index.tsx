@@ -6,12 +6,9 @@ import {
   SettingWrapper,
 } from '@affine/component/setting-components';
 import { LanguageMenu } from '@affine/core/components/affine/language-menu';
+import { FeatureFlagService } from '@affine/core/modules/feature-flag';
 import { useI18n } from '@affine/i18n';
-import {
-  FeatureFlagService,
-  useLiveData,
-  useService,
-} from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import { useTheme } from 'next-themes';
 import { useCallback, useMemo } from 'react';
 

@@ -1,28 +1,29 @@
 import { DebugLogger } from '@affine/debug';
-import { WorkspaceFlavour } from '@affine/env/workspace';
-import { DocCollection } from '@blocksuite/affine/store';
 import type {
   BlobStorage,
   DocStorage,
-  WorkspaceEngineProvider,
-  WorkspaceFlavourProvider,
-  WorkspaceMetadata,
-  WorkspaceProfileInfo,
+  FrameworkProvider,
 } from '@toeverything/infra';
-import {
-  getAFFiNEWorkspaceSchema,
-  LiveData,
-  Service,
-} from '@toeverything/infra';
+import { LiveData, Service } from '@toeverything/infra';
 import { isEqual } from 'lodash-es';
 import { nanoid } from 'nanoid';
 import { Observable } from 'rxjs';
-import { applyUpdate, encodeStateAsUpdate } from 'yjs';
+import { encodeStateAsUpdate } from 'yjs';
 
 import { DesktopApiService } from '../../desktop-api';
+import {
+  getAFFiNEWorkspaceSchema,
+  type WorkspaceEngineProvider,
+  type WorkspaceFlavourProvider,
+  type WorkspaceFlavoursProvider,
+  type WorkspaceMetadata,
+  type WorkspaceProfileInfo,
+} from '../../workspace';
+import { WorkspaceImpl } from '../../workspace/impl/workspace';
 import type { WorkspaceEngineStorageProvider } from '../providers/engine';
 import { BroadcastChannelAwarenessConnection } from './engine/awareness-broadcast-channel';
 import { StaticBlobStorage } from './engine/blob-static';
+import { getWorkspaceProfileWorker } from './out-worker';
 
 export const LOCAL_WORKSPACE_LOCAL_STORAGE_KEY = 'affine-local-workspace';
 const LOCAL_WORKSPACE_CHANGED_BROADCAST_CHANNEL_KEY =
@@ -54,17 +55,13 @@ export function setLocalWorkspaceIds(
   );
 }
 
-export class LocalWorkspaceFlavourProvider
-  extends Service
-  implements WorkspaceFlavourProvider
-{
+class LocalWorkspaceFlavourProvider implements WorkspaceFlavourProvider {
   constructor(
-    private readonly storageProvider: WorkspaceEngineStorageProvider
-  ) {
-    super();
-  }
+    private readonly storageProvider: WorkspaceEngineStorageProvider,
+    private readonly framework: FrameworkProvider
+  ) {}
 
-  flavour: WorkspaceFlavour = WorkspaceFlavour.LOCAL;
+  flavour = 'local';
   notifyChannel = new BroadcastChannel(
     LOCAL_WORKSPACE_CHANGED_BROADCAST_CHANNEL_KEY
   );
@@ -72,9 +69,8 @@ export class LocalWorkspaceFlavourProvider
   async deleteWorkspace(id: string): Promise<void> {
     setLocalWorkspaceIds(ids => ids.filter(x => x !== id));
 
-    const electronApi = this.framework.getOptional(DesktopApiService);
-
-    if (BUILD_CONFIG.isElectron && electronApi) {
+    if (BUILD_CONFIG.isElectron) {
+      const electronApi = this.framework.get(DesktopApiService);
       await electronApi.handler.workspace.delete(id);
     }
 
@@ -83,7 +79,7 @@ export class LocalWorkspaceFlavourProvider
   }
   async createWorkspace(
     initial: (
-      docCollection: DocCollection,
+      docCollection: WorkspaceImpl,
       blobStorage: BlobStorage,
       docStorage: DocStorage
     ) => Promise<void>
@@ -94,29 +90,32 @@ export class LocalWorkspaceFlavourProvider
     const blobStorage = this.storageProvider.getBlobStorage(id);
     const docStorage = this.storageProvider.getDocStorage(id);
 
-    const docCollection = new DocCollection({
+    const docCollection = new WorkspaceImpl({
       id: id,
-      idGenerator: () => nanoid(),
       schema: getAFFiNEWorkspaceSchema(),
-      blobSources: { main: blobStorage },
+      blobSource: blobStorage,
     });
 
-    // apply initial state
-    await initial(docCollection, blobStorage, docStorage);
+    try {
+      // apply initial state
+      await initial(docCollection, blobStorage, docStorage);
 
-    // save workspace to local storage, should be vary fast
-    await docStorage.doc.set(id, encodeStateAsUpdate(docCollection.doc));
-    for (const subdocs of docCollection.doc.getSubdocs()) {
-      await docStorage.doc.set(subdocs.guid, encodeStateAsUpdate(subdocs));
+      // save workspace to local storage, should be vary fast
+      await docStorage.doc.set(id, encodeStateAsUpdate(docCollection.doc));
+      for (const subdocs of docCollection.doc.getSubdocs()) {
+        await docStorage.doc.set(subdocs.guid, encodeStateAsUpdate(subdocs));
+      }
+
+      // save workspace id to local storage
+      setLocalWorkspaceIds(ids => [...ids, id]);
+
+      // notify all browser tabs, so they can update their workspace list
+      this.notifyChannel.postMessage(id);
+    } finally {
+      docCollection.dispose();
     }
 
-    // save workspace id to local storage
-    setLocalWorkspaceIds(ids => [...ids, id]);
-
-    // notify all browser tabs, so they can update their workspace list
-    this.notifyChannel.postMessage(id);
-
-    return { id, flavour: WorkspaceFlavour.LOCAL };
+    return { id, flavour: 'local' };
   }
   workspaces$ = LiveData.from(
     new Observable<WorkspaceMetadata[]>(subscriber => {
@@ -124,7 +123,7 @@ export class LocalWorkspaceFlavourProvider
       const emit = () => {
         const value = getLocalWorkspaceIds().map(id => ({
           id,
-          flavour: WorkspaceFlavour.LOCAL,
+          flavour: 'local',
         }));
         if (isEqual(last, value)) return;
         subscriber.next(value);
@@ -162,16 +161,16 @@ export class LocalWorkspaceFlavourProvider
       };
     }
 
-    const bs = new DocCollection({
-      id,
-      schema: getAFFiNEWorkspaceSchema(),
-    });
+    const client = getWorkspaceProfileWorker();
 
-    if (localData) applyUpdate(bs.doc, localData);
+    const result = await client.call(
+      'renderWorkspaceProfile',
+      [localData].filter(Boolean) as Uint8Array[]
+    );
 
     return {
-      name: bs.meta.name,
-      avatar: bs.meta.avatar,
+      name: result.name,
+      avatar: result.avatar,
       isOwner: true,
     };
   }
@@ -198,4 +197,19 @@ export class LocalWorkspaceFlavourProvider
       },
     };
   }
+}
+
+export class LocalWorkspaceFlavoursProvider
+  extends Service
+  implements WorkspaceFlavoursProvider
+{
+  constructor(
+    private readonly storageProvider: WorkspaceEngineStorageProvider
+  ) {
+    super();
+  }
+
+  workspaceFlavours$ = new LiveData<WorkspaceFlavourProvider[]>([
+    new LocalWorkspaceFlavourProvider(this.storageProvider, this.framework),
+  ]);
 }

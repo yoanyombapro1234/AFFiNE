@@ -1,0 +1,15 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "noEmit": true,
+    "composite": false,
+    "paths": {
+      "@blocks/*": ["../blocks/src/*"],
+      "@inline/*": ["../framework/inline/src/*"],
+      "@store/*": ["../framework/store/src/*"],
+      "@playground/*": ["../playground/*"]
+    }
+  },
+  "include": ["**.spec.ts", "**.test.ts", "**/**.ts"]
+}

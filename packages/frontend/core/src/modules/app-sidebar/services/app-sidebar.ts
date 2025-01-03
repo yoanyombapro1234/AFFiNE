@@ -1,5 +1,6 @@
-import { GlobalState, Service } from '@toeverything/infra';
+import { Service } from '@toeverything/infra';
 
+import { GlobalState } from '../../storage';
 import { AppSidebar } from '../entities/app-sidebar';
 
 export class AppSidebarService extends Service {

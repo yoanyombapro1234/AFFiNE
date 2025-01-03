@@ -17,6 +17,11 @@
 // ====================================================================================
 const env = process.env;
 
+AFFiNE.serverName = AFFiNE.affine.canary
+  ? 'AFFiNE Canary Cloud'
+  : AFFiNE.affine.beta
+    ? 'AFFiNE Beta Cloud'
+    : 'AFFiNE Cloud';
 AFFiNE.metrics.enabled = !AFFiNE.node.test;
 
 if (env.R2_OBJECT_STORAGE_ACCOUNT_ID) {
@@ -52,13 +57,6 @@ AFFiNE.use('copilot', {
   fal: {
     apiKey: '',
   },
-});
-AFFiNE.use('redis', {
-  host: env.REDIS_SERVER_HOST,
-  db: 0,
-  port: 6379,
-  username: env.REDIS_SERVER_USER,
-  password: env.REDIS_SERVER_PASSWORD,
 });
 AFFiNE.use('payment', {
   stripe: {

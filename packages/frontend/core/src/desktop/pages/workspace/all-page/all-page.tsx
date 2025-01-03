@@ -4,13 +4,11 @@ import {
   useFilteredPageMetas,
   VirtualizedPageList,
 } from '@affine/core/components/page-list';
+import { GlobalContextService } from '@affine/core/modules/global-context';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import type { Filter } from '@affine/env/filter';
 import { useI18n } from '@affine/i18n';
-import {
-  GlobalContextService,
-  useService,
-  WorkspaceService,
-} from '@toeverything/infra';
+import { useService } from '@toeverything/infra';
 import { useEffect, useState } from 'react';
 
 import {

@@ -1,7 +1,12 @@
 {
   "extends": "../../../tsconfig.json",
   "exclude": ["lib"],
-  "include": ["./src/**/*", "./src/**/*.json", "./src/type.d.ts"],
+  "include": [
+    "./src/**/*",
+    "./src/**/*.json",
+    "./src/type.d.ts",
+    "./.storybook"
+  ],
   "compilerOptions": {
     "composite": true,
     "noEmit": false,
@@ -22,8 +27,6 @@
     },
     {
       "path": "../../common/infra"
-    },
-
-    { "path": "../../../tests/fixtures" }
+    }
   ]
 }

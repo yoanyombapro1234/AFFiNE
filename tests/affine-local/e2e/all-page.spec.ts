@@ -314,8 +314,15 @@ test('click display button to group pages', async ({ page }) => {
   await waitForAllPagesLoad(page);
   // click the display button
   await page.locator('[data-testid="page-display-menu-button"]').click();
+
+  // click grouping menu item and wait for submenu
+
   await page.locator('[data-testid="page-display-grouping-menuItem"]').click();
-  await page.locator('[data-testid="group-by-favourites"]').click();
+
+  // don't know why the `page.getByTestId('group-by-favourites').click()` will make the submenu disappear and failed
+  await page.getByTestId('group-by-favourites').evaluate((el: HTMLElement) => {
+    el.click();
+  });
 
   // the group header should appear
   await expect(

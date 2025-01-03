@@ -33,6 +33,9 @@
     },
     {
       "path": "../../../../tests/kit"
+    },
+    {
+      "path": "../../../../tools/utils"
     }
   ],
   "ts-node": {

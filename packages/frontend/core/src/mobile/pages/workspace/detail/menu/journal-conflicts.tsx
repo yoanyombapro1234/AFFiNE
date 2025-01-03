@@ -6,23 +6,26 @@ import {
   useConfirmModal,
 } from '@affine/component';
 import { MoveToTrash } from '@affine/core/components/page-list';
+import {
+  type DocRecord,
+  DocService,
+  DocsService,
+} from '@affine/core/modules/doc';
 import { DocDisplayMetaService } from '@affine/core/modules/doc-display-meta';
 import { JournalService } from '@affine/core/modules/journal';
 import { WorkbenchLink } from '@affine/core/modules/workbench';
 import { useI18n } from '@affine/i18n';
 import { CalendarXmarkIcon, EditIcon, TodayIcon } from '@blocksuite/icons/rc';
-import type { DocRecord } from '@toeverything/infra';
-import {
-  DocService,
-  DocsService,
-  useLiveData,
-  useService,
-} from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import { type MouseEvent, useCallback, useMemo } from 'react';
 
 import * as styles from './journal-conflicts.css';
 
-const ResolveConflictOperations = ({ docRecord }: { docRecord: DocRecord }) => {
+export const ResolveConflictOperations = ({
+  docRecord,
+}: {
+  docRecord: DocRecord;
+}) => {
   const t = useI18n();
   const journalService = useService(JournalService);
   const { openConfirmModal } = useConfirmModal();
@@ -106,10 +109,27 @@ const DocItem = ({ docRecord }: { docRecord: DocRecord }) => {
   );
 };
 
-const ConflictList = ({ docRecords }: { docRecords: DocRecord[] }) => {
+export const ConflictList = ({ docRecords }: { docRecords: DocRecord[] }) => {
   return docRecords.map(docRecord => (
     <DocItem key={docRecord.id} docRecord={docRecord} />
   ));
+};
+
+export const MobileJournalConflictList = ({ date }: { date: string }) => {
+  const docRecordList = useService(DocsService).list;
+  const journalService = useService(JournalService);
+  const docs = useLiveData(
+    useMemo(() => journalService.journalsByDate$(date), [journalService, date])
+  );
+  const docRecords = useLiveData(
+    docRecordList.docs$.map(records =>
+      records.filter(v => {
+        return docs.some(doc => doc.id === v.id);
+      })
+    )
+  );
+
+  return <ConflictList docRecords={docRecords} />;
 };
 
 const ConflictListMenuItem = ({ docRecords }: { docRecords: DocRecord[] }) => {

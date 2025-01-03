@@ -10,18 +10,17 @@ import {
 } from '@affine/component';
 import { useJournalRouteHelper } from '@affine/core/components/hooks/use-journal';
 import { MoveToTrash } from '@affine/core/components/page-list';
+import {
+  type DocRecord,
+  DocService,
+  DocsService,
+} from '@affine/core/modules/doc';
 import { DocDisplayMetaService } from '@affine/core/modules/doc-display-meta';
 import { JournalService } from '@affine/core/modules/journal';
 import { WorkbenchLink } from '@affine/core/modules/workbench';
 import { useI18n } from '@affine/i18n';
 import { CalendarXmarkIcon, EditIcon } from '@blocksuite/icons/rc';
-import type { DocRecord } from '@toeverything/infra';
-import {
-  DocService,
-  DocsService,
-  useLiveData,
-  useService,
-} from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import { assignInlineVars } from '@vanilla-extract/dynamic';
 import clsx from 'clsx';
 import dayjs from 'dayjs';
@@ -154,8 +153,7 @@ export const EditorJournalPanel = () => {
           customDayRenderer={customDayRenderer}
           value={journalDate?.format('YYYY-MM-DD')}
           onChange={onDateSelect}
-          monthHeaderCellClassName={styles.journalDateCellWrapper}
-          monthBodyCellClassName={styles.journalDateCellWrapper}
+          cellSize={34}
         />
       </div>
       {journalDate ? (

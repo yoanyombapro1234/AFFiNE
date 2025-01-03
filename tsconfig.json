@@ -34,7 +34,7 @@
     "allowSyntheticDefaultImports": true,
     "isolatedModules": true,
     // Language and Environment
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "jsxImportSource": "@emotion/react",
     "lib": ["ESNext", "DOM"],
     "target": "ES2022",
@@ -44,6 +44,8 @@
     // Projects
     "composite": true,
     "incremental": true,
+    // For dev performance
+    "disableReferencedProjectLoad": true,
     // Completeness
     "skipLibCheck": true, // skip all type checks for .d.ts files
     "paths": {
@@ -52,7 +54,6 @@
       "@affine/admin/components/ui/*": [
         "./packages/frontend/admin/src/components/ui/*"
       ],
-      "@affine/cli/*": ["./tools/cli/src/*"],
       "@affine/server/*": ["./packages/backend/server/src/*"],
       "@affine/component": ["./packages/frontend/component/src/index"],
       "@affine/component/*": [
@@ -66,13 +67,13 @@
       "@affine/graphql": ["./packages/frontend/graphql/src"],
       "@affine/electron/scripts/*": ["./packages/frontend/electron/scripts/*"],
       "@affine-test/kit/*": ["./tests/kit/*"],
-      "@affine-test/fixtures/*": ["./tests/fixtures/*"],
       "@toeverything/infra": ["./packages/common/infra/src"],
       "@affine/native": ["./packages/frontend/native/index.d.ts"],
       "@affine/native/*": ["./packages/frontend/native/*"],
       "@affine/server-native": ["./packages/backend/native/index.d.ts"],
       // Development only
-      "@affine/electron/*": ["./packages/frontend/apps/electron/src/*"]
+      "@affine/electron/*": ["./packages/frontend/apps/electron/src/*"],
+      "@affine/nbstore": ["./packages/common/nbstore/src"]
     }
   },
   "include": [],
@@ -101,6 +102,9 @@
       "path": "./packages/frontend/apps/web"
     },
     {
+      "path": "./packages/frontend/apps/electron-renderer"
+    },
+    {
       "path": "./packages/frontend/apps/mobile"
     },
     {
@@ -111,9 +115,6 @@
     },
     {
       "path": "./packages/frontend/apps/electron/tsconfig.test.json"
-    },
-    {
-      "path": "./packages/frontend/apps/electron/renderer/tsconfig.json"
     },
     {
       "path": "./packages/frontend/graphql"
@@ -131,9 +132,15 @@
     {
       "path": "./packages/common/infra"
     },
+    {
+      "path": "./packages/common/nbstore"
+    },
     // Tools
     {
       "path": "./tools/cli"
+    },
+    {
+      "path": "./tools/utils"
     },
     {
       "path": "./tools/playstore-auto-bump"
@@ -146,16 +153,7 @@
       "path": "./tests/affine-local"
     },
     {
-      "path": "./tests/affine-migration"
-    },
-    {
       "path": "./tests/affine-mobile"
-    },
-    {
-      "path": "./tests/affine-legacy/0.7.0-canary.18"
-    },
-    {
-      "path": "./tests/affine-legacy/0.8.0-canary.7"
     },
     {
       "path": "./tests/affine-cloud"
@@ -163,24 +161,11 @@
     {
       "path": "./tests/affine-desktop"
     },
+    // Blocksuite
     {
-      "path": "./tests/affine-legacy/0.8.4"
-    },
-    {
-      "path": "./tests/affine-legacy/0.6.1-beta.1"
-    },
-    // Others
-    {
-      "path": "./tsconfig.node.json"
+      "path": "./blocksuite/affine/all"
     }
   ],
   "files": [],
-  "exclude": ["node_modules", "target", "lib", "test-results", "dist"],
-  "ts-node": {
-    "esm": true,
-    "compilerOptions": {
-      "module": "ESNext",
-      "moduleResolution": "Node"
-    }
-  }
+  "exclude": ["node_modules", "target", "lib", "test-results", "dist"]
 }

@@ -1,6 +1,6 @@
 import type { useI18n } from '@affine/i18n';
 import { track } from '@affine/track';
-import type { DocCollection } from '@blocksuite/affine/store';
+import type { Workspace } from '@blocksuite/affine/store';
 import { ArrowRightBigIcon } from '@blocksuite/icons/rc';
 import type { createStore } from 'jotai';
 
@@ -19,7 +19,7 @@ export function registerAffineNavigationCommands({
   t: ReturnType<typeof useI18n>;
   store: ReturnType<typeof createStore>;
   navigationHelper: ReturnType<typeof useNavigateHelper>;
-  docCollection: DocCollection;
+  docCollection: Workspace;
   globalDialogService: GlobalDialogService;
 }) {
   const unsubs: Array<() => void> = [];

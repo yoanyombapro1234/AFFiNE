@@ -9,8 +9,11 @@ import { Button } from '../../button';
 import { Modal } from '../../modal';
 import { Scrollable } from '../../scrollbar';
 import type { MenuProps } from '../menu.types';
-import type { SubMenuContent } from './context';
-import { MobileMenuContext } from './context';
+import {
+  MobileMenuContext,
+  type SubMenuContent,
+  useMobileSubMenuHelper,
+} from './context';
 import * as styles from './styles.css';
 import { MobileMenuSubRaw } from './sub';
 
@@ -32,12 +35,23 @@ export const MobileMenu = ({
 }: MenuProps) => {
   const [subMenus, setSubMenus] = useState<SubMenuContent[]>([]);
   const [open, setOpen] = useState(false);
+  const mobileContextValue = {
+    subMenus,
+    setSubMenus,
+    setOpen,
+  };
+
+  const { removeSubMenu, removeAllSubMenus } =
+    useMobileSubMenuHelper(mobileContextValue);
+
   const [sliderHeight, setSliderHeight] = useState(0);
   const [sliderElement, setSliderElement] = useState<HTMLDivElement | null>(
     null
   );
   const { setOpen: pSetOpen } = useContext(MobileMenuContext);
   const finalOpen = rootOptions?.open ?? open;
+
+  // always show the last submenu, if any
   const activeIndex = subMenus.length;
 
   // dynamic height for slider
@@ -62,12 +76,12 @@ export const MobileMenu = ({
         // a workaround to hack the onPointerDownOutside event
         onPointerDownOutside?.({} as any);
         onInteractOutside?.({} as any);
-        setSubMenus([]);
+        removeAllSubMenus();
       }
       setOpen(open);
       rootOptions?.onOpenChange?.(open);
     },
-    [onInteractOutside, onPointerDownOutside, rootOptions]
+    [onInteractOutside, onPointerDownOutside, removeAllSubMenus, rootOptions]
   );
 
   const onItemClick = useCallback(
@@ -93,7 +107,11 @@ export const MobileMenu = ({
    * ```
    */
   if (pSetOpen) {
-    return <MobileMenuSubRaw items={items}>{children}</MobileMenuSubRaw>;
+    return (
+      <MobileMenuSubRaw items={items} subOptions={rootOptions}>
+        {children}
+      </MobileMenuSubRaw>
+    );
   }
 
   return (
@@ -112,6 +130,7 @@ export const MobileMenu = ({
             className: clsx(className, styles.mobileMenuModal),
             ...otherContentOptions,
           }}
+          disableAutoFocus={true}
         >
           <div
             ref={setSliderElement}
@@ -126,7 +145,7 @@ export const MobileMenu = ({
             </div>
             {subMenus.map((sub, index) => (
               <div
-                key={index}
+                key={sub.id}
                 data-index={index + 1}
                 className={styles.menuContent}
               >
@@ -135,7 +154,9 @@ export const MobileMenu = ({
                   variant="plain"
                   className={styles.backButton}
                   prefix={<ArrowLeftSmallIcon />}
-                  onClick={() => setSubMenus(prev => prev.slice(0, index))}
+                  onClick={() => {
+                    removeSubMenu(sub.id);
+                  }}
                   prefixStyle={{ width: 24, height: 24 }}
                 >
                   {sub.title || t['com.affine.backButton']()}

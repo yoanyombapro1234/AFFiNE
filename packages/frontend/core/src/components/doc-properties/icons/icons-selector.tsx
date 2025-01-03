@@ -1,6 +1,6 @@
 import { Menu, Scrollable } from '@affine/component';
+import type { DocCustomPropertyInfo } from '@affine/core/modules/db';
 import { useI18n } from '@affine/i18n';
-import type { DocCustomPropertyInfo } from '@toeverything/infra';
 import { chunk } from 'lodash-es';
 
 import { type DocPropertyIconName, DocPropertyIconNames } from './constant';
@@ -26,9 +26,9 @@ const IconsSelectorPanel = ({
       </div>
       <Scrollable.Viewport className={styles.iconsContainerScrollable}>
         <div className={styles.iconsContainer}>
-          {iconRows.map((iconRow, index) => {
+          {iconRows.map(iconRow => {
             return (
-              <div key={index} className={styles.iconsRow}>
+              <div key={iconRow.join('-')} className={styles.iconsRow}>
                 {iconRow.map(iconName => {
                   const Icon = iconNameToComponent(iconName);
                   return (
@@ -63,10 +63,16 @@ export const DocPropertyIconSelector = ({
   return (
     <Menu
       items={
-        <IconsSelectorPanel
-          selectedIcon={propertyInfo.icon}
-          onSelectedChange={onSelectedChange}
-        />
+        <div
+          style={{
+            padding: BUILD_CONFIG.isMobileEdition ? '0 20px' : undefined,
+          }}
+        >
+          <IconsSelectorPanel
+            selectedIcon={propertyInfo.icon}
+            onSelectedChange={onSelectedChange}
+          />
+        </div>
       }
     >
       <div className={styles.iconSelectorButton}>

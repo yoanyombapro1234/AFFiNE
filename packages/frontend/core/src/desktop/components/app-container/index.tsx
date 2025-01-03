@@ -8,11 +8,11 @@ import {
 } from '@affine/core/modules/app-sidebar/views';
 import { AppTabsHeader } from '@affine/core/modules/app-tabs-header';
 import { NavigationButtons } from '@affine/core/modules/navigation';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import {
   useLiveData,
   useService,
   useServiceOptional,
-  WorkspaceService,
 } from '@toeverything/infra';
 import clsx from 'clsx';
 import {

@@ -133,7 +133,7 @@ export class ChatPanel extends WithDisposable(ShadowlessElement) {
       };
 
       this.isLoading = false;
-      this.scrollToDown();
+      this._scrollToEnd();
     })().catch(console.error);
   }, 200);
 
@@ -156,6 +156,10 @@ export class ChatPanel extends WithDisposable(ShadowlessElement) {
     error: null,
     markdown: '',
     chatSessionId: null,
+  };
+
+  private readonly _scrollToEnd = () => {
+    this._chatMessages.value?.scrollToEnd();
   };
 
   private readonly _cleanupHistories = async () => {
@@ -187,8 +191,26 @@ export class ChatPanel extends WithDisposable(ShadowlessElement) {
 
   protected override updated(_changedProperties: PropertyValues) {
     if (_changedProperties.has('doc')) {
-      this.chatContextValue.chatSessionId = null;
-      this._resetItems();
+      requestAnimationFrame(() => {
+        this.chatContextValue.chatSessionId = null;
+        this._resetItems();
+      });
+    }
+
+    if (
+      !this.isLoading &&
+      _changedProperties.has('chatContextValue') &&
+      this.chatContextValue.status !== 'idle'
+    ) {
+      if (this.chatContextValue.status === 'transmitting') {
+        this._scrollToEnd();
+      } else if (
+        this.chatContextValue.status === 'loading' ||
+        this.chatContextValue.status === 'error' ||
+        this.chatContextValue.status === 'success'
+      ) {
+        setTimeout(this._scrollToEnd, 500);
+      }
     }
   }
 
@@ -236,10 +258,6 @@ export class ChatPanel extends WithDisposable(ShadowlessElement) {
       images,
     });
   };
-
-  scrollToDown() {
-    requestAnimationFrame(() => this._chatMessages.value?.scrollToDown());
-  }
 
   override render() {
     return html` <div class="chat-panel-container">

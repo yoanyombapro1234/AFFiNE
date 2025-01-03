@@ -1,17 +1,17 @@
 import { BlockComponent } from '@blocksuite/affine/block-std';
 import { Peekable } from '@blocksuite/affine/blocks';
 import { computed } from '@preact/signals-core';
-import {
-  type AIChatBlockModel,
-  ChatMessagesSchema,
-} from '@toeverything/infra/blocksuite';
 import { html } from 'lit';
 
+import { type AIChatBlockModel, ChatMessagesSchema } from '../../../blocks';
 import { ChatWithAIIcon } from '../_common/icon';
 import { AIChatBlockStyles } from './styles';
 
 @Peekable({
-  enableOn: ({ doc }: AIChatBlockComponent) => !doc.readonly,
+  enableOn: ({ doc }: AIChatBlockComponent) => {
+    // Disable on mobile and readonly mode
+    return !BUILD_CONFIG.isMobileEdition && !doc.readonly;
+  },
 })
 export class AIChatBlockComponent extends BlockComponent<AIChatBlockModel> {
   static override styles = AIChatBlockStyles;

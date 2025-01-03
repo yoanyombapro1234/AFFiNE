@@ -1,11 +1,13 @@
 import { Button, Skeleton, Tooltip } from '@affine/component';
 import { Loading } from '@affine/component/ui/loading';
-import { WorkspaceAvatar } from '@affine/component/workspace-avatar';
 import { useSystemOnline } from '@affine/core/components/hooks/use-system-online';
 import { useWorkspace } from '@affine/core/components/hooks/use-workspace';
 import { useWorkspaceInfo } from '@affine/core/components/hooks/use-workspace-info';
+import type {
+  WorkspaceMetadata,
+  WorkspaceProfileInfo,
+} from '@affine/core/modules/workspace';
 import { UNTITLED_WORKSPACE_NAME } from '@affine/env/constant';
-import { WorkspaceFlavour } from '@affine/env/workspace';
 import {
   ArrowDownSmallIcon,
   CloudWorkspaceIcon,
@@ -15,20 +17,19 @@ import {
   LocalWorkspaceIcon,
   NoNetworkIcon,
   SettingsIcon,
+  TeamWorkspaceIcon,
   UnsyncIcon,
 } from '@blocksuite/icons/rc';
-import {
-  useLiveData,
-  type WorkspaceMetadata,
-  type WorkspaceProfileInfo,
-} from '@toeverything/infra';
+import { useLiveData } from '@toeverything/infra';
 import { cssVar } from '@toeverything/theme';
 import clsx from 'clsx';
 import type { HTMLAttributes } from 'react';
 import { forwardRef, useCallback, useEffect, useState } from 'react';
 
 import { useCatchEventCallback } from '../../hooks/use-catch-event-hook';
+import { WorkspaceAvatar } from '../../workspace-avatar';
 import * as styles from './styles.css';
+export { PureWorkspaceCard } from './pure-workspace-card';
 
 const CloudWorkspaceStatus = () => {
   return (
@@ -97,7 +98,7 @@ const useSyncEngineSyncProgress = (meta: WorkspaceMetadata) => {
 
   let content;
   // TODO(@eyhn): add i18n
-  if (workspace.flavour === WorkspaceFlavour.LOCAL) {
+  if (workspace.flavour === 'local') {
     if (!BUILD_CONFIG.isElectron) {
       content = 'This is a local demo workspace.';
     } else {
@@ -132,7 +133,7 @@ const useSyncEngineSyncProgress = (meta: WorkspaceMetadata) => {
   return {
     message: content,
     icon:
-      workspace.flavour === WorkspaceFlavour.AFFINE_CLOUD ? (
+      workspace.flavour !== 'local' ? (
         !isOnline ? (
           <OfflineStatus />
         ) : (
@@ -143,7 +144,7 @@ const useSyncEngineSyncProgress = (meta: WorkspaceMetadata) => {
       ),
     progress,
     active:
-      workspace.flavour === WorkspaceFlavour.AFFINE_CLOUD &&
+      workspace.flavour !== 'local' &&
       ((syncing && progress !== undefined) || engineState.retrying), // active if syncing or retrying,
   };
 };
@@ -173,7 +174,7 @@ const WorkspaceSyncInfo = ({
   workspaceProfile: WorkspaceProfileInfo;
 }) => {
   const syncStatus = useSyncEngineSyncProgress(workspaceMetadata);
-  const isCloud = workspaceMetadata.flavour === WorkspaceFlavour.AFFINE_CLOUD;
+  const isCloud = workspaceMetadata.flavour !== 'local';
   const { paused, pause } = usePauseAnimation();
 
   // to make sure that animation will play first time
@@ -241,6 +242,7 @@ export const WorkspaceCard = forwardRef<
     avatarSize?: number;
     disable?: boolean;
     hideCollaborationIcon?: boolean;
+    hideTeamWorkspaceIcon?: boolean;
     active?: boolean;
     onClickOpenSettings?: (workspaceMetadata: WorkspaceMetadata) => void;
     onClickEnableCloud?: (workspaceMetadata: WorkspaceMetadata) => void;
@@ -257,6 +259,7 @@ export const WorkspaceCard = forwardRef<
       className,
       disable,
       hideCollaborationIcon,
+      hideTeamWorkspaceIcon,
       active,
       ...props
     },
@@ -315,8 +318,7 @@ export const WorkspaceCard = forwardRef<
             )}
           </div>
           <div className={styles.showOnCardHover}>
-            {onClickEnableCloud &&
-            workspaceMetadata.flavour === WorkspaceFlavour.LOCAL ? (
+            {onClickEnableCloud && workspaceMetadata.flavour === 'local' ? (
               <Button
                 className={styles.enableCloudButton}
                 onClick={onEnableCloud}
@@ -326,6 +328,9 @@ export const WorkspaceCard = forwardRef<
             ) : null}
             {hideCollaborationIcon || information?.isOwner ? null : (
               <CollaborationIcon className={styles.collaborationIcon} />
+            )}
+            {hideTeamWorkspaceIcon || !information?.isTeam ? null : (
+              <TeamWorkspaceIcon className={styles.collaborationIcon} />
             )}
             {onClickOpenSettings && (
               <div className={styles.settingButton} onClick={onOpenSettings}>
@@ -338,7 +343,7 @@ export const WorkspaceCard = forwardRef<
 
         {active && (
           <div className={styles.activeContainer}>
-            <DoneIcon className={styles.activeIcon} />{' '}
+            <DoneIcon className={styles.activeIcon} />
           </div>
         )}
       </div>

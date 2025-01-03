@@ -8,9 +8,18 @@ export const RowLayout = ({
   label,
   children,
   href,
-}: PropsWithChildren<{ label: ReactNode; href?: string }>) => {
+  onClick,
+}: PropsWithChildren<{
+  label: ReactNode;
+  href?: string;
+  onClick?: () => void;
+}>) => {
   const content = (
-    <ConfigModal.Row className={styles.baseSettingItem}>
+    <ConfigModal.Row
+      data-testid="setting-row"
+      className={styles.baseSettingItem}
+      onClick={onClick}
+    >
       <div className={styles.baseSettingItemName}>{label}</div>
       <div className={styles.baseSettingItemAction}>
         {children ||

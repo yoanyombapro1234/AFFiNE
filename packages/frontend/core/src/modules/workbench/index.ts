@@ -11,13 +11,11 @@ export type { WorkbenchLinkProps } from './view/workbench-link';
 export { WorkbenchLink } from './view/workbench-link';
 export { WorkbenchRoot } from './view/workbench-root';
 
-import {
-  type Framework,
-  GlobalStateService,
-  WorkspaceScope,
-} from '@toeverything/infra';
+import { type Framework } from '@toeverything/infra';
 
 import { DesktopApiService } from '../desktop-api';
+import { GlobalStateService } from '../storage';
+import { WorkspaceScope } from '../workspace';
 import { SidebarTab } from './entities/sidebar-tab';
 import { View } from './entities/view';
 import { Workbench } from './entities/workbench';

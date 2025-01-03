@@ -8,6 +8,7 @@ import {
   type ListItem,
   ListScrollContainer,
 } from '@affine/core/components/page-list';
+import { DocsService } from '@affine/core/modules/doc';
 import { CompatibleFavoriteItemsAdapter } from '@affine/core/modules/favorite';
 import type { Collection } from '@affine/env/filter';
 import { Trans, useI18n } from '@affine/i18n';
@@ -18,7 +19,7 @@ import {
   PageIcon,
   ToggleCollapseIcon,
 } from '@blocksuite/icons/rc';
-import { DocsService, useLiveData, useService } from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import { cssVar } from '@toeverything/theme';
 import clsx from 'clsx';
 import type { ReactNode } from 'react';

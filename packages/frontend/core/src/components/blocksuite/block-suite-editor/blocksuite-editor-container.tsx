@@ -3,13 +3,14 @@ import {
   type NoteBlockModel,
   NoteDisplayMode,
 } from '@blocksuite/affine/blocks';
+import { Slot } from '@blocksuite/affine/global/utils';
 import type {
   AffineEditorContainer,
   DocTitle,
   EdgelessEditor,
   PageEditor,
 } from '@blocksuite/affine/presets';
-import { type BlockModel, type Doc, Slot } from '@blocksuite/affine/store';
+import { type BlockModel, type Doc } from '@blocksuite/affine/store';
 import clsx from 'clsx';
 import type React from 'react';
 import {

@@ -4,11 +4,11 @@ import test from 'ava';
 import * as Sinon from 'sinon';
 import { applyUpdate, Doc as YDoc, encodeStateAsUpdate } from 'yjs';
 
+import { ConfigModule } from '../../src/base/config';
 import {
   DocStorageModule,
   PgWorkspaceDocStorageAdapter as Adapter,
 } from '../../src/core/doc';
-import { ConfigModule } from '../../src/fundamentals/config';
 import { createTestingModule, initTestingDB } from '../utils';
 
 let m: TestingModule;

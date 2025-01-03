@@ -5,34 +5,42 @@ import type {
   WORKSPACE_DIALOG_SCHEMA,
 } from '@affine/core/modules/dialogs';
 import { UrlService } from '@affine/core/modules/url';
+import { WorkspaceService } from '@affine/core/modules/workspace';
+import { DebugLogger } from '@affine/debug';
 import { useI18n } from '@affine/i18n';
 import track from '@affine/track';
 import {
+  HtmlTransformer,
   MarkdownTransformer,
   NotionHtmlTransformer,
   openFileOrFiles,
   ZipTransformer,
 } from '@blocksuite/affine/blocks';
-import type { DocCollection } from '@blocksuite/affine/store';
+import type { Workspace } from '@blocksuite/affine/store';
 import {
+  ExportToHtmlIcon,
   ExportToMarkdownIcon,
   HelpIcon,
   NotionIcon,
+  PageIcon,
+  ZipIcon,
 } from '@blocksuite/icons/rc';
-import {
-  FeatureFlagService,
-  useLiveData,
-  useService,
-  WorkspaceService,
-} from '@toeverything/infra';
+import { useService } from '@toeverything/infra';
 import { cssVar } from '@toeverything/theme';
 import { cssVarV2 } from '@toeverything/theme/v2';
-import { type ReactElement, useCallback, useState } from 'react';
+import {
+  type ReactElement,
+  type SVGAttributes,
+  useCallback,
+  useState,
+} from 'react';
 
 import * as style from './styles.css';
 
-type ImportType = 'markdown' | 'markdownZip' | 'notion' | 'snapshot';
-type AcceptType = 'Markdown' | 'Zip';
+const logger = new DebugLogger('import');
+
+type ImportType = 'markdown' | 'markdownZip' | 'notion' | 'snapshot' | 'html';
+type AcceptType = 'Markdown' | 'Zip' | 'Html';
 type Status = 'idle' | 'importing' | 'success' | 'error';
 type ImportResult = {
   docIds: string[];
@@ -43,7 +51,7 @@ type ImportResult = {
 type ImportConfig = {
   fileOptions: { acceptType: AcceptType; multiple: boolean };
   importFunction: (
-    docCollection: DocCollection,
+    docCollection: Workspace,
     file: File | File[]
   ) => Promise<ImportResult>;
 };
@@ -68,14 +76,31 @@ const importOptions = [
     key: 'markdownZip',
     label: 'com.affine.import.markdown-with-media-files',
     prefixIcon: (
-      <ExportToMarkdownIcon
+      <ZipIcon color={cssVarV2('icon/primary')} width={20} height={20} />
+    ),
+    suffixIcon: (
+      <HelpIcon color={cssVarV2('icon/primary')} width={20} height={20} />
+    ),
+    suffixTooltip: 'com.affine.import.markdown-with-media-files.tooltip',
+    testId: 'editor-option-menu-import-markdown-with-media',
+    type: 'markdownZip' as ImportType,
+  },
+  {
+    key: 'html',
+    label: 'com.affine.import.html-files',
+    prefixIcon: (
+      <ExportToHtmlIcon
         color={cssVarV2('icon/primary')}
         width={20}
         height={20}
       />
     ),
-    testId: 'editor-option-menu-import-markdown-with-media',
-    type: 'markdownZip' as ImportType,
+    suffixIcon: (
+      <HelpIcon color={cssVarV2('icon/primary')} width={20} height={20} />
+    ),
+    suffixTooltip: 'com.affine.import.html-files.tooltip',
+    testId: 'editor-option-menu-import-html',
+    type: 'html' as ImportType,
   },
   {
     key: 'notion',
@@ -87,6 +112,15 @@ const importOptions = [
     suffixTooltip: 'com.affine.import.notion.tooltip',
     testId: 'editor-option-menu-import-notion',
     type: 'notion' as ImportType,
+  },
+  {
+    key: 'snapshot',
+    label: 'com.affine.import.snapshot',
+    prefixIcon: (
+      <PageIcon color={cssVarV2('icon/primary')} width={20} height={20} />
+    ),
+    testId: 'editor-option-menu-import-snapshot',
+    type: 'snapshot' as ImportType,
   },
 ];
 
@@ -123,6 +157,28 @@ const importConfigs: Record<ImportType, ImportConfig> = {
         collection: docCollection,
         imported: file,
       });
+      return {
+        docIds,
+      };
+    },
+  },
+  html: {
+    fileOptions: { acceptType: 'Html', multiple: true },
+    importFunction: async (docCollection, files) => {
+      if (!Array.isArray(files)) {
+        throw new Error('Expected an array of files for html files import');
+      }
+      const docIds: string[] = [];
+      for (const file of files) {
+        const text = await file.text();
+        const fileName = file.name.split('.').slice(0, -1).join('.');
+        const docId = await HtmlTransformer.importHTMLToDoc({
+          collection: docCollection,
+          html: text,
+          fileName,
+        });
+        if (docId) docIds.push(docId);
+      }
       return {
         docIds,
       };
@@ -172,8 +228,8 @@ const ImportOptionItem = ({
   onImport,
 }: {
   label: string;
-  prefixIcon: ReactElement;
-  suffixIcon?: ReactElement;
+  prefixIcon: ReactElement<SVGAttributes<SVGElement>>;
+  suffixIcon?: ReactElement<SVGAttributes<SVGElement>>;
   suffixTooltip?: string;
   type: ImportType;
   onImport: (type: ImportType) => void;
@@ -200,10 +256,6 @@ const ImportOptions = ({
   onImport: (type: ImportType) => void;
 }) => {
   const t = useI18n();
-  const featureFlagService = useService(FeatureFlagService);
-  const enableSnapshotImportExport = useLiveData(
-    featureFlagService.flags.enable_snapshot_import_export.$
-  );
 
   return (
     <>
@@ -232,14 +284,6 @@ const ImportOptions = ({
           )
         )}
       </div>
-      {enableSnapshotImportExport && (
-        <div className={style.importModalTip}>
-          {t['Import']()}{' '}
-          <span className={style.link} onClick={() => onImport('snapshot')}>
-            {t['Snapshot']()}.
-          </span>
-        </div>
-      )}
       <div className={style.importModalTip}>
         {t['com.affine.import.modal.tip']()}{' '}
         <a
@@ -373,6 +417,9 @@ export const ImportDialog = ({
             docCount: docIds.length,
           },
         });
+        track.$.importModal.$.createDoc({
+          control: 'import',
+        });
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : 'Unknown error occurred';
@@ -383,6 +430,7 @@ export const ImportDialog = ({
           status: 'failed',
           error: errorMessage || undefined,
         });
+        logger.error('Failed to import', error);
       }
     },
     [docCollection, t]

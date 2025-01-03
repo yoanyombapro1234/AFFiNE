@@ -2,19 +2,21 @@ import { Loading, Scrollable } from '@affine/component';
 import { WorkspaceDetailSkeleton } from '@affine/component/setting-components';
 import type { ModalProps } from '@affine/component/ui/modal';
 import { Modal } from '@affine/component/ui/modal';
-import { AuthService } from '@affine/core/modules/cloud';
+import {
+  AuthService,
+  DefaultServerService,
+  ServersService,
+} from '@affine/core/modules/cloud';
 import type {
   DialogComponentProps,
   GLOBAL_DIALOG_SCHEMA,
 } from '@affine/core/modules/dialogs';
 import type { SettingTab } from '@affine/core/modules/dialogs/constant';
+import { GlobalContextService } from '@affine/core/modules/global-context';
+import type { WorkspaceMetadata } from '@affine/core/modules/workspace';
 import { Trans } from '@affine/i18n';
 import { ContactWithUsIcon } from '@blocksuite/icons/rc';
-import {
-  useLiveData,
-  useService,
-  type WorkspaceMetadata,
-} from '@toeverything/infra';
+import { FrameworkScope, useLiveData, useService } from '@toeverything/infra';
 import { debounce } from 'lodash-es';
 import {
   Suspense,
@@ -60,7 +62,21 @@ const SettingModalInner = ({
     activeWorkspaceMetadata: initialWorkspaceMetadata,
     scrollAnchor: undefined,
   });
-  const loginStatus = useLiveData(useService(AuthService).session.status$);
+  const globalContextService = useService(GlobalContextService);
+
+  const currentServerId = useLiveData(
+    globalContextService.globalContext.serverId.$
+  );
+  console.log(currentServerId);
+  const serversService = useService(ServersService);
+  const defaultServerService = useService(DefaultServerService);
+  const currentServer =
+    useLiveData(
+      currentServerId ? serversService.server$(currentServerId) : null
+    ) ?? defaultServerService.server;
+  const loginStatus = useLiveData(
+    currentServer.scope.get(AuthService).session.status$
+  );
 
   const modalContentRef = useRef<HTMLDivElement>(null);
   const modalContentWrapperRef = useRef<HTMLDivElement>(null);
@@ -123,7 +139,7 @@ const SettingModalInner = ({
   }, [setOpenStarAFFiNEModal]);
 
   return (
-    <>
+    <FrameworkScope scope={currentServer.scope}>
       <SettingSidebar
         activeTab={settingState.activeTab}
         onTabChange={onTabChange}
@@ -135,8 +151,8 @@ const SettingModalInner = ({
           className={style.wrapper}
           ref={modalContentWrapperRef}
         >
-          <div ref={modalContentRef} className={style.centerContainer}>
-            <div className={style.content}>
+          <div className={style.centerContainer}>
+            <div ref={modalContentRef} className={style.content}>
               <Suspense fallback={<WorkspaceDetailSkeleton />}>
                 {}
                 {settingState.activeTab === 'account' &&
@@ -191,7 +207,7 @@ const SettingModalInner = ({
           <Scrollable.Scrollbar />
         </Scrollable.Viewport>
       </Scrollable.Root>
-    </>
+    </FrameworkScope>
   );
 };
 

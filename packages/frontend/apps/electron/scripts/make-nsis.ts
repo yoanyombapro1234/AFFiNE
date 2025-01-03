@@ -89,4 +89,6 @@ async function make() {
   await fs.remove(tmpPath);
 }
 
-make();
+make().catch(e => {
+  console.error(e);
+});

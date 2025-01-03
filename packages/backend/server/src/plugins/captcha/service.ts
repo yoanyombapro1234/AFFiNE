@@ -6,12 +6,12 @@ import type { Request } from 'express';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 
-import { TokenService, TokenType } from '../../core/auth/token';
 import {
   CaptchaVerificationFailed,
   Config,
   verifyChallengeResponse,
-} from '../../fundamentals';
+} from '../../base';
+import { TokenService, TokenType } from '../../core/auth/token';
 import { CaptchaConfig } from './types';
 
 const validator = z
@@ -88,15 +88,14 @@ export class CaptchaService {
 
   async verifyRequest(credential: Credential, req: Request) {
     const challenge = credential.challenge;
+    let resource: string | null = null;
     if (typeof challenge === 'string' && challenge) {
-      const resource = await this.token
+      resource = await this.token
         .getToken(TokenType.Challenge, challenge)
-        .then(token => token?.credential);
+        .then(token => token?.credential || null);
+    }
 
-      if (!resource) {
-        throw new CaptchaVerificationFailed('Invalid Challenge');
-      }
-
+    if (resource) {
       const isChallengeVerified = await this.verifyChallengeResponse(
         credential.token,
         resource

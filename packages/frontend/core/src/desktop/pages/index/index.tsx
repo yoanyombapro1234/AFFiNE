@@ -1,16 +1,16 @@
 import { DesktopApiService } from '@affine/core/modules/desktop-api';
+import { WorkspacesService } from '@affine/core/modules/workspace';
 import {
   buildShowcaseWorkspace,
   createFirstAppData,
 } from '@affine/core/utils/first-app-data';
-import { WorkspaceFlavour } from '@affine/env/workspace';
 import {
   useLiveData,
   useService,
   useServiceOptional,
-  WorkspacesService,
 } from '@toeverything/infra';
 import {
+  type ReactNode,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -35,8 +35,12 @@ import { AppContainer } from '../../components/app-container';
  */
 export const Component = ({
   defaultIndexRoute = 'all',
+  children,
+  fallback,
 }: {
   defaultIndexRoute?: string;
+  children?: ReactNode;
+  fallback?: ReactNode;
 }) => {
   // navigating and creating may be slow, to avoid flickering, we show workspace fallback
   const [navigating, setNavigating] = useState(true);
@@ -59,11 +63,8 @@ export const Component = ({
   const createCloudWorkspace = useCallback(() => {
     if (createOnceRef.current) return;
     createOnceRef.current = true;
-    buildShowcaseWorkspace(
-      workspacesService,
-      WorkspaceFlavour.AFFINE_CLOUD,
-      'AFFiNE Cloud'
-    )
+    // TODO: support selfhosted
+    buildShowcaseWorkspace(workspacesService, 'affine-cloud', 'AFFiNE Cloud')
       .then(({ meta, defaultDocId }) => {
         if (defaultDocId) {
           jumpToPage(meta.id, defaultDocId);
@@ -86,15 +87,14 @@ export const Component = ({
     // check is user logged in && has cloud workspace
     if (searchParams.get('initCloud') === 'true') {
       if (loggedIn) {
-        if (list.every(w => w.flavour !== WorkspaceFlavour.AFFINE_CLOUD)) {
+        if (list.every(w => w.flavour !== 'affine-cloud')) {
           createCloudWorkspace();
           return;
         }
 
         // open first cloud workspace
         const openWorkspace =
-          list.find(w => w.flavour === WorkspaceFlavour.AFFINE_CLOUD) ??
-          list[0];
+          list.find(w => w.flavour === 'affine-cloud') ?? list[0];
         openPage(openWorkspace.id, defaultIndexRoute);
       } else {
         return;
@@ -151,24 +151,26 @@ export const Component = ({
   }, [jumpToPage, openPage, workspacesService]);
 
   if (navigating || creating) {
-    return <AppContainer fallback />;
+    return fallback ?? <AppContainer fallback />;
   }
 
   // TODO(@eyhn): We need a no workspace page
   return (
-    <div
-      style={{
-        position: 'fixed',
-        left: 'calc(50% - 150px)',
-        top: '50%',
-      }}
-    >
-      <WorkspaceNavigator
-        open={true}
-        menuContentOptions={{
-          forceMount: true,
+    children ?? (
+      <div
+        style={{
+          position: 'fixed',
+          left: 'calc(50% - 150px)',
+          top: '50%',
         }}
-      />
-    </div>
+      >
+        <WorkspaceNavigator
+          open={true}
+          menuContentOptions={{
+            forceMount: true,
+          }}
+        />
+      </div>
+    )
   );
 };

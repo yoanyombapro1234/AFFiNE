@@ -8,22 +8,20 @@ import {
   useDraggable,
   useDropTarget,
 } from '@affine/component';
+import type { DocCustomPropertyInfo } from '@affine/core/modules/db';
+import { DocService, DocsService } from '@affine/core/modules/doc';
 import { DocDatabaseBacklinkInfo } from '@affine/core/modules/doc-info';
 import type {
   DatabaseRow,
   DatabaseValueCell,
 } from '@affine/core/modules/doc-info/types';
-import { WorkbenchService } from '@affine/core/modules/workbench';
-import { ViewService } from '@affine/core/modules/workbench/services/view';
+import { ViewService, WorkbenchService } from '@affine/core/modules/workbench';
 import type { AffineDNDData } from '@affine/core/types/dnd';
 import { useI18n } from '@affine/i18n';
 import { track } from '@affine/track';
 import { PlusIcon, PropertyIcon, ToggleExpandIcon } from '@blocksuite/icons/rc';
 import * as Collapsible from '@radix-ui/react-collapsible';
 import {
-  type DocCustomPropertyInfo,
-  DocService,
-  DocsService,
   useLiveData,
   useService,
   useServiceOptional,
@@ -44,6 +42,7 @@ export type DefaultOpenProperty =
     }
   | {
       type: 'database';
+      docId: string;
       databaseId: string;
       databaseRowId: string;
     };
@@ -53,6 +52,11 @@ export interface DocPropertiesTableProps {
   defaultOpenProperty?: DefaultOpenProperty;
   onPropertyAdded?: (property: DocCustomPropertyInfo) => void;
   onPropertyChange?: (property: DocCustomPropertyInfo, value: unknown) => void;
+  onPropertyInfoChange?: (
+    property: DocCustomPropertyInfo,
+    field: keyof DocCustomPropertyInfo,
+    value: string
+  ) => void;
   onDatabasePropertyChange?: (
     row: DatabaseRow,
     cell: DatabaseValueCell,
@@ -107,12 +111,17 @@ interface DocPropertyRowProps {
   showAll?: boolean;
   defaultOpenEditMenu?: boolean;
   onChange?: (value: unknown) => void;
+  onPropertyInfoChange?: (
+    field: keyof DocCustomPropertyInfo,
+    value: string
+  ) => void;
 }
 
 export const DocPropertyRow = ({
   propertyInfo,
   defaultOpenEditMenu,
   onChange,
+  onPropertyInfoChange,
 }: DocPropertyRowProps) => {
   const t = useI18n();
   const docService = useService(DocService);
@@ -131,11 +140,13 @@ export const DocPropertyRow = ({
     typeInfo && 'value' in typeInfo ? typeInfo.value : undefined;
 
   const handleChange = useCallback(
-    (value: any) => {
-      if (typeof value !== 'string') {
-        throw new Error('only allow string value');
+    (value: any, skipCommit?: boolean) => {
+      if (!skipCommit) {
+        if (typeof value !== 'string') {
+          throw new Error('only allow string value');
+        }
+        docService.doc.record.setCustomProperty(propertyInfo.id, value);
       }
-      docService.doc.record.setCustomProperty(propertyInfo.id, value);
       onChange?.(value);
     },
     [docService, onChange, propertyInfo]
@@ -212,7 +223,12 @@ export const DocPropertyRow = ({
           propertyInfo.name ||
           (typeInfo?.name ? t.t(typeInfo.name) : t['unnamed']())
         }
-        menuItems={<EditDocPropertyMenuItems propertyId={propertyInfo.id} />}
+        menuItems={
+          <EditDocPropertyMenuItems
+            propertyId={propertyInfo.id}
+            onPropertyInfoChange={onPropertyInfoChange}
+          />
+        }
         data-testid="doc-property-name"
       />
       <ValueRenderer
@@ -230,6 +246,11 @@ interface DocWorkspacePropertiesTableBodyProps {
   defaultOpen?: boolean;
   onChange?: (property: DocCustomPropertyInfo, value: unknown) => void;
   onPropertyAdded?: (property: DocCustomPropertyInfo) => void;
+  onPropertyInfoChange?: (
+    property: DocCustomPropertyInfo,
+    field: keyof DocCustomPropertyInfo,
+    value: string
+  ) => void;
 }
 
 // 🏷️ Tags     (⋅ xxx) (⋅ yyy)
@@ -240,7 +261,15 @@ const DocWorkspacePropertiesTableBody = forwardRef<
   DocWorkspacePropertiesTableBodyProps
 >(
   (
-    { className, style, defaultOpen, onChange, onPropertyAdded, ...props },
+    {
+      className,
+      style,
+      defaultOpen,
+      onChange,
+      onPropertyAdded,
+      onPropertyInfoChange,
+      ...props
+    },
     ref
   ) => {
     const t = useI18n();
@@ -248,7 +277,7 @@ const DocWorkspacePropertiesTableBody = forwardRef<
     const workbenchService = useService(WorkbenchService);
     const viewService = useServiceOptional(ViewService);
     const properties = useLiveData(docsService.propertyList.sortedProperties$);
-    const [propertyCollapsed, setPropertyCollapsed] = useState(true);
+    const [addMoreCollapsed, setAddMoreCollapsed] = useState(true);
 
     const [newPropertyId, setNewPropertyId] = useState<string | null>(null);
 
@@ -260,6 +289,10 @@ const DocWorkspacePropertiesTableBody = forwardRef<
       [onPropertyAdded]
     );
 
+    const handleCollapseChange = useCallback(() => {
+      setNewPropertyId(null);
+    }, []);
+
     return (
       <PropertyCollapsibleSection
         ref={ref}
@@ -267,12 +300,13 @@ const DocWorkspacePropertiesTableBody = forwardRef<
         style={style}
         title={t.t('com.affine.workspace.properties')}
         defaultCollapsed={!defaultOpen}
+        onCollapseChange={handleCollapseChange}
         {...props}
       >
         <PropertyCollapsibleContent
           collapsible
-          collapsed={propertyCollapsed}
-          onCollapseChange={setPropertyCollapsed}
+          collapsed={addMoreCollapsed}
+          onCollapseChange={setAddMoreCollapsed}
           className={styles.tableBodySortable}
           collapseButtonText={({ hide, isCollapsed }) =>
             isCollapsed
@@ -298,6 +332,9 @@ const DocWorkspacePropertiesTableBody = forwardRef<
               propertyInfo={property}
               defaultOpenEditMenu={newPropertyId === property.id}
               onChange={value => onChange?.(property, value)}
+              onPropertyInfoChange={(...args) =>
+                onPropertyInfoChange?.(property, ...args)
+              }
             />
           ))}
           <div className={styles.actionContainer}>
@@ -351,6 +388,7 @@ const DocPropertiesTableInner = ({
   defaultOpenProperty,
   onPropertyAdded,
   onPropertyChange,
+  onPropertyInfoChange,
   onDatabasePropertyChange,
   className,
 }: DocPropertiesTableProps) => {
@@ -370,6 +408,7 @@ const DocPropertiesTableInner = ({
             }
             onPropertyAdded={onPropertyAdded}
             onChange={onPropertyChange}
+            onPropertyInfoChange={onPropertyInfoChange}
           />
           <div className={styles.tableHeaderDivider} />
           <DocDatabaseBacklinkInfo
@@ -378,8 +417,9 @@ const DocPropertiesTableInner = ({
               defaultOpenProperty?.type === 'database'
                 ? [
                     {
-                      databaseId: defaultOpenProperty.databaseId,
+                      databaseBlockId: defaultOpenProperty.databaseId,
                       rowId: defaultOpenProperty.databaseRowId,
+                      docId: defaultOpenProperty.docId,
                     },
                   ]
                 : []

@@ -1,17 +1,16 @@
-import { Skeleton } from '@affine/component';
 import { Button } from '@affine/component/ui/button';
+import { ServerService } from '@affine/core/modules/cloud';
 import { UrlService } from '@affine/core/modules/url';
 import { OAuthProviderType } from '@affine/graphql';
+import track from '@affine/track';
 import { GithubIcon, GoogleDuotoneIcon } from '@blocksuite/icons/rc';
 import { useLiveData, useService } from '@toeverything/infra';
-import { type ReactElement, useCallback } from 'react';
-
-import { ServerConfigService } from '../../../modules/cloud';
+import { type ReactElement, type SVGAttributes, useCallback } from 'react';
 
 const OAuthProviderMap: Record<
   OAuthProviderType,
   {
-    icon: ReactElement;
+    icon: ReactElement<SVGAttributes<SVGElement>>;
   }
 > = {
   [OAuthProviderType.Google]: {
@@ -29,16 +28,16 @@ const OAuthProviderMap: Record<
 };
 
 export function OAuth({ redirectUrl }: { redirectUrl?: string }) {
-  const serverConfig = useService(ServerConfigService).serverConfig;
+  const serverService = useService(ServerService);
   const urlService = useService(UrlService);
-  const oauth = useLiveData(serverConfig.features$.map(r => r?.oauth));
+  const oauth = useLiveData(serverService.server.features$.map(r => r?.oauth));
   const oauthProviders = useLiveData(
-    serverConfig.config$.map(r => r?.oauthProviders)
+    serverService.server.config$.map(r => r?.oauthProviders)
   );
   const scheme = urlService.getClientScheme();
 
   if (!oauth) {
-    return <Skeleton height={50} />;
+    return null;
   }
 
   return oauthProviders?.map(provider => (
@@ -65,6 +64,7 @@ function OAuthProvider({
   scheme?: string;
   popupWindow: (url: string) => void;
 }) {
+  const serverService = useService(ServerService);
   const { icon } = OAuthProviderMap[provider];
 
   const onClick = useCallback(() => {
@@ -84,10 +84,12 @@ function OAuthProvider({
     // if (BUILD_CONFIG.isAndroid) {}
 
     const oauthUrl =
-      BUILD_CONFIG.serverUrlPrefix + `/oauth/login?${params.toString()}`;
+      serverService.server.baseUrl + `/oauth/login?${params.toString()}`;
+
+    track.$.$.auth.signIn({ method: 'oauth', provider });
 
     popupWindow(oauthUrl);
-  }, [popupWindow, provider, redirectUrl, scheme]);
+  }, [popupWindow, provider, redirectUrl, scheme, serverService]);
 
   return (
     <Button

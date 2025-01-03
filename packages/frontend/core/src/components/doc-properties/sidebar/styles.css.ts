@@ -7,8 +7,8 @@ export const container = style({
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'stretch',
-  height: '100%',
   paddingTop: '8px',
+  paddingBottom: '64px',
   position: 'relative',
 });
 

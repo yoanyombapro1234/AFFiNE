@@ -3,8 +3,9 @@ import {
   generateUrl,
   type UseSharingUrl,
 } from '@affine/core/components/hooks/affine/use-share-url';
-import { getAffineCloudBaseUrl } from '@affine/core/modules/cloud/services/fetch';
+import { ServerService } from '@affine/core/modules/cloud';
 import { EditorService } from '@affine/core/modules/editor';
+import { copyLinkToBlockStdScopeClipboard } from '@affine/core/utils/clipboard';
 import { I18n } from '@affine/i18n';
 import { track } from '@affine/track';
 import type {
@@ -40,9 +41,7 @@ function createCopyLinkToBlockMenuItem(
       return mode === 'edgeless';
     },
     select: () => {
-      const baseUrl = getAffineCloudBaseUrl();
-      if (!baseUrl) return;
-
+      const serverService = framework.get(ServerService);
       const pageId = model.doc.id;
       const { editor } = framework.get(EditorService);
       const mode = editor.mode$.value;
@@ -53,28 +52,28 @@ function createCopyLinkToBlockMenuItem(
       const options: UseSharingUrl = {
         workspaceId,
         pageId,
-        shareMode: mode,
+        mode,
         blockIds: [model.id],
       };
 
-      const str = generateUrl(options);
+      const str = generateUrl({
+        ...options,
+        baseUrl: serverService.server.baseUrl,
+      });
       if (!str) return;
 
       const type = model.flavour;
       const page = editor.editorContainer$.value;
 
-      page?.host?.std.clipboard
-        .writeToClipboard(items => {
-          items['text/plain'] = str;
-          // wrap a link
-          items['text/html'] = `<a href="${str}">${str}</a>`;
-          return items;
-        })
-        .then(() => {
-          track.doc.editor.toolbar.copyBlockToLink({ type });
+      copyLinkToBlockStdScopeClipboard(str, page?.host?.std.clipboard)
+        .then(success => {
+          if (!success) return;
+
           notify.success({ title: I18n['Copied link to clipboard']() });
         })
         .catch(console.error);
+
+      track.doc.editor.toolbar.copyBlockToLink({ type });
     },
   });
 }

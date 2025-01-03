@@ -1,4 +1,4 @@
-import { useQueryImmutable } from '@affine/core/components/hooks/use-query';
+import { useQueryImmutable } from '@affine/admin/use-query';
 import { getServerServiceConfigsQuery } from '@affine/graphql';
 import { useMemo } from 'react';
 

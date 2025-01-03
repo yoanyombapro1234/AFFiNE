@@ -5,7 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import type { CookieOptions, Request, Response } from 'express';
 import { assign, pick } from 'lodash-es';
 
-import { Config, MailService, SignUpForbidden } from '../../fundamentals';
+import { Config, MailService, SignUpForbidden } from '../../base';
 import { FeatureManagementService } from '../features/management';
 import { QuotaService } from '../quota/service';
 import { QuotaType } from '../quota/types';

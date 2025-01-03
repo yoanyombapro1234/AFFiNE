@@ -5,7 +5,7 @@ import { Controller, Get, Logger, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import isMobile from 'is-mobile';
 
-import { Config, metrics, URLHelper } from '../../fundamentals';
+import { Config, metrics, URLHelper } from '../../base';
 import { htmlSanitize } from '../../native';
 import { Public } from '../auth';
 import { PermissionService } from '../permission';

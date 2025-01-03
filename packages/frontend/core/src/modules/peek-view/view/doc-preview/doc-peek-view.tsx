@@ -108,10 +108,7 @@ function DocPeekPreviewEditor({
         })
       );
 
-      const unbind = editor.bindEditorContainer(
-        editorContainer,
-        (editorContainer as any).title
-      );
+      const unbind = editor.bindEditorContainer(editorContainer);
 
       if (mode === 'edgeless') {
         fitViewport(editorContainer, xywh);
@@ -162,18 +159,28 @@ function DocPeekPreviewEditor({
         </Scrollable.Viewport>
         <Scrollable.Scrollbar />
       </Scrollable.Root>
-      <EditorOutlineViewer
-        editor={editorElement}
-        show={mode === 'page'}
-        openOutlinePanel={openOutlinePanel}
-      />
+      {!BUILD_CONFIG.isMobileEdition && !BUILD_CONFIG.isMobileWeb ? (
+        <EditorOutlineViewer
+          editor={editorElement}
+          show={mode === 'page'}
+          openOutlinePanel={openOutlinePanel}
+        />
+      ) : null}
     </AffineErrorBoundary>
   );
 }
 
 export function DocPeekPreview({ docRef }: { docRef: DocReferenceInfo }) {
-  const { docId, blockIds, elementIds, mode, xywh, databaseId, databaseRowId } =
-    docRef;
+  const {
+    docId,
+    blockIds,
+    elementIds,
+    mode,
+    xywh,
+    databaseId,
+    databaseDocId,
+    databaseRowId,
+  } = docRef;
   const { doc, editor, loading } = useEditor(
     docId,
     mode,
@@ -181,8 +188,9 @@ export function DocPeekPreview({ docRef }: { docRef: DocReferenceInfo }) {
       blockIds,
       elementIds,
     },
-    databaseId && databaseRowId
+    databaseId && databaseRowId && databaseDocId
       ? {
+          docId: databaseDocId,
           databaseId,
           databaseRowId,
           type: 'database',

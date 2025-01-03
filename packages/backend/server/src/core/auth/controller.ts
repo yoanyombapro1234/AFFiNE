@@ -20,11 +20,12 @@ import {
   InternalServerError,
   InvalidEmail,
   InvalidEmailToken,
+  Runtime,
   SignUpForbidden,
   Throttle,
   URLHelper,
   UseNamedGuard,
-} from '../../fundamentals';
+} from '../../base';
 import { UserService } from '../user';
 import { validators } from '../utils/validators';
 import { Public } from './guard';
@@ -35,6 +36,7 @@ import { TokenService, TokenType } from './token';
 interface PreflightResponse {
   registered: boolean;
   hasPassword: boolean;
+  magicLink: boolean;
 }
 
 interface SignInCredential {
@@ -56,7 +58,8 @@ export class AuthController {
     private readonly auth: AuthService,
     private readonly user: UserService,
     private readonly token: TokenService,
-    private readonly config: Config
+    private readonly config: Config,
+    private readonly runtime: Runtime
   ) {
     if (config.node.dev) {
       // set DNS servers in dev mode
@@ -74,7 +77,7 @@ export class AuthController {
     @Body() params?: { email: string }
   ): Promise<PreflightResponse> {
     if (!params?.email) {
-      throw new InvalidEmail();
+      throw new InvalidEmail({ email: 'not provided' });
     }
     validators.assertValidEmail(params.email);
 
@@ -82,16 +85,20 @@ export class AuthController {
       params.email
     );
 
+    const magicLinkAvailable = !!this.config.mailer.host;
+
     if (!user) {
       return {
         registered: false,
         hasPassword: false,
+        magicLink: magicLinkAvailable,
       };
     }
 
     return {
       registered: user.registered,
       hasPassword: !!user.password,
+      magicLink: magicLinkAvailable,
     };
   }
 
@@ -154,19 +161,19 @@ export class AuthController {
     // send email magic link
     const user = await this.user.findUserByEmail(email);
     if (!user) {
-      const allowSignup = await this.config.runtime.fetch('auth/allowSignup');
+      const allowSignup = await this.runtime.fetch('auth/allowSignup');
       if (!allowSignup) {
         throw new SignUpForbidden();
       }
 
-      const requireEmailDomainVerification = await this.config.runtime.fetch(
+      const requireEmailDomainVerification = await this.runtime.fetch(
         'auth/requireEmailDomainVerification'
       );
       if (requireEmailDomainVerification) {
         // verify domain has MX, SPF, DMARC records
         const [name, domain, ...rest] = email.split('@');
         if (rest.length || !domain) {
-          throw new InvalidEmail();
+          throw new InvalidEmail({ email });
         }
         const [mx, spf, dmarc] = await Promise.allSettled([
           resolveMx(domain).then(t => t.map(mx => mx.exchange).filter(Boolean)),
@@ -178,11 +185,11 @@ export class AuthController {
           ),
         ]).then(t => t.filter(t => t.status === 'fulfilled').map(t => t.value));
         if (!mx?.length || !spf?.length || !dmarc?.length) {
-          throw new InvalidEmail();
+          throw new InvalidEmail({ email });
         }
         // filter out alias emails
-        if (name.includes('+') || name.includes('.')) {
-          throw new InvalidEmail();
+        if (name.includes('+')) {
+          throw new InvalidEmail({ email });
         }
       }
     }

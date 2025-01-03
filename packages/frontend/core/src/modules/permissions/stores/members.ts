@@ -1,10 +1,10 @@
 import { getMembersByWorkspaceIdQuery } from '@affine/graphql';
 import { Store } from '@toeverything/infra';
 
-import type { GraphQLService } from '../../cloud';
+import type { WorkspaceServerService } from '../../cloud';
 
 export class WorkspaceMembersStore extends Store {
-  constructor(private readonly graphqlService: GraphQLService) {
+  constructor(private readonly workspaceServerService: WorkspaceServerService) {
     super();
   }
 
@@ -14,7 +14,10 @@ export class WorkspaceMembersStore extends Store {
     take: number,
     signal?: AbortSignal
   ) {
-    const data = await this.graphqlService.gql({
+    if (!this.workspaceServerService.server) {
+      throw new Error('No Server');
+    }
+    const data = await this.workspaceServerService.server.gql({
       query: getMembersByWorkspaceIdQuery,
       variables: {
         workspaceId,

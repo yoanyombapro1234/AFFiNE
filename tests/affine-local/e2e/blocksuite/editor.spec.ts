@@ -54,7 +54,7 @@ test('link page is useable', async ({ page }) => {
   await page.keyboard.press('g');
   await page.keyboard.press('e');
   await page.keyboard.press('1');
-  await page.keyboard.press('Enter');
+  await page.locator('icon-button:has-text("page1")').first().click();
   const link = page.locator('.affine-reference');
   await expect(link).toBeVisible();
   await page.click('.affine-reference');

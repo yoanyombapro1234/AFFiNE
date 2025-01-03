@@ -5,7 +5,7 @@ import {
   reactRouterV6BrowserTracingIntegration,
   setTags,
 } from '@sentry/react';
-import { ApplicationStarted, OnEvent, Service } from '@toeverything/infra';
+import { OnEvent, Service } from '@toeverything/infra';
 import { debounce } from 'lodash-es';
 import { useEffect } from 'react';
 import {
@@ -15,7 +15,8 @@ import {
   useNavigationType,
 } from 'react-router-dom';
 
-import { AuthService } from '../../cloud';
+import { AuthService, DefaultServerService, ServersService } from '../../cloud';
+import { ApplicationStarted } from '../../lifecycle';
 import type { DesktopApi } from '../entities/electron-api';
 
 @OnEvent(ApplicationStarted, e => e.setupStartListener)
@@ -87,6 +88,10 @@ export class DesktopApiService extends Service {
   }
 
   private setupCommonUIEvents() {
+    if (this.api.appInfo.windowName !== 'main') {
+      return;
+    }
+
     const handleMaximized = (maximized: boolean | undefined) => {
       document.documentElement.dataset.maximized = String(maximized);
     };
@@ -101,12 +106,13 @@ export class DesktopApiService extends Service {
       .isFullScreen()
       .then(handleFullscreen)
       .catch(console.error);
+
     this.api.events.ui.onMaximized(handleMaximized);
     this.api.events.ui.onFullScreen(handleFullscreen);
 
     const tabId = this.api.appInfo.viewId;
 
-    if (tabId && this.api.appInfo.windowName === 'main') {
+    if (tabId) {
       let isActive = false;
       const handleActiveTabChange = (active: boolean) => {
         isActive = active;
@@ -138,12 +144,27 @@ export class DesktopApiService extends Service {
   }
 
   private setupAuthRequestEvent() {
-    this.events.ui.onAuthenticationRequest(({ method, payload }) => {
+    this.events.ui.onAuthenticationRequest(({ method, payload, server }) => {
       (async () => {
-        const authService = this.framework.get(AuthService);
         if (!(await this.api.handler.ui.isActiveTab())) {
           return;
         }
+
+        // Dynamically get these services to avoid circular dependencies
+        const serversService = this.framework.get(ServersService);
+        const defaultServerService = this.framework.get(DefaultServerService);
+
+        let targetServer;
+        if (server) {
+          targetServer = await serversService.addOrGetServerByBaseUrl(server);
+        } else {
+          targetServer = defaultServerService.server;
+        }
+        if (!targetServer) {
+          throw new Error('Affine Cloud server not found');
+        }
+        const authService = targetServer.scope.get(AuthService);
+
         switch (method) {
           case 'magic-link': {
             const { email, token } = payload;

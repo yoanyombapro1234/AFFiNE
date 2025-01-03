@@ -1,18 +1,15 @@
 import { useThemeColorV2 } from '@affine/component';
 import { PageNotFound } from '@affine/core/desktop/pages/404';
+import { GlobalContextService } from '@affine/core/modules/global-context';
 import { TagService } from '@affine/core/modules/tag';
-import {
-  GlobalContextService,
-  useLiveData,
-  useService,
-} from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { TagDetail } from '../../../views';
 
 export const Component = () => {
-  useThemeColorV2('layer/background/secondary');
+  useThemeColorV2('layer/background/mobile/primary');
   const params = useParams();
   const tagId = params.tagId;
 

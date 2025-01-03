@@ -13,14 +13,14 @@ import Sinon from 'sinon';
 import request, { type Response } from 'supertest';
 
 import { AppModule } from '../../src/app.module';
-import { AuthService, Public } from '../../src/core/auth';
-import { ConfigModule } from '../../src/fundamentals/config';
+import { ConfigModule } from '../../src/base/config';
 import {
   CloudThrottlerGuard,
   SkipThrottle,
   Throttle,
   ThrottlerStorage,
-} from '../../src/fundamentals/throttler';
+} from '../../src/base/throttler';
+import { AuthService, Public } from '../../src/core/auth';
 import { createTestingApp, initTestingDB, internalSignIn } from '../utils';
 
 const test = ava as TestFn<{

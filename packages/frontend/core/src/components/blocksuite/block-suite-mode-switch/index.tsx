@@ -1,11 +1,16 @@
 import { RadioGroup, type RadioItem, Tooltip } from '@affine/component';
 import { registerAffineCommand } from '@affine/core/commands';
 import { EditorService } from '@affine/core/modules/editor';
+import { ViewService, WorkbenchService } from '@affine/core/modules/workbench';
 import { useI18n } from '@affine/i18n';
 import { track } from '@affine/track';
 import type { DocMode } from '@blocksuite/affine/blocks';
 import { EdgelessIcon, PageIcon } from '@blocksuite/icons/rc';
-import { useLiveData, useService } from '@toeverything/infra';
+import {
+  useLiveData,
+  useService,
+  useServiceOptional,
+} from '@toeverything/infra';
 import { useCallback, useEffect, useMemo } from 'react';
 
 import { switchItem } from './style.css';
@@ -36,6 +41,10 @@ export const EditorModeSwitch = () => {
   const trash = useLiveData(editor.doc.trash$);
   const isSharedMode = editor.isSharedMode;
   const currentMode = useLiveData(editor.mode$);
+  const view = useServiceOptional(ViewService)?.view;
+  const workbench = useServiceOptional(WorkbenchService)?.workbench;
+  const activeView = useLiveData(workbench?.activeView$);
+  const isActiveView = activeView?.id && activeView?.id === view?.id;
 
   const togglePage = useCallback(() => {
     if (currentMode === 'page' || isSharedMode || trash) return;
@@ -64,7 +73,8 @@ export const EditorModeSwitch = () => {
   );
 
   useEffect(() => {
-    if (trash || isSharedMode || currentMode === undefined) return;
+    if (trash || isSharedMode || currentMode === undefined || !isActiveView)
+      return;
     return registerAffineCommand({
       id: 'affine:doc-mode-switch',
       category: 'editor:page',
@@ -79,7 +89,7 @@ export const EditorModeSwitch = () => {
       },
       run: () => onModeChange(currentMode === 'edgeless' ? 'page' : 'edgeless'),
     });
-  }, [currentMode, isSharedMode, onModeChange, t, trash]);
+  }, [currentMode, isActiveView, isSharedMode, onModeChange, t, trash]);
 
   return (
     <Tooltip

@@ -1,29 +1,28 @@
+import { WorkspaceImpl } from '@affine/core/modules/workspace/impl/workspace';
 import { BlockStdScope, type EditorHost } from '@blocksuite/affine/block-std';
 import {
   type AffineAIPanelWidgetConfig,
-  EdgelessEditorBlockSpecs,
+  SpecProvider,
 } from '@blocksuite/affine/blocks';
 import { AffineSchemas } from '@blocksuite/affine/blocks/schemas';
 import { WithDisposable } from '@blocksuite/affine/global/utils';
 import type { Doc } from '@blocksuite/affine/store';
-import { DocCollection, Schema } from '@blocksuite/affine/store';
+import { Schema } from '@blocksuite/affine/store';
 import { css, html, LitElement, nothing } from 'lit';
 import { property, query } from 'lit/decorators.js';
 import { createRef, type Ref, ref } from 'lit/directives/ref.js';
 
-import { getAIPanel } from '../ai-panel';
 import { PPTBuilder } from '../slides/index';
+import { getAIPanelWidget } from '../utils/ai-widgets';
+import type { AIContext } from '../utils/context';
 
 export const createSlidesRenderer: (
   host: EditorHost,
-  ctx: {
-    get: () => Record<string, unknown>;
-    set: (data: Record<string, unknown>) => void;
-  }
+  ctx: AIContext
 ) => AffineAIPanelWidgetConfig['answerRenderer'] = (host, ctx) => {
   return (answer, state) => {
     if (state === 'generating') {
-      const panel = getAIPanel(host);
+      const panel = getAIPanelWidget(host);
       panel.generatingElement?.updateLoadingProgress(2);
       return nothing;
     }
@@ -56,6 +55,8 @@ export class AISlidesRenderer extends WithDisposable(LitElement) {
 
   private _doc!: Doc;
 
+  private _docCollection: WorkspaceImpl | null = null;
+
   @query('editor-host')
   private accessor _editorHost!: EditorHost;
 
@@ -77,7 +78,7 @@ export class AISlidesRenderer extends WithDisposable(LitElement) {
     requestAnimationFrame(() => {
       if (!this._editorHost) return;
       PPTBuilder(this._editorHost)
-        .process(this.text)
+        ?.process(this.text)
         .then(res => {
           if (res && this.ctx) {
             this.ctx.set({
@@ -85,7 +86,7 @@ export class AISlidesRenderer extends WithDisposable(LitElement) {
               images: res.images,
             });
             // refresh loading menu item
-            getAIPanel(this.host)
+            getAIPanelWidget(this.host)
               .shadowRoot?.querySelector('ai-panel-answer')
               ?.requestUpdate();
           }
@@ -208,7 +209,8 @@ export class AISlidesRenderer extends WithDisposable(LitElement) {
         >
           ${new BlockStdScope({
             doc: this._doc,
-            extensions: EdgelessEditorBlockSpecs,
+            extensions:
+              SpecProvider.getInstance().getSpec('edgeless:preview').value,
           }).render()}
         </div>
         <div class="mask"></div>
@@ -219,7 +221,7 @@ export class AISlidesRenderer extends WithDisposable(LitElement) {
     super.connectedCallback();
 
     const schema = new Schema().register(AffineSchemas);
-    const collection = new DocCollection({
+    const collection = new WorkspaceImpl({
       schema,
       id: 'SLIDES_PREVIEW',
     });
@@ -234,6 +236,12 @@ export class AISlidesRenderer extends WithDisposable(LitElement) {
 
     doc.resetHistory();
     this._doc = doc;
+    this._docCollection = collection;
+  }
+
+  override disconnectedCallback(): void {
+    this._docCollection?.dispose();
+    super.disconnectedCallback();
   }
 }
 

@@ -62,6 +62,8 @@ test('should have pagination in member list', async ({ page }) => {
 
   await page.waitForTimeout(1000);
 
+  await page.getByTestId('confirm-modal-cancel').click();
+
   const firstPageMemberItemCount = await page
     .locator('[data-testid="member-item"]')
     .count();

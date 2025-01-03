@@ -1,9 +1,6 @@
+import { FeatureFlagService } from '@affine/core/modules/feature-flag';
 import { ThemeEditorService } from '@affine/core/modules/theme-editor';
-import {
-  FeatureFlagService,
-  useLiveData,
-  useServices,
-} from '@toeverything/infra';
+import { useLiveData, useServices } from '@toeverything/infra';
 import { useTheme } from 'next-themes';
 import { useEffect } from 'react';
 

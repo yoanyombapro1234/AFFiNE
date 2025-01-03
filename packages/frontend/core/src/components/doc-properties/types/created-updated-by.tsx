@@ -1,8 +1,8 @@
 import { Avatar, PropertyValue } from '@affine/component';
 import { CloudDocMetaService } from '@affine/core/modules/cloud/services/cloud-doc-meta';
-import { WorkspaceFlavour } from '@affine/env/workspace';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import { useI18n } from '@affine/i18n';
-import { useLiveData, useService, WorkspaceService } from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import { useEffect, useMemo } from 'react';
 
 import { userWrapper } from './created-updated-by.css';
@@ -73,8 +73,7 @@ const LocalUserValue = () => {
 
 export const CreatedByValue = () => {
   const workspaceService = useService(WorkspaceService);
-  const isCloud =
-    workspaceService.workspace.flavour === WorkspaceFlavour.AFFINE_CLOUD;
+  const isCloud = workspaceService.workspace.flavour !== 'local';
 
   if (!isCloud) {
     return (
@@ -93,8 +92,7 @@ export const CreatedByValue = () => {
 
 export const UpdatedByValue = () => {
   const workspaceService = useService(WorkspaceService);
-  const isCloud =
-    workspaceService.workspace.flavour === WorkspaceFlavour.AFFINE_CLOUD;
+  const isCloud = workspaceService.workspace.flavour !== 'local';
 
   if (!isCloud) {
     return (

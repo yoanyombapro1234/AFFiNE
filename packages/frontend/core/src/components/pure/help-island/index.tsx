@@ -1,15 +1,11 @@
 import { Tooltip } from '@affine/component/ui/tooltip';
 import { GlobalDialogService } from '@affine/core/modules/dialogs';
 import type { SettingTab } from '@affine/core/modules/dialogs/constant';
+import { GlobalContextService } from '@affine/core/modules/global-context';
 import { UrlService } from '@affine/core/modules/url';
 import { useI18n } from '@affine/i18n';
 import { CloseIcon, NewIcon } from '@blocksuite/icons/rc';
-import {
-  GlobalContextService,
-  useLiveData,
-  useService,
-  useServices,
-} from '@toeverything/infra';
+import { useLiveData, useService, useServices } from '@toeverything/infra';
 import { useCallback, useState } from 'react';
 
 import { ContactIcon, HelpIcon, KeyboardIcon } from './icons';

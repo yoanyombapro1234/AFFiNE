@@ -6,9 +6,10 @@ import {
   type Language,
   SUPPORTED_LANGUAGES,
 } from '@affine/i18n';
-import type { GlobalCache } from '@toeverything/infra';
 import { effect, Entity, fromPromise, LiveData } from '@toeverything/infra';
 import { catchError, EMPTY, exhaustMap, mergeMap } from 'rxjs';
+
+import type { GlobalCache } from '../../storage';
 
 export type LanguageInfo = {
   key: Language;

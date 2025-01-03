@@ -1,9 +1,10 @@
 import type { Tag, Tag as TagSchema } from '@affine/env/filter';
 import type { DocsPropertiesMeta } from '@blocksuite/affine/store';
-import type { WorkspaceService } from '@toeverything/infra';
 import { LiveData, Store } from '@toeverything/infra';
 import { nanoid } from 'nanoid';
 import { Observable } from 'rxjs';
+
+import type { WorkspaceService } from '../../workspace';
 
 export class TagStore extends Store {
   get properties() {
@@ -22,7 +23,7 @@ export class TagStore extends Store {
 
   subscribe(cb: () => void) {
     const disposable =
-      this.workspaceService.workspace.docCollection.meta.docMetaUpdated.on(cb);
+      this.workspaceService.workspace.docCollection.slots.docListUpdated.on(cb);
     return disposable.dispose;
   }
 
@@ -85,7 +86,7 @@ export class TagStore extends Store {
   };
 
   updatePageTags = (pageId: string, tags: string[]) => {
-    this.workspaceService.workspace.docCollection.setDocMeta(pageId, {
+    this.workspaceService.workspace.docCollection.meta.setDocMeta(pageId, {
       tags,
     });
   };

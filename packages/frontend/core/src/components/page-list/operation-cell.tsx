@@ -9,11 +9,14 @@ import {
 import { useBlockSuiteMetaHelper } from '@affine/core/components/hooks/affine/use-block-suite-meta-helper';
 import { useCatchEventCallback } from '@affine/core/components/hooks/use-catch-event-hook';
 import { WorkspaceDialogService } from '@affine/core/modules/dialogs';
+import { DocsService } from '@affine/core/modules/doc';
 import {
   CompatibleFavoriteItemsAdapter,
   FavoriteService,
 } from '@affine/core/modules/favorite';
+import { FeatureFlagService } from '@affine/core/modules/feature-flag';
 import { WorkbenchService } from '@affine/core/modules/workbench';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import type { Collection, DeleteCollectionInfo } from '@affine/env/filter';
 import { useI18n } from '@affine/i18n';
 import { track } from '@affine/track';
@@ -32,14 +35,7 @@ import {
   ResetIcon,
   SplitViewIcon,
 } from '@blocksuite/icons/rc';
-import {
-  DocsService,
-  FeatureFlagService,
-  useLiveData,
-  useService,
-  useServices,
-  WorkspaceService,
-} from '@toeverything/infra';
+import { useLiveData, useService, useServices } from '@toeverything/infra';
 import type { MouseEvent } from 'react';
 import { useCallback, useState } from 'react';
 

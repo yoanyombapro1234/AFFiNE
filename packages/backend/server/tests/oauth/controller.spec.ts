@@ -7,11 +7,11 @@ import Sinon from 'sinon';
 import request from 'supertest';
 
 import { AppModule } from '../../src/app.module';
+import { URLHelper } from '../../src/base';
+import { ConfigModule } from '../../src/base/config';
 import { CurrentUser } from '../../src/core/auth';
 import { AuthService } from '../../src/core/auth/service';
 import { UserService } from '../../src/core/user';
-import { URLHelper } from '../../src/fundamentals';
-import { ConfigModule } from '../../src/fundamentals/config';
 import { OAuthProviderName } from '../../src/plugins/oauth/config';
 import { GoogleOAuthProvider } from '../../src/plugins/oauth/providers/google';
 import { OAuthService } from '../../src/plugins/oauth/service';

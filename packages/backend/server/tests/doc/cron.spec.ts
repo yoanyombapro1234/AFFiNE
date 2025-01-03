@@ -6,9 +6,9 @@ import { PrismaClient } from '@prisma/client';
 import test from 'ava';
 import * as Sinon from 'sinon';
 
+import { Config } from '../../src/base/config';
 import { DocStorageModule } from '../../src/core/doc';
 import { DocStorageCronJob } from '../../src/core/doc/job';
-import { Config } from '../../src/fundamentals/config';
 import { createTestingModule } from '../utils';
 
 let m: TestingModule;

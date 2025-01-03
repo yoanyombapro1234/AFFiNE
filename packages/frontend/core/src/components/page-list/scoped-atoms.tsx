@@ -136,12 +136,12 @@ const defaultSortingFn: SorterConfig<MetaRecord<ListItem>>['sortingFn'] = (
   return 0;
 };
 
-const validKeys: Array<keyof MetaRecord<ListItem>> = [
+const validKeys: Set<keyof MetaRecord<ListItem>> = new Set([
   'id',
   'title',
   'createDate',
   'updatedDate',
-];
+]);
 
 const sorterStateAtom = atom<SorterConfig<MetaRecord<ListItem>>>({
   key: DEFAULT_SORT_KEY,
@@ -175,7 +175,7 @@ export const sorterAtom = atom(
   },
   (_get, set, { newSortKey }: { newSortKey: keyof MetaRecord<ListItem> }) => {
     set(sorterStateAtom, sorterState => {
-      if (validKeys.includes(newSortKey)) {
+      if (validKeys.has(newSortKey)) {
         return {
           ...sorterState,
           key: newSortKey,

@@ -16,7 +16,7 @@ export const content = style({
   position: 'relative',
   width: '100%',
   marginBottom: '24px',
-  minHeight: 'calc(100% - 48px)',
+  minHeight: 'calc(var(--setting-modal-height) - 124px)',
   maxWidth: '560px',
 });
 export const suggestionLink = style({

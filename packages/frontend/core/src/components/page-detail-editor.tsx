@@ -1,12 +1,13 @@
 import './page-detail-editor.css';
 
 import type { AffineEditorContainer } from '@blocksuite/affine/presets';
-import { DocService, useLiveData, useService } from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import { cssVar } from '@toeverything/theme';
 import clsx from 'clsx';
 import type { CSSProperties } from 'react';
 import { useMemo } from 'react';
 
+import { DocService } from '../modules/doc';
 import { EditorService } from '../modules/editor';
 import {
   EditorSettingService,
@@ -16,7 +17,7 @@ import { BlockSuiteEditor as Editor } from './blocksuite/block-suite-editor';
 import * as styles from './page-detail-editor.css';
 
 declare global {
-  // eslint-disable-next-line no-var
+  // oxlint-disable-next-line no-var
   var currentEditor: AffineEditorContainer | undefined;
 }
 

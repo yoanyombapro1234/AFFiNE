@@ -5,7 +5,9 @@ import {
   type CSSProperties,
   type HTMLAttributes,
   type ReactNode,
+  useCallback,
   useMemo,
+  useRef,
 } from 'react';
 
 import * as styles from './dropdown-select.css';
@@ -28,6 +30,7 @@ export interface SettingDropdownSelectProps<
   ) => void;
   emitValue?: E;
   menuOptions?: Omit<MenuProps, 'items' | 'children'>;
+  native?: boolean;
 }
 
 export const SettingDropdownSelect = <
@@ -40,12 +43,26 @@ export const SettingDropdownSelect = <
   onChange,
   className,
   menuOptions,
+  native = true,
   ...attrs
 }: SettingDropdownSelectProps<V, E>) => {
   const selectedItem = useMemo(
     () => options.find(opt => opt.value === value),
     [options, value]
   );
+
+  if (native) {
+    return (
+      <NativeSettingDropdownSelect
+        options={options}
+        value={value}
+        emitValue={emitValue as any}
+        onChange={onChange}
+        {...attrs}
+      />
+    );
+  }
+
   return (
     <MobileMenu
       items={options.map(opt => (
@@ -64,11 +81,71 @@ export const SettingDropdownSelect = <
       ))}
       {...menuOptions}
     >
-      <div className={clsx(styles.root, className)} {...attrs}>
+      <div
+        data-testid="dropdown-select-trigger"
+        className={clsx(styles.root, className)}
+        {...attrs}
+      >
         <span className={styles.label}>{selectedItem?.label ?? ''}</span>
 
         <ArrowDownSmallIcon className={styles.icon} />
       </div>
     </MobileMenu>
+  );
+};
+
+export const NativeSettingDropdownSelect = <
+  V extends string = string,
+  E extends boolean | undefined = true,
+>({
+  options = [],
+  value,
+  emitValue = true,
+  onChange,
+  className,
+  ...attrs
+}: Omit<SettingDropdownSelectProps<V, E>, 'native'>) => {
+  const nativeSelectRef = useRef<HTMLSelectElement>(null);
+  const selectedItem = useMemo(
+    () => options.find(opt => opt.value === value),
+    [options, value]
+  );
+
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const value = e.target.value;
+      const opt = options.find(opt => opt.value === value);
+      if (emitValue) {
+        onChange?.(e.target.value as any);
+      } else {
+        onChange?.(opt as any);
+      }
+    },
+    [emitValue, onChange, options]
+  );
+
+  return (
+    <div
+      data-testid="dropdown-select-trigger"
+      className={clsx(styles.root, className)}
+      {...attrs}
+    >
+      <span className={styles.label}>{selectedItem?.label ?? ''}</span>
+
+      <ArrowDownSmallIcon className={styles.icon} />
+      <select
+        className={styles.nativeSelect}
+        ref={nativeSelectRef}
+        value={value}
+        onChange={handleChange}
+        data-testid="native-dropdown-select-trigger"
+      >
+        {options.map(opt => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 };

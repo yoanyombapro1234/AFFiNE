@@ -3,8 +3,6 @@ import { randomUUID } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import { AiPromptRole, PrismaClient } from '@prisma/client';
 
-import { FeatureManagementService } from '../../core/features';
-import { QuotaService } from '../../core/quota';
 import {
   CopilotActionTaken,
   CopilotMessageNotFound,
@@ -12,7 +10,9 @@ import {
   CopilotQuotaExceeded,
   CopilotSessionDeleted,
   CopilotSessionNotFound,
-} from '../../fundamentals';
+} from '../../base';
+import { FeatureManagementService } from '../../core/features';
+import { QuotaService } from '../../core/quota';
 import { ChatMessageCache } from './message';
 import { PromptService } from './prompt';
 import {

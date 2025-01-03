@@ -1,16 +1,17 @@
-import { dbEvents, dbHandlers } from './db';
 import { dialogHandlers } from './dialog';
+import { dbEventsV1, dbHandlersV1, nbstoreHandlers } from './nbstore';
 import { provideExposed } from './provide';
 import { workspaceEvents, workspaceHandlers } from './workspace';
 
 export const handlers = {
-  db: dbHandlers,
+  db: dbHandlersV1,
+  nbstore: nbstoreHandlers,
   workspace: workspaceHandlers,
   dialog: dialogHandlers,
 };
 
 export const events = {
-  db: dbEvents,
+  db: dbEventsV1,
   workspace: workspaceEvents,
 };
 

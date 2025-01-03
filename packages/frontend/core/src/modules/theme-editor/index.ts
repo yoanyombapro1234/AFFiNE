@@ -1,5 +1,6 @@
-import { type Framework, GlobalState } from '@toeverything/infra';
+import { type Framework } from '@toeverything/infra';
 
+import { GlobalState } from '../storage';
 import { ThemeEditorService } from './services/theme-editor';
 
 export { ThemeEditorService };

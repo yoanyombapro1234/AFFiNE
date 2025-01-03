@@ -1,6 +1,7 @@
 import { MobileMenu } from '@affine/component';
+import { WorkspacesService } from '@affine/core/modules/workspace';
 import { track } from '@affine/track';
-import { useServiceOptional, WorkspacesService } from '@toeverything/infra';
+import { useServiceOptional } from '@toeverything/infra';
 import {
   forwardRef,
   type HTMLAttributes,

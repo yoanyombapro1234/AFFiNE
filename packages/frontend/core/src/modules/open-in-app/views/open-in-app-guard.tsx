@@ -33,7 +33,7 @@ const WebOpenInAppGuard = ({ children }: { children: React.ReactNode }) => {
   }
 
   return shouldOpenInApp && !environment.isMobile ? (
-    <OpenInAppPage openHereClicked={onOpenHere} />
+    <OpenInAppPage openHereClicked={onOpenHere} mode="open-doc" />
   ) : (
     children
   );

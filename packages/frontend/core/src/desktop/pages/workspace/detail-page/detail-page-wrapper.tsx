@@ -1,14 +1,9 @@
+import { type Doc, DocsService } from '@affine/core/modules/doc';
 import type { Editor } from '@affine/core/modules/editor';
 import { EditorsService } from '@affine/core/modules/editor';
 import { ViewService } from '@affine/core/modules/workbench/services/view';
-import type { Doc } from '@toeverything/infra';
-import {
-  DocsService,
-  FrameworkScope,
-  useLiveData,
-  useService,
-  WorkspaceService,
-} from '@toeverything/infra';
+import { WorkspaceService } from '@affine/core/modules/workspace';
+import { FrameworkScope, useLiveData, useService } from '@toeverything/infra';
 import {
   type PropsWithChildren,
   type ReactNode,
@@ -56,10 +51,7 @@ const useLoadDoc = (pageId: string) => {
 
   useEffect(() => {
     if (doc && isInTrash) {
-      currentWorkspace.docCollection.awarenessStore.setReadonly(
-        doc.blockSuiteDoc.blockCollection,
-        true
-      );
+      doc.blockSuiteDoc.readonly = true;
     }
   }, [currentWorkspace.docCollection.awarenessStore, doc, isInTrash]);
 

@@ -9,6 +9,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
@@ -116,6 +117,24 @@ export const PeekViewModalContainer = forwardRef<
         contentWrapper?: AnimeParams;
       }
     ) => {
+      // if target has no bounding client rect,
+      // find its parent that has bounding client rect
+      let iteration = 0;
+      while (
+        target &&
+        !target.getBoundingClientRect().width &&
+        iteration < 10
+      ) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        target = target.parentElement || undefined;
+        iteration++;
+      }
+
+      if (!target) {
+        // fallback to fade animation
+        return animateFade(!!zoomIn);
+      }
+
       return new Promise<void>(resolve => {
         const contentClip = contentClipRef.current;
         const content = contentRef.current;
@@ -123,27 +142,11 @@ export const PeekViewModalContainer = forwardRef<
 
         if (!contentClip || !content || !target || !overlay) {
           resolve();
+          setAnimeState('idle');
           return;
         }
         const targets = contentClip;
         const lockSizeEl = content;
-
-        // if target has no bounding client rect, find its parent that has bounding client rect
-        let iteration = 0;
-        while (
-          target &&
-          !target.getBoundingClientRect().width &&
-          iteration < 10
-        ) {
-          // eslint-disable-next-line react-hooks/exhaustive-deps
-          target = target.parentElement || undefined;
-          iteration++;
-        }
-
-        if (!target) {
-          resolve();
-          return;
-        }
 
         const from = zoomIn ? target : contentClip;
         const to = zoomIn ? contentClip : target;
@@ -312,7 +315,7 @@ export const PeekViewModalContainer = forwardRef<
     };
   }, [onOpenChange]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (animation === 'zoom') {
       open ? animateZoomIn() : animateZoomOut();
     } else if (animation === 'fade') {

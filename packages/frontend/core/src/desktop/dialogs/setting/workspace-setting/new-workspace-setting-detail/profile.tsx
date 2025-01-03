@@ -1,14 +1,15 @@
 import { FlexWrapper, Input, notify, Wrapper } from '@affine/component';
 import { Button } from '@affine/component/ui/button';
-import { WorkspaceAvatar } from '@affine/component/workspace-avatar';
 import { useCatchEventCallback } from '@affine/core/components/hooks/use-catch-event-hook';
 import { Upload } from '@affine/core/components/pure/file-upload';
+import { WorkspaceAvatar } from '@affine/core/components/workspace-avatar';
 import { WorkspacePermissionService } from '@affine/core/modules/permissions';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import { validateAndReduceImage } from '@affine/core/utils/reduce-image';
 import { UNTITLED_WORKSPACE_NAME } from '@affine/env/constant';
 import { useI18n } from '@affine/i18n';
 import { CameraIcon } from '@blocksuite/icons/rc';
-import { useLiveData, useService, WorkspaceService } from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import type { KeyboardEvent } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 

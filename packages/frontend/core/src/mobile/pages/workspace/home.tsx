@@ -10,7 +10,7 @@ import {
 import { HomeHeader, RecentDocs } from '../../views';
 
 export const Component = () => {
-  useThemeColorV2('layer/background/secondary');
+  useThemeColorV2('layer/background/mobile/primary');
 
   return (
     <>

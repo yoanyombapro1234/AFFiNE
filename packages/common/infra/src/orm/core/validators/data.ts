@@ -70,7 +70,14 @@ export const dataValidators = {
           }
 
           const typeGet = inputType(val);
-          if (!typeMatches(field.type, typeGet)) {
+
+          if (field.type === 'enum') {
+            if (!field.values?.includes(val)) {
+              throw new Error(
+                `[Table(${table.name})]: Field '${key}' value '${val}' is not valid. Expected one of [${field.values?.join(', ')}].`
+              );
+            }
+          } else if (!typeMatches(field.type, typeGet)) {
             throw new Error(
               `[Table(${table.name})]: Field '${key}' type mismatch. Expected ${field.type} got ${typeGet}.`
             );
@@ -103,7 +110,13 @@ export const dataValidators = {
           }
 
           const typeGet = inputType(val);
-          if (!typeMatches(field.type, typeGet)) {
+          if (field.type === 'enum') {
+            if (!field.values?.includes(val)) {
+              throw new Error(
+                `[Table(${table.name})]: Field '${key}' value '${val}' is not valid. Expected one of [${field.values?.join(', ')}].`
+              );
+            }
+          } else if (!typeMatches(field.type, typeGet)) {
             throw new Error(
               `[Table(${table.name})]: Field '${key}' type mismatch. Expected type '${field.type}' but got '${typeGet}'.`
             );

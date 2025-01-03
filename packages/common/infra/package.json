@@ -4,7 +4,6 @@
   "private": true,
   "sideEffects": false,
   "exports": {
-    "./blocksuite": "./src/blocksuite/index.ts",
     "./storage": "./src/storage/index.ts",
     "./utils": "./src/utils/index.ts",
     "./app-config-storage": "./src/app-config-storage.ts",
@@ -15,50 +14,35 @@
     "@affine/debug": "workspace:*",
     "@affine/env": "workspace:*",
     "@affine/templates": "workspace:*",
-    "@blocksuite/affine": "0.17.30",
     "@datastructures-js/binary-search-tree": "^5.3.2",
     "eventemitter2": "^6.4.9",
-    "foxact": "^0.2.33",
+    "foxact": "^0.2.43",
     "fractional-indexing": "^3.2.0",
     "fuse.js": "^7.0.0",
     "graphemer": "^1.4.0",
     "idb": "^8.0.0",
-    "jotai": "^2.8.0",
-    "jotai-effect": "^1.0.0",
+    "jotai": "^2.10.3",
+    "jotai-effect": "^1.0.5",
     "lodash-es": "^4.17.21",
-    "nanoid": "^5.0.7",
-    "react": "18.3.1",
-    "yjs": "patch:yjs@npm%3A13.6.18#~/.yarn/patches/yjs-npm-13.6.18-ad0d5f7c43.patch",
-    "zod": "^3.22.4"
+    "nanoid": "^5.0.9",
+    "react": "19.0.0",
+    "yjs": "^13.6.21",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@affine-test/fixtures": "workspace:*",
     "@affine/templates": "workspace:*",
-    "@testing-library/react": "^16.0.0",
+    "@emotion/react": "^11.14.0",
+    "@swc/core": "^1.10.1",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/react": "^16.1.0",
+    "@types/react": "^19.0.1",
     "fake-indexeddb": "^6.0.0",
-    "react": "^18.2.0",
     "rxjs": "^7.8.1",
-    "vitest": "2.1.4"
+    "vitest": "2.1.8"
   },
   "peerDependencies": {
-    "@affine/templates": "*",
     "electron": "*",
-    "react": "*",
-    "yjs": "^13"
+    "react-dom": "^19.0.0"
   },
-  "peerDependenciesMeta": {
-    "@affine/templates": {
-      "optional": true
-    },
-    "electron": {
-      "optional": true
-    },
-    "react": {
-      "optional": true
-    },
-    "yjs": {
-      "optional": true
-    }
-  },
-  "version": "0.17.0"
+  "version": "0.19.0"
 }

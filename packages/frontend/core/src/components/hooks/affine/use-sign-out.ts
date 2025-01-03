@@ -3,15 +3,11 @@ import {
   notify,
   useConfirmModal,
 } from '@affine/component';
-import { AuthService } from '@affine/core/modules/cloud';
-import { WorkspaceFlavour } from '@affine/env/workspace';
+import { AuthService, ServerService } from '@affine/core/modules/cloud';
+import { GlobalContextService } from '@affine/core/modules/global-context';
+import { WorkspacesService } from '@affine/core/modules/workspace';
 import { useI18n } from '@affine/i18n';
-import {
-  GlobalContextService,
-  useLiveData,
-  useService,
-  WorkspacesService,
-} from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import { useCallback } from 'react';
 
 import { useNavigateHelper } from '../use-navigate-helper';
@@ -32,18 +28,14 @@ export const useSignOut = ({
   const { openConfirmModal } = useConfirmModal();
   const { openPage } = useNavigateHelper();
 
+  const serverService = useService(ServerService);
   const authService = useService(AuthService);
   const workspacesService = useService(WorkspacesService);
   const globalContextService = useService(GlobalContextService);
 
   const workspaces = useLiveData(workspacesService.list.workspaces$);
-  const currentWorkspaceId = useLiveData(
-    globalContextService.globalContext.workspaceId.$
-  );
-  const currentWorkspaceMetadata = useLiveData(
-    currentWorkspaceId
-      ? workspacesService.list.workspace$(currentWorkspaceId)
-      : undefined
+  const currentWorkspaceFlavour = useLiveData(
+    globalContextService.globalContext.workspaceFlavour.$
   );
 
   const signOut = useCallback(async () => {
@@ -58,10 +50,10 @@ export const useSignOut = ({
       });
     }
 
-    // if current workspace is affine cloud, switch to local workspace
-    if (currentWorkspaceMetadata?.flavour === WorkspaceFlavour.AFFINE_CLOUD) {
+    // if current workspace is sign out, switch to other workspace
+    if (currentWorkspaceFlavour === serverService.server.id) {
       const localWorkspace = workspaces.find(
-        w => w.flavour === WorkspaceFlavour.LOCAL
+        w => w.flavour !== serverService.server.id
       );
       if (localWorkspace) {
         openPage(localWorkspace.id, 'all');
@@ -69,9 +61,10 @@ export const useSignOut = ({
     }
   }, [
     authService,
-    currentWorkspaceMetadata?.flavour,
+    currentWorkspaceFlavour,
     onConfirm,
     openPage,
+    serverService.server.id,
     workspaces,
   ]);
 

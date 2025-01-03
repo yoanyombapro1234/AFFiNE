@@ -32,10 +32,18 @@ test('should create a page with a local first avatar and remove it', async ({
     .setInputFiles(resolve(rootDir, 'tests', 'fixtures', 'blue.png'));
   await page.mouse.click(0, 0);
   await page.getByTestId('workspace-name').click();
-  await page.getByTestId('workspace-card').nth(0).click();
+  await page
+    .getByTestId('workspace-card')
+    .nth(0)
+    .getByTestId('workspace-avatar')
+    .click();
   await page.waitForTimeout(1000);
   await page.getByTestId('workspace-name').click();
-  await page.getByTestId('workspace-card').nth(1).click();
+  await page
+    .getByTestId('workspace-card')
+    .nth(1)
+    .getByTestId('workspace-avatar')
+    .click();
   const avatarCanvas = await page
     .getByTestId('workspace-avatar')
     .locator('canvas')

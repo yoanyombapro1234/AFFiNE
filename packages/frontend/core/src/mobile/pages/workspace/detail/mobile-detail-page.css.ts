@@ -1,4 +1,5 @@
 import { cssVar } from '@toeverything/theme';
+import { bodyEmphasized } from '@toeverything/theme/typography';
 import { cssVarV2 } from '@toeverything/theme/v2';
 import { globalStyle, style } from '@vanilla-extract/css';
 
@@ -15,6 +16,26 @@ export const header = style({
   top: 0,
   zIndex: 1,
 });
+
+export const headerContent = style({
+  maxWidth: `calc(100% - 200px)`,
+});
+export const headerTitle = style([
+  bodyEmphasized,
+  {
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+
+    opacity: 0,
+    transition: 'opacity 0.23s ease',
+    selectors: {
+      '&[data-show="true"]': {
+        opacity: 1,
+      },
+    },
+  },
+]);
 
 export const mainContainer = style({
   containerType: 'inline-size',
@@ -59,6 +80,10 @@ export const affineDocViewport = style({
   },
 });
 
+export const errorBoundary = style({
+  flex: 1,
+});
+
 export const scrollbar = style({
   marginRight: '4px',
 });
@@ -92,4 +117,8 @@ export const journalIconButton = style({
   top: 16,
   right: 12,
   display: 'flex',
+});
+
+export const journalDatePicker = style({
+  background: cssVarV2('layer/background/primary'),
 });

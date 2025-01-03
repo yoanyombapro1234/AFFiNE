@@ -1,6 +1,6 @@
 import type { Framework } from '@toeverything/infra';
-import { WorkspaceScope } from '@toeverything/infra';
 
+import { WorkspaceScope } from '../workspace';
 import { PDF } from './entities/pdf';
 import { PDFPage } from './entities/pdf-page';
 import { PDFService } from './services/pdf';

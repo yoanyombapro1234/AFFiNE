@@ -2,7 +2,7 @@ import { DocDisplayMetaService } from '@affine/core/modules/doc-display-meta';
 import type { Tag } from '@affine/env/filter';
 import { useI18n } from '@affine/i18n';
 import { assertExists } from '@blocksuite/affine/global/utils';
-import type { DocCollection, DocMeta } from '@blocksuite/affine/store';
+import type { DocMeta, Workspace } from '@blocksuite/affine/store';
 import { ToggleCollapseIcon, ViewLayersIcon } from '@blocksuite/icons/rc';
 import * as Collapsible from '@radix-ui/react-collapsible';
 import { useLiveData, useService } from '@toeverything/infra';
@@ -36,11 +36,9 @@ import type {
 } from './types';
 import { shallowEqual } from './utils';
 
-export const ItemGroupHeader = <T extends ListItem>({
-  id,
-  items,
-  label,
-}: ItemGroupProps<T>) => {
+export const ItemGroupHeader = memo(function ItemGroupHeader<
+  T extends ListItem,
+>({ id, items, label }: ItemGroupProps<T>) {
   const [collapseState, setCollapseState] = useAtom(groupCollapseStateAtom);
   const collapsed = collapseState[id];
   const onExpandedClicked: MouseEventHandler = useCallback(
@@ -113,7 +111,7 @@ export const ItemGroupHeader = <T extends ListItem>({
       </button>
     </div>
   ) : null;
-};
+});
 
 export const ItemGroup = <T extends ListItem>({
   id,
@@ -218,7 +216,9 @@ const listsPropsAtom = selectAtom(
   shallowEqual
 );
 
-export const PageListItemRenderer = (item: ListItem) => {
+export const PageListItemRenderer = memo(function PageListItemRenderer(
+  item: ListItem
+) {
   const props = useAtomValue(listsPropsAtom);
   const { selectionActive } = useAtomValue(selectionStateAtom);
   const groups = useAtomValue(groupsAtom);
@@ -238,7 +238,7 @@ export const PageListItemRenderer = (item: ListItem) => {
       )}
     />
   );
-};
+});
 
 export const CollectionListItemRenderer = memo((item: ListItem) => {
   const props = useAtomValue(listsPropsAtom);
@@ -256,7 +256,9 @@ export const CollectionListItemRenderer = memo((item: ListItem) => {
 
 CollectionListItemRenderer.displayName = 'CollectionListItemRenderer';
 
-export const TagListItemRenderer = (item: ListItem) => {
+export const TagListItemRenderer = memo(function TagListItemRenderer(
+  item: ListItem
+) {
   const props = useAtomValue(listsPropsAtom);
   const { selectionActive } = useAtomValue(selectionStateAtom);
   const tag = item as TagMeta;
@@ -268,11 +270,11 @@ export const TagListItemRenderer = (item: ListItem) => {
       })}
     />
   );
-};
+});
 
 function tagIdToTagOption(
   tagId: string,
-  docCollection: DocCollection
+  docCollection: Workspace
 ): Tag | undefined {
   return docCollection.meta.properties.tags?.options.find(
     opt => opt.id === tagId
@@ -317,9 +319,7 @@ function pageMetaToListItemProp(
     pageId: item.id,
     pageIds,
     title: <PageTitle id={item.id} />,
-    preview: (
-      <PagePreview docCollection={props.docCollection} pageId={item.id} />
-    ),
+    preview: <PagePreview pageId={item.id} />,
     createDate: new Date(item.createDate),
     updatedDate: item.updatedDate ? new Date(item.updatedDate) : undefined,
     to: props.rowAsLink && !props.selectable ? `/${item.id}` : undefined,

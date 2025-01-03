@@ -1,13 +1,8 @@
 import { TagService, useDeleteTagConfirmModal } from '@affine/core/modules/tag';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import { useI18n } from '@affine/i18n';
-import track from '@affine/track';
 import { TagsIcon } from '@blocksuite/icons/rc';
-import {
-  LiveData,
-  useLiveData,
-  useService,
-  WorkspaceService,
-} from '@toeverything/infra';
+import { LiveData, useLiveData, useService } from '@toeverything/infra';
 import { useCallback, useMemo } from 'react';
 
 import { useAsyncCallback } from '../hooks/affine-async-hooks';
@@ -26,6 +21,7 @@ interface TagsEditorProps {
 interface TagsInlineEditorProps extends TagsEditorProps {
   placeholder?: string;
   className?: string;
+  onChange?: (value: unknown) => void;
 }
 
 export const TagsInlineEditor = ({
@@ -33,19 +29,18 @@ export const TagsInlineEditor = ({
   readonly,
   placeholder,
   className,
+  onChange,
 }: TagsInlineEditorProps) => {
   const workspace = useService(WorkspaceService);
   const tagService = useService(TagService);
-  const tagIds = useLiveData(tagService.tagList.tagIdsByPageId$(pageId));
+  const tagIds$ = tagService.tagList.tagIdsByPageId$(pageId);
+  const tagIds = useLiveData(tagIds$);
   const tags = useLiveData(tagService.tagList.tags$);
   const tagColors = tagService.tagColors;
 
   const onCreateTag = useCallback(
     (name: string, color: string) => {
       const newTag = tagService.tagList.createTag(name, color);
-      track.doc.inlineDocInfo.property.editProperty({
-        type: 'tags',
-      });
       return {
         id: newTag.id,
         value: newTag.value$.value,
@@ -58,21 +53,17 @@ export const TagsInlineEditor = ({
   const onSelectTag = useCallback(
     (tagId: string) => {
       tagService.tagList.tagByTagId$(tagId).value?.tag(pageId);
-      track.doc.inlineDocInfo.property.editProperty({
-        type: 'tags',
-      });
+      onChange?.(tagIds$.value);
     },
-    [pageId, tagService.tagList]
+    [onChange, pageId, tagIds$, tagService.tagList]
   );
 
   const onDeselectTag = useCallback(
     (tagId: string) => {
       tagService.tagList.tagByTagId$(tagId).value?.untag(pageId);
-      track.doc.inlineDocInfo.property.editProperty({
-        type: 'tags',
-      });
+      onChange?.(tagIds$.value);
     },
-    [pageId, tagService.tagList]
+    [onChange, pageId, tagIds$, tagService.tagList]
   );
 
   const onTagChange = useCallback(
@@ -82,11 +73,9 @@ export const TagsInlineEditor = ({
       } else if (property === 'color') {
         tagService.tagList.tagByTagId$(id).value?.changeColor(value);
       }
-      track.doc.inlineDocInfo.property.editProperty({
-        type: 'tags',
-      });
+      onChange?.(tagIds$.value);
     },
-    [tagService.tagList]
+    [onChange, tagIds$, tagService.tagList]
   );
 
   const deleteTags = useDeleteTagConfirmModal();
@@ -94,11 +83,9 @@ export const TagsInlineEditor = ({
   const onTagDelete = useAsyncCallback(
     async (id: string) => {
       await deleteTags([id]);
-      track.doc.inlineDocInfo.property.editProperty({
-        type: 'tags',
-      });
+      onChange?.(tagIds$.value);
     },
-    [deleteTags]
+    [onChange, tagIds$, deleteTags]
   );
 
   const adaptedTags = useLiveData(

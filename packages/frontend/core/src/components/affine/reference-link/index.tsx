@@ -1,12 +1,12 @@
+import { DocsService } from '@affine/core/modules/doc';
 import { DocDisplayMetaService } from '@affine/core/modules/doc-display-meta';
 import { JournalService } from '@affine/core/modules/journal';
 import { PeekViewService } from '@affine/core/modules/peek-view/services/peek-view';
 import { useInsidePeekView } from '@affine/core/modules/peek-view/view/modal-container';
 import { WorkbenchLink } from '@affine/core/modules/workbench';
-import { useI18n } from '@affine/i18n';
 import { track } from '@affine/track';
 import type { DocMode } from '@blocksuite/affine/blocks';
-import type { DocCollection } from '@blocksuite/affine/store';
+import type { Workspace } from '@blocksuite/affine/store';
 import { LiveData, useLiveData, useService } from '@toeverything/infra';
 import clsx from 'clsx';
 import { nanoid } from 'nanoid';
@@ -25,6 +25,7 @@ import * as styles from './styles.css';
 interface AffinePageReferenceProps {
   pageId: string;
   params?: URLSearchParams;
+  title?: string; // title alias
   className?: string;
   Icon?: ComponentType;
   onClick?: (e: MouseEvent) => void;
@@ -33,19 +34,20 @@ interface AffinePageReferenceProps {
 function AffinePageReferenceInner({
   pageId,
   params,
+  title,
   Icon: UserIcon,
 }: AffinePageReferenceProps) {
   const docDisplayMetaService = useService(DocDisplayMetaService);
-  const i18n = useI18n();
+  const docsService = useService(DocsService);
 
-  let linkWithMode: DocMode | null = null;
-  let linkToNode = false;
+  let referenceWithMode: DocMode | null = null;
+  let referenceToNode = false;
   if (params) {
     const m = params.get('mode');
     if (m && (m === 'page' || m === 'edgeless')) {
-      linkWithMode = m as DocMode;
+      referenceWithMode = m as DocMode;
     }
-    linkToNode = params.has('blockIds') || params.has('elementIds');
+    referenceToNode = params.has('blockIds') || params.has('elementIds');
   }
 
   const Icon = useLiveData(
@@ -55,28 +57,33 @@ function AffinePageReferenceInner({
       }
       return get(
         docDisplayMetaService.icon$(pageId, {
-          mode: linkWithMode ?? undefined,
+          mode: referenceWithMode ?? undefined,
           reference: true,
-          referenceToNode: linkToNode,
+          referenceToNode,
+          hasTitleAlias: Boolean(title),
         })
       );
     })
   );
-  const title = useLiveData(
-    docDisplayMetaService.title$(pageId, { reference: true })
+
+  const notFound = !useLiveData(docsService.list.doc$(pageId));
+
+  title = useLiveData(
+    docDisplayMetaService.title$(pageId, { title, reference: true })
   );
 
   return (
-    <>
+    <span className={notFound ? styles.notFound : ''}>
       <Icon className={styles.pageReferenceIcon} />
-      <span className="affine-reference-title">{i18n.t(title)}</span>
-    </>
+      <span className="affine-reference-title">{title}</span>
+    </span>
   );
 }
 
 export function AffinePageReference({
   pageId,
   params,
+  title,
   className,
   Icon,
   onClick: userOnClick,
@@ -142,7 +149,12 @@ export function AffinePageReference({
       onClick={onClick}
       className={clsx(styles.pageReferenceLink, className)}
     >
-      <AffinePageReferenceInner pageId={pageId} params={params} Icon={Icon} />
+      <AffinePageReferenceInner
+        pageId={pageId}
+        params={params}
+        title={title}
+        Icon={Icon}
+      />
     </WorkbenchLink>
   );
 }
@@ -151,10 +163,11 @@ export function AffineSharedPageReference({
   pageId,
   docCollection,
   params,
+  title,
   Icon,
   onClick: userOnClick,
 }: AffinePageReferenceProps & {
-  docCollection: DocCollection;
+  docCollection: Workspace;
 }) {
   const journalService = useService(JournalService);
   const isJournal = !!useLiveData(journalService.journalDate$(pageId));
@@ -203,7 +216,12 @@ export function AffineSharedPageReference({
       onClick={onClick}
       className={styles.pageReferenceLink}
     >
-      <AffinePageReferenceInner pageId={pageId} params={params} Icon={Icon} />
+      <AffinePageReferenceInner
+        pageId={pageId}
+        params={params}
+        title={title}
+        Icon={Icon}
+      />
     </Link>
   );
 }

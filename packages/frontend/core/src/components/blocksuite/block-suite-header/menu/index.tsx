@@ -11,11 +11,7 @@ import { useBlockSuiteMetaHelper } from '@affine/core/components/hooks/affine/us
 import { useEnableCloud } from '@affine/core/components/hooks/affine/use-enable-cloud';
 import { useExportPage } from '@affine/core/components/hooks/affine/use-export-page';
 import { useDocMetaHelper } from '@affine/core/components/hooks/use-block-suite-page-meta';
-import {
-  Export,
-  MoveToTrash,
-  Snapshot,
-} from '@affine/core/components/page-list';
+import { Export, MoveToTrash } from '@affine/core/components/page-list';
 import { IsFavoriteIcon } from '@affine/core/components/pure/icons';
 import { useDetailPageHeaderResponsive } from '@affine/core/desktop/pages/workspace/detail-page/use-header-responsive';
 import { WorkspaceDialogService } from '@affine/core/modules/dialogs';
@@ -23,7 +19,7 @@ import { EditorService } from '@affine/core/modules/editor';
 import { OpenInAppService } from '@affine/core/modules/open-in-app/services';
 import { WorkbenchService } from '@affine/core/modules/workbench';
 import { ViewService } from '@affine/core/modules/workbench/services/view';
-import { WorkspaceFlavour } from '@affine/env/workspace';
+import { WorkspaceService } from '@affine/core/modules/workspace';
 import { useI18n } from '@affine/i18n';
 import { track } from '@affine/track';
 import type { Doc } from '@blocksuite/affine/store';
@@ -44,11 +40,9 @@ import {
   TocIcon,
 } from '@blocksuite/icons/rc';
 import {
-  FeatureFlagService,
   useLiveData,
   useService,
   useServiceOptional,
-  WorkspaceService,
 } from '@toeverything/infra';
 import { useCallback, useState } from 'react';
 
@@ -84,10 +78,6 @@ export const PageHeaderMenuButton = ({
   const primaryMode = useLiveData(editorService.editor.doc.primaryMode$);
 
   const workbench = useService(WorkbenchService).workbench;
-  const featureFlagService = useService(FeatureFlagService);
-  const enableSnapshotImportExport = useLiveData(
-    featureFlagService.flags.enable_snapshot_import_export.$
-  );
   const openInAppService = useServiceOptional(OpenInAppService);
 
   const { favorite, toggleFavorite } = useFavorite(pageId);
@@ -120,7 +110,7 @@ export const PageHeaderMenuButton = ({
 
   const openHistoryModal = useCallback(() => {
     track.$.header.history.open();
-    if (workspace.flavour === WorkspaceFlavour.AFFINE_CLOUD) {
+    if (workspace.flavour === 'affine-cloud') {
       return setHistoryModalOpen(true);
     }
     return setOpenHistoryTipsModal(true);
@@ -402,14 +392,12 @@ export const PageHeaderMenuButton = ({
         {t['Import']()}
       </MenuItem>
       <Export exportHandler={exportHandler} pageMode={currentMode} />
-      {enableSnapshotImportExport && <Snapshot />}
       <MenuSeparator />
       <MoveToTrash
         data-testid="editor-option-menu-delete"
         onSelect={handleOpenTrashModal}
       />
-      {BUILD_CONFIG.isWeb &&
-      workspace.flavour === WorkspaceFlavour.AFFINE_CLOUD ? (
+      {BUILD_CONFIG.isWeb && workspace.flavour === 'affine-cloud' ? (
         <MenuItem
           prefixIcon={<LocalWorkspaceIcon />}
           data-testid="editor-option-menu-link"
@@ -436,7 +424,7 @@ export const PageHeaderMenuButton = ({
       >
         <HeaderDropDownButton />
       </Menu>
-      {workspace.flavour === WorkspaceFlavour.AFFINE_CLOUD ? (
+      {workspace.flavour !== 'local' ? (
         <PageHistoryModal
           docCollection={workspace.docCollection}
           open={historyModalOpen}

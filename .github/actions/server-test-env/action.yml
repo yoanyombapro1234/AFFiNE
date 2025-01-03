@@ -15,7 +15,9 @@ runs:
 
     - name: Run init-db script
       shell: bash
+      env:
+        NODE_ENV: test
       run: |
-        yarn workspace @affine/server exec prisma generate
-        yarn workspace @affine/server exec prisma db push
-        yarn workspace @affine/server data-migration run
+        yarn affine @affine/server prisma generate
+        yarn affine @affine/server prisma db push
+        yarn affine @affine/server data-migration run

@@ -2,9 +2,9 @@ import { join } from 'node:path';
 
 import {
   app,
+  BrowserWindow,
   Menu,
   MenuItem,
-  session,
   type View,
   type WebContents,
   WebContentsView,
@@ -24,7 +24,8 @@ import {
 } from 'rxjs';
 
 import { isMacOS } from '../../shared/utils';
-import { CLOUD_BASE_URL, isDev } from '../config';
+import { beforeAppQuit } from '../cleanup';
+import { isDev } from '../config';
 import { mainWindowOrigin, shellViewUrl } from '../constants';
 import { ensureHelperProcess } from '../helper-process';
 import { logger } from '../logger';
@@ -38,7 +39,6 @@ import {
   type WorkbenchViewMeta,
 } from '../shared-state-schema';
 import { globalStateStorage } from '../shared-storage/storage';
-import { getCustomThemeWindow } from './custom-theme-window';
 import { getMainWindow, MainWindowManager } from './main-window';
 
 async function getAdditionalArguments() {
@@ -171,6 +171,7 @@ export class WebContentViewsManager {
           ready: ready.has(w.id),
           activeViewIndex: w.activeViewIndex,
           views: w.views,
+          basename: w.basename,
         };
       });
     }),
@@ -721,23 +722,6 @@ export class WebContentViewsManager {
         // add shell view
         this.createAndAddView('shell').catch(err => logger.error(err));
         (async () => {
-          const updateCookies = () => {
-            session.defaultSession.cookies
-              .get({
-                url: CLOUD_BASE_URL,
-              })
-              .then(cookies => {
-                this.cookies = cookies;
-              })
-              .catch(err => {
-                logger.error('failed to get cookies', err);
-              });
-          };
-          updateCookies();
-          session.defaultSession.cookies.on('changed', () => {
-            updateCookies();
-          });
-
           if (this.tabViewsMeta.workbenches.length === 0) {
             // create a default view (e.g., on first launch)
             await this.addTab();
@@ -749,8 +733,10 @@ export class WebContentViewsManager {
       })
     );
 
-    app.on('before-quit', () => {
-      disposables.forEach(d => d.unsubscribe());
+    disposables.forEach(d => {
+      beforeAppQuit(() => {
+        d.unsubscribe();
+      });
     });
 
     const focusActiveView = () => {
@@ -833,6 +819,12 @@ export class WebContentViewsManager {
 
     if (spellCheckSettings.enabled) {
       view.webContents.on('context-menu', (_event, params) => {
+        const shouldShow =
+          params.misspelledWord && params.dictionarySuggestions.length > 0;
+
+        if (!shouldShow) {
+          return;
+        }
         const menu = new Menu();
 
         // Add each spelling suggestion
@@ -912,10 +904,6 @@ export class WebContentViewsManager {
   };
 }
 
-export function getCookies() {
-  return WebContentViewsManager.instance.cookies;
-}
-
 // there is no proper way to listen to webContents resize event
 // we will rely on window.resize event in renderer instead
 export async function handleWebContentsResize(webContents?: WebContents) {
@@ -965,6 +953,7 @@ export const onTabsStatusChange = (
       pinned: boolean;
       activeViewIndex: number;
       views: WorkbenchViewMeta[];
+      basename: string;
     }[]
   ) => void
 ) => {
@@ -1083,24 +1072,19 @@ export const onActiveTabChanged = (fn: (tabId: string) => void) => {
 
 export const showDevTools = (id?: string) => {
   // use focusedWindow?
-  // const focusedWindow = BrowserWindow.getFocusedWindow()
-
-  // workaround for opening devtools for theme-editor window
-  // there should be some strategy like windows manager, so we can know which window is active
-  getCustomThemeWindow()
-    .then(w => {
-      if (w && w.isFocused()) {
-        w.webContents.openDevTools();
-      } else {
-        const view = id
-          ? WebContentViewsManager.instance.getViewById(id)
-          : WebContentViewsManager.instance.activeWorkbenchView;
-        if (view) {
-          view.webContents.openDevTools();
-        }
-      }
-    })
-    .catch(console.error);
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  // check if focused window is main window
+  const mainWindow = WebContentViewsManager.instance.mainWindow;
+  if (focusedWindow && focusedWindow.id !== mainWindow?.id) {
+    focusedWindow.webContents.openDevTools();
+  } else {
+    const view = id
+      ? WebContentViewsManager.instance.getViewById(id)
+      : WebContentViewsManager.instance.activeWorkbenchView;
+    if (view) {
+      view.webContents.openDevTools();
+    }
+  }
 };
 
 export const pingAppLayoutReady = (wc: WebContents, ready: boolean) => {

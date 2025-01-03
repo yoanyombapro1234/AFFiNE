@@ -2,16 +2,15 @@ import { notify } from '@affine/component';
 import { SettingRow } from '@affine/component/setting-components';
 import { ConfirmModal } from '@affine/component/ui/modal';
 import { useAsyncCallback } from '@affine/core/components/hooks/affine-async-hooks';
+import { GlobalContextService } from '@affine/core/modules/global-context';
 import { WorkspacePermissionService } from '@affine/core/modules/permissions';
-import { useI18n } from '@affine/i18n';
-import { ArrowRightSmallIcon } from '@blocksuite/icons/rc';
 import {
-  GlobalContextService,
-  useLiveData,
-  useServices,
   WorkspaceService,
   WorkspacesService,
-} from '@toeverything/infra';
+} from '@affine/core/modules/workspace';
+import { useI18n } from '@affine/i18n';
+import { ArrowRightSmallIcon } from '@blocksuite/icons/rc';
+import { useLiveData, useServices } from '@toeverything/infra';
 import { useCallback, useEffect, useState } from 'react';
 
 import {

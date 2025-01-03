@@ -3,8 +3,10 @@ import {
   PaymentRequiredError,
   UnauthorizedError,
 } from '@blocksuite/affine/blocks';
-import { Slot } from '@blocksuite/affine/store';
+import { Slot } from '@blocksuite/affine/global/utils';
 import { captureException } from '@sentry/react';
+
+import type { ChatContextValue } from './chat-panel/chat-context';
 
 export interface AIUserInfo {
   id: string;
@@ -18,6 +20,13 @@ export interface AIChatParams {
   mode?: 'page' | 'edgeless';
   // Auto select and append selection to input via `Continue with AI` action.
   autoSelect?: boolean;
+  appendCard?: boolean;
+}
+
+export interface AISendParams {
+  host: EditorHost;
+  input?: string;
+  context?: Partial<ChatContextValue | null>;
 }
 
 export type ActionEventType =
@@ -104,14 +113,13 @@ export class AIProvider {
     // use case: when user selects "continue in chat" in an ask ai result panel
     // do we need to pass the context to the chat panel?
     requestOpenWithChat: new Slot<AIChatParams>(),
+    requestSendWithChat: new Slot<AISendParams>(),
     requestInsertTemplate: new Slot<{
       template: string;
       mode: 'page' | 'edgeless';
     }>(),
     requestLogin: new Slot<{ host: EditorHost }>(),
     requestUpgradePlan: new Slot<{ host: EditorHost }>(),
-    // when an action is requested to run in edgeless mode (show a toast in affine)
-    requestRunInEdgeless: new Slot<{ host: EditorHost }>(),
     // stream of AI actions triggered by users
     actions: new Slot<{
       action: keyof BlockSuitePresets.AIActions;
@@ -142,10 +150,6 @@ export class AIProvider {
       ...options: Parameters<BlockSuitePresets.AIActions[T]>
     ) => ReturnType<BlockSuitePresets.AIActions[T]>
   ): void {
-    if (this.actions[id]) {
-      console.warn(`AI action ${id} is already provided`);
-    }
-
     // @ts-expect-error TODO: maybe fix this
     this.actions[id] = (
       ...args: Parameters<BlockSuitePresets.AIActions[T]>
@@ -306,7 +310,6 @@ export class AIProvider {
         options: BlockSuitePresets.AIForkChatSessionOptions
       ) => string | Promise<string>;
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       AIProvider.instance.provideAction(id as any, action as any);
     }
   }

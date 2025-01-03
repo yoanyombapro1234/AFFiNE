@@ -50,7 +50,7 @@ test('should throw if user not found', async t => {
   const { auth } = t.context;
 
   await t.throwsAsync(() => auth.signIn('u2@affine.pro', '1'), {
-    message: 'Wrong user email or password.',
+    message: 'Wrong user email or password: u2@affine.pro',
   });
 });
 
@@ -72,7 +72,7 @@ test('should throw if password not match', async t => {
   const { auth } = t.context;
 
   await t.throwsAsync(() => auth.signIn('u1@affine.pro', '2'), {
-    message: 'Wrong user email or password.',
+    message: 'Wrong user email or password: u1@affine.pro',
   });
 });
 
@@ -87,7 +87,7 @@ test('should be able to change password', async t => {
   await t.throwsAsync(
     () => auth.signIn('u1@affine.pro', '1' /* old password */),
     {
-      message: 'Wrong user email or password.',
+      message: 'Wrong user email or password: u1@affine.pro',
     }
   );
 
@@ -104,7 +104,7 @@ test('should be able to change email', async t => {
   await auth.changeEmail(u1.id, 'u2@affine.pro');
 
   await t.throwsAsync(() => auth.signIn('u1@affine.pro' /* old email */, '1'), {
-    message: 'Wrong user email or password.',
+    message: 'Wrong user email or password: u1@affine.pro',
   });
 
   signedInU1 = await auth.signIn('u2@affine.pro', '1');

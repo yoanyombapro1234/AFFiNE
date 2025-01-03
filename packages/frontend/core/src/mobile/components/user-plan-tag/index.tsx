@@ -1,7 +1,4 @@
-import {
-  ServerConfigService,
-  SubscriptionService,
-} from '@affine/core/modules/cloud';
+import { ServerService, SubscriptionService } from '@affine/core/modules/cloud';
 import { SubscriptionPlan } from '@affine/graphql';
 import { useLiveData, useServices } from '@toeverything/infra';
 import clsx from 'clsx';
@@ -13,12 +10,12 @@ export const UserPlanTag = forwardRef<
   HTMLDivElement,
   HTMLProps<HTMLDivElement>
 >(function UserPlanTag({ className, ...attrs }, ref) {
-  const { serverConfigService, subscriptionService } = useServices({
-    ServerConfigService,
+  const { serverService, subscriptionService } = useServices({
+    ServerService,
     SubscriptionService,
   });
   const hasPayment = useLiveData(
-    serverConfigService.serverConfig.features$.map(r => r?.payment)
+    serverService.server.features$.map(r => r?.payment)
   );
   const plan = useLiveData(
     subscriptionService.subscription.pro$.map(subscription =>

@@ -13,20 +13,20 @@
         "mobile",
         "ios",
         "android",
+        "mobile-native",
         "docs",
-        "storybook",
         "component",
-        "workspace",
         "env",
         "graphql",
-        "cli",
         "hooks",
         "i18n",
         "native",
         "templates",
         "debug",
-        "storage",
-        "infra"
+        "nbstore",
+        "infra",
+        "editor",
+        "tools"
       ]
     ]
   }

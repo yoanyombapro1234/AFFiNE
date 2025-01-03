@@ -3,6 +3,7 @@ import {
   TagPageListHeader,
   VirtualizedPageList,
 } from '@affine/core/components/page-list';
+import { GlobalContextService } from '@affine/core/modules/global-context';
 import { TagService } from '@affine/core/modules/tag';
 import {
   useIsActiveView,
@@ -11,12 +12,8 @@ import {
   ViewIcon,
   ViewTitle,
 } from '@affine/core/modules/workbench';
-import {
-  GlobalContextService,
-  useLiveData,
-  useService,
-  WorkspaceService,
-} from '@toeverything/infra';
+import { WorkspaceService } from '@affine/core/modules/workspace';
+import { useLiveData, useService } from '@toeverything/infra';
 import { useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 

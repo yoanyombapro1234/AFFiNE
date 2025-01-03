@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaClient } from '@prisma/client';
 
-import { CryptoHelper } from '../../fundamentals/helpers';
+import { CryptoHelper } from '../../base/helpers';
 
 export enum TokenType {
   SignIn,

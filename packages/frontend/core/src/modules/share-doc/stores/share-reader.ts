@@ -2,16 +2,21 @@ import { ErrorNames, UserFriendlyError } from '@affine/graphql';
 import type { DocMode } from '@blocksuite/affine/blocks';
 import { Store } from '@toeverything/infra';
 
-import { type FetchService, isBackendError } from '../../cloud';
+import type { ServersService } from '../../cloud';
+import { isBackendError } from '../../cloud';
 
 export class ShareReaderStore extends Store {
-  constructor(private readonly fetchService: FetchService) {
+  constructor(private readonly serversService: ServersService) {
     super();
   }
 
-  async loadShare(workspaceId: string, docId: string) {
+  async loadShare(serverId: string, workspaceId: string, docId: string) {
+    const server = this.serversService.server$(serverId).value;
+    if (!server) {
+      throw new Error(`Server ${serverId} not found`);
+    }
     try {
-      const docResponse = await this.fetchService.fetch(
+      const docResponse = await server.fetch(
         `/api/workspaces/${workspaceId}/docs/${docId}`
       );
       const publishMode = docResponse.headers.get(
@@ -19,7 +24,7 @@ export class ShareReaderStore extends Store {
       ) as DocMode | null;
       const docBinary = await docResponse.arrayBuffer();
 
-      const workspaceResponse = await this.fetchService.fetch(
+      const workspaceResponse = await server.fetch(
         `/api/workspaces/${workspaceId}/docs/${workspaceId}`
       );
       const workspaceBinary = await workspaceResponse.arrayBuffer();

@@ -1,4 +1,4 @@
-import type { WorkspaceMetadata } from '@toeverything/infra';
+import type { WorkspaceMetadata } from '@affine/core/modules/workspace';
 
 import type { SettingState } from '../../types';
 

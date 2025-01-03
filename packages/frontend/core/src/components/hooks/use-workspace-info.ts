@@ -1,9 +1,8 @@
-import type { WorkspaceMetadata } from '@toeverything/infra';
 import {
-  useLiveData,
-  useService,
+  type WorkspaceMetadata,
   WorkspacesService,
-} from '@toeverything/infra';
+} from '@affine/core/modules/workspace';
+import { useLiveData, useService } from '@toeverything/infra';
 import { useEffect } from 'react';
 
 export function useWorkspaceInfo(meta?: WorkspaceMetadata) {

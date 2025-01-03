@@ -1,5 +1,6 @@
 import { useI18n } from '@affine/i18n';
 import { getCurrentStore } from '@toeverything/infra';
+import clsx from 'clsx';
 import { Provider } from 'jotai/react';
 import type { FC } from 'react';
 import { useCallback, useMemo } from 'react';
@@ -32,6 +33,7 @@ function getErrorFallbackComponent(error: any): FC<FallbackProps> {
 
 export interface AffineErrorFallbackProps extends FallbackProps {
   height?: number | string;
+  className?: string;
 }
 
 export const AffineErrorFallback: FC<AffineErrorFallbackProps> = props => {
@@ -39,7 +41,7 @@ export const AffineErrorFallback: FC<AffineErrorFallbackProps> = props => {
   const Component = useMemo(() => getErrorFallbackComponent(error), [error]);
 
   return (
-    <div className={styles.viewport} style={{ height }}>
+    <div className={clsx(styles.viewport, props.className)} style={{ height }}>
       <Component error={error} resetError={resetError} />
       <Provider key="JotaiProvider" store={getCurrentStore()}>
         <DumpInfo error={error} />

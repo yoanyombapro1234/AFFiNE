@@ -134,7 +134,7 @@ test('should share a page', async t => {
   await acceptInviteById(
     app,
     workspace.id,
-    await inviteUser(app, u1.token.token, workspace.id, u2.email, 'Admin')
+    await inviteUser(app, u1.token.token, workspace.id, u2.email)
   );
   const invited = await publishPage(app, u2.token.token, workspace.id, 'page2');
   t.is(invited.id, 'page2', 'failed to share page');
@@ -211,7 +211,7 @@ test('should can get workspace doc', async t => {
   await acceptInviteById(
     app,
     workspace.id,
-    await inviteUser(app, u1.token.token, workspace.id, u2.email, 'Admin')
+    await inviteUser(app, u1.token.token, workspace.id, u2.email)
   );
 
   const res2 = await request(app.getHttpServer())

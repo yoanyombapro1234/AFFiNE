@@ -13,22 +13,6 @@ import {
   type RendererToHelper,
 } from '../shared/type';
 
-export function getElectronAPIs() {
-  const mainAPIs = getMainAPIs();
-  const helperAPIs = getHelperAPIs();
-
-  return {
-    apis: {
-      ...mainAPIs.apis,
-      ...helperAPIs.apis,
-    },
-    events: {
-      ...mainAPIs.events,
-      ...helperAPIs.events,
-    },
-  };
-}
-
 type Schema =
   | 'affine'
   | 'affine-canary'
@@ -157,7 +141,11 @@ const createMessagePortChannel = (port: MessagePort): EventBasedChannel => {
       port.start();
       return () => {
         port.onmessage = null;
-        port.close();
+        try {
+          port.close();
+        } catch (err) {
+          console.error('[helper] close port error', err);
+        }
       };
     },
     send(data) {
@@ -243,4 +231,61 @@ function getHelperAPIs() {
   } else {
     return { apis: {}, events: {} };
   }
+}
+
+const mainAPIs = getMainAPIs();
+const helperAPIs = getHelperAPIs();
+
+export const apis = {
+  ...mainAPIs.apis,
+  ...helperAPIs.apis,
+};
+
+export const events = {
+  ...mainAPIs.events,
+  ...helperAPIs.events,
+};
+
+// Create MessagePort that can be used by web workers
+export function requestWebWorkerPort() {
+  const ch = new MessageChannel();
+
+  const localPort = ch.port1;
+  const remotePort = ch.port2;
+
+  // todo: should be able to let the web worker use the electron APIs directly for better performance
+  const flattenedAPIs = Object.entries(apis).flatMap(([namespace, api]) => {
+    return Object.entries(api as any).map(([method, fn]) => [
+      `${namespace}:${method}`,
+      fn,
+    ]);
+  });
+
+  AsyncCall(Object.fromEntries(flattenedAPIs), {
+    channel: createMessagePortChannel(localPort),
+    log: false,
+  });
+
+  const cleanup = () => {
+    remotePort.close();
+    localPort.close();
+  };
+
+  const portId = crypto.randomUUID();
+
+  setTimeout(() => {
+    window.postMessage(
+      {
+        type: 'electron:request-api-port',
+        portId,
+        ports: [remotePort],
+      },
+      '*',
+      [remotePort]
+    );
+  });
+
+  localPort.start();
+
+  return { portId, cleanup };
 }

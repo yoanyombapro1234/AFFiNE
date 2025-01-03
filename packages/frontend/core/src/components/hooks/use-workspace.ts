@@ -1,5 +1,9 @@
-import type { Workspace, WorkspaceMetadata } from '@toeverything/infra';
-import { useService, WorkspacesService } from '@toeverything/infra';
+import {
+  type Workspace,
+  type WorkspaceMetadata,
+  WorkspacesService,
+} from '@affine/core/modules/workspace';
+import { useService } from '@toeverything/infra';
 import { useEffect, useState } from 'react';
 
 /**

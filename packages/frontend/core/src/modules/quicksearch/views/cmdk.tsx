@@ -314,9 +314,9 @@ const CMDKKeyBinding = ({ keyBinding }: { keyBinding: string }) => {
 
   return (
     <div className={styles.keybinding}>
-      {fragments.map((fragment, index) => {
+      {fragments.map(fragment => {
         return (
-          <div key={index} className={styles.keybindingFragment}>
+          <div key={fragment} className={styles.keybindingFragment}>
             {fragment}
           </div>
         );

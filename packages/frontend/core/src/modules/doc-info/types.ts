@@ -1,5 +1,7 @@
 import type { DatabaseBlockDataSource } from '@blocksuite/affine/blocks';
-import type { Doc, LiveData } from '@toeverything/infra';
+import type { LiveData } from '@toeverything/infra';
+
+import type { Doc } from '../doc';
 
 // make database property type to be compatible with DocCustomPropertyInfo
 export type DatabaseProperty<Data = Record<string, unknown>> = {

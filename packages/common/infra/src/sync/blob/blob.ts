@@ -1,5 +1,5 @@
 import { DebugLogger } from '@affine/debug';
-import { Slot } from '@blocksuite/affine/global/utils';
+import EventEmitter2 from 'eventemitter2';
 import { difference } from 'lodash-es';
 
 import { LiveData } from '../../livedata';
@@ -32,13 +32,19 @@ export interface BlobStatus {
 export class BlobEngine {
   readonly name = 'blob-engine';
   readonly readonly = this.local.readonly;
+  readonly event = new EventEmitter2();
 
   private abort: AbortController | null = null;
 
   readonly isStorageOverCapacity$ = new LiveData(false);
 
   singleBlobSizeLimit: number = 100 * 1024 * 1024;
-  onAbortLargeBlob = new Slot<Blob>();
+  onAbortLargeBlob = (callback: (blob: Blob) => void) => {
+    this.event.on('abort-large-blob', callback);
+    return () => {
+      this.event.off('abort-large-blob', callback);
+    };
+  };
 
   constructor(
     private readonly local: BlobStorage,
@@ -153,7 +159,7 @@ export class BlobEngine {
     }
 
     if (value.size > this.singleBlobSizeLimit) {
-      this.onAbortLargeBlob.emit(value);
+      this.event.emit('abort-large-blob', value);
       logger.error('blob over limit, abort set');
       return key;
     }

@@ -64,15 +64,18 @@ async function getChangeLog(repo, previousCommit, currentCommit) {
 
   const revWalk = repo.revWalk();
 
+  let headId = repo.head().target();
+
   if (currentCommit) {
     const commit =
-      repo.findCommit(currentCommit) ?? findTagByName(repo, previousCommit);
+      repo.findCommit(currentCommit) ?? findTagByName(repo, currentCommit);
     if (!commit) {
       console.log(
         `Current commit ${currentCommit} not found in ${repo.path()}`
       );
       return '';
     }
+    headId = commit.id();
     revWalk.push(commit.id());
   } else {
     revWalk.pushHead();
@@ -89,7 +92,7 @@ async function getChangeLog(repo, previousCommit, currentCommit) {
         email: commit.author().email(),
       },
     });
-    if (commitId.startsWith(previousCommit)) {
+    if (commitId === prevCommit.id()) {
       break;
     }
   }
@@ -97,6 +100,9 @@ async function getChangeLog(repo, previousCommit, currentCommit) {
   const parseConfig = await resolveConfig({
     token: process.env.GITHUB_TOKEN,
   });
+
+  parseConfig.from = prevCommit.id();
+  parseConfig.to = headId;
 
   const parsedCommits = parseCommits(commits, parseConfig);
   await resolveAuthors(parsedCommits, parseConfig);

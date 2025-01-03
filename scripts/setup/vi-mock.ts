@@ -24,7 +24,7 @@ vi.mock('@blocksuite/affine/presets', () => ({
 }));
 
 if (typeof window !== 'undefined' && HTMLCanvasElement) {
-  // @ts-expect-error
+  // @ts-expect-error allow vitest global mock
   HTMLCanvasElement.prototype.getContext = () => {
     return {
       fillRect: vi.fn(),

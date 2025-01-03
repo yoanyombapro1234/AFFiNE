@@ -39,7 +39,7 @@ function calcCompletenesses() {
 
   writeFileSync(
     join(pkgRoot, 'src', 'i18n-completenesses.json'),
-    JSON.stringify(completenesses, null, 2)
+    JSON.stringify(completenesses, null, 2) + '\n'
   );
 }
 

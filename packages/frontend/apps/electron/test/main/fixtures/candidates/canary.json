@@ -46,6 +46,16 @@
         "size": 133493672
       },
       {
+        "name": "affine-0.17.0-canary.7-canary-windows-arm64.exe",
+        "url": "https://github.com/toeverything/AFFiNE/releases/download/v0.17.0-canary.7/affine-0.17.0-canary.7-canary-windows-arm64.exe",
+        "size": 182557416
+      },
+      {
+        "name": "affine-0.17.0-canary.7-canary-windows-arm64.nsis.exe",
+        "url": "https://github.com/toeverything/AFFiNE/releases/download/v0.17.0-canary.7/affine-0.17.0-canary.7-canary-windows-arm64.nsis.exe",
+        "size": 133493672
+      },
+      {
         "name": "codecov.yml",
         "url": "https://github.com/toeverything/AFFiNE/releases/download/v0.17.0-canary.7/codecov.yml",
         "size": 91

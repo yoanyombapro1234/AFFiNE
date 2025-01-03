@@ -12,9 +12,8 @@ import {
 import { DisposableGroup } from '@blocksuite/affine/global/utils';
 import type { AffineEditorContainer } from '@blocksuite/affine/presets';
 import type { Doc } from '@blocksuite/affine/store';
-import { use } from 'foxact/use';
 import type { CSSProperties } from 'react';
-import { Suspense, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import type { DefaultOpenProperty } from '../../doc-properties';
 import { BlocksuiteEditorContainer } from './blocksuite-editor-container';
@@ -31,28 +30,6 @@ export type EditorProps = {
   className?: string;
 };
 
-function usePageRoot(page: Doc) {
-  if (!page.ready) {
-    page.load();
-  }
-
-  if (!page.root) {
-    use(
-      new Promise<void>((resolve, reject) => {
-        const disposable = page.slots.rootAdded.once(() => {
-          resolve();
-        });
-        window.setTimeout(() => {
-          disposable.dispose();
-          reject(new NoPageRootError(page));
-        }, 20 * 1000);
-      })
-    );
-  }
-
-  return page.root;
-}
-
 const BlockSuiteEditorImpl = ({
   mode,
   page,
@@ -62,11 +39,9 @@ const BlockSuiteEditorImpl = ({
   onEditorReady,
   defaultOpenProperty,
 }: EditorProps) => {
-  usePageRoot(page);
-
   useEffect(() => {
     const disposable = page.slots.blockUpdated.once(() => {
-      page.collection.setDocMeta(page.id, {
+      page.collection.meta.setDocMeta(page.id, {
         updatedDate: Date.now(),
       });
     });
@@ -146,9 +121,35 @@ const BlockSuiteEditorImpl = ({
 };
 
 export const BlockSuiteEditor = (props: EditorProps) => {
-  return (
-    <Suspense fallback={<EditorLoading />}>
-      <BlockSuiteEditorImpl key={props.page.id} {...props} />
-    </Suspense>
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (props.page.root) {
+      setIsLoading(false);
+      return;
+    }
+    const timer = setTimeout(() => {
+      disposable.dispose();
+      setError(new NoPageRootError(props.page));
+    }, 20 * 1000);
+    const disposable = props.page.slots.rootAdded.once(() => {
+      setIsLoading(false);
+      clearTimeout(timer);
+    });
+    return () => {
+      disposable.dispose();
+      clearTimeout(timer);
+    };
+  }, [props.page]);
+
+  if (error) {
+    throw error;
+  }
+
+  return isLoading ? (
+    <EditorLoading />
+  ) : (
+    <BlockSuiteEditorImpl key={props.page.id} {...props} />
   );
 };

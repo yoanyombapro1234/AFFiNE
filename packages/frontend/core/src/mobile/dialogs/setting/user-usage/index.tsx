@@ -1,7 +1,7 @@
 import { Skeleton } from '@affine/component';
 import {
   AuthService,
-  ServerConfigService,
+  ServerService,
   UserCopilotQuotaService,
   UserQuotaService,
 } from '@affine/core/modules/cloud';
@@ -71,10 +71,8 @@ const Loading = () => {
 };
 
 const UsagePanel = () => {
-  const serverConfigService = useService(ServerConfigService);
-  const serverFeatures = useLiveData(
-    serverConfigService.serverConfig.features$
-  );
+  const serverService = useService(ServerService);
+  const serverFeatures = useLiveData(serverService.server.features$);
 
   return (
     <SettingGroup title="Storage" contentStyle={{ padding: '10px 16px' }}>

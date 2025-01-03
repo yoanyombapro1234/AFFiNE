@@ -41,3 +41,15 @@ export async function openExplorerNodeMenu(page: Page, node: Locator) {
   await expect(menu).toBeVisible();
   return menu;
 }
+
+export async function openTab(
+  page: Page,
+  name: 'home' | 'all' | 'Journal' | 'New Page'
+) {
+  const tab = page.locator('#app-tabs').getByRole('tab', { name });
+  await expect(tab).toBeVisible();
+  await tab.click();
+  // eslint-disable-next-line unicorn/prefer-dom-node-dataset
+  const isActive = await tab.getAttribute('data-active');
+  expect(isActive).toBe('true');
+}
